@@ -238,3 +238,84 @@ class TestSectorCRFullEpisode:
                 break
 
         assert np.isfinite(total_reward)
+
+
+# ===========================================================================
+# Bug fix: SectorCR aircraft must spawn INSIDE the polygon
+# ===========================================================================
+
+
+class TestSectorCRInitialPositions:
+    """Scenario should provide initial positions inside the polygon."""
+
+    def test_get_initial_positions_returns_dict(self) -> None:
+        """After setup(), get_initial_positions() returns a dict mapping agent IDs to (lat, lon)."""
+        from bluesky_pettingzoo.envs.scenarios.sector_cr import _point_in_polygon
+
+        scenario = SectorCRScenario(num_aircraft=3, seed=42)
+        rng = np.random.RandomState(42)
+        bounds = {"lat_min": 39.0, "lat_max": 41.0, "lon_min": 116.0, "lon_max": 118.0}
+        agents = scenario.setup(rng, bounds)
+
+        positions = scenario.get_initial_positions()
+        assert positions is not None
+        assert isinstance(positions, dict)
+        assert set(positions.keys()) == set(agents)
+
+        polygon = scenario.get_sector_polygon()
+        for acid, (lat, lon) in positions.items():
+            assert _point_in_polygon(lat, lon, polygon), (
+                f"{acid} position ({lat}, {lon}) is outside the polygon"
+            )
+
+    def test_get_initial_positions_returns_none_before_setup(self) -> None:
+        """get_initial_positions() returns None if setup() hasn't been called."""
+        scenario = SectorCRScenario(num_aircraft=3, seed=42)
+        assert scenario.get_initial_positions() is None
+
+
+class TestSectorCREpisodeLength:
+    """SectorCR episodes must last more than 1 step (bug regression)."""
+
+    def test_episode_runs_multiple_steps(self, tmp_path: Path) -> None:
+        """Aircraft inside the polygon should not be truncated on step 1."""
+        _write_rewards_yaml(tmp_path)
+        config = _make_config(initial_count=3, max_steps=20)
+        config["_rewards_yaml"] = str(tmp_path / "rewards.yaml")
+
+        scenario = SectorCRScenario(num_aircraft=3, seed=42)
+        env = _make_env_with_scenario(config, scenario)
+        env.reset(seed=42)
+
+        assert len(env.agents) == 3
+
+        actions = {a: [2, 2, 2] for a in env.agents}
+        _, _, _, truncations, _ = env.step(actions)
+
+        # At least some agents should survive step 1 (not all truncated)
+        surviving = [a for a in env.agents]
+        assert len(surviving) > 0, (
+            "All agents truncated on step 1 -- aircraft likely spawned outside polygon"
+        )
+
+    def test_episode_lasting_multiple_steps(self, tmp_path: Path) -> None:
+        """Episode should last more than 1 step overall."""
+        _write_rewards_yaml(tmp_path)
+        config = _make_config(initial_count=3, max_steps=20)
+        config["_rewards_yaml"] = str(tmp_path / "rewards.yaml")
+
+        scenario = SectorCRScenario(num_aircraft=3, seed=42)
+        env = _make_env_with_scenario(config, scenario)
+        env.reset(seed=42)
+
+        step_count = 0
+        for _ in range(20):
+            if not env.agents:
+                break
+            actions = {a: [2, 2, 2] for a in env.agents}
+            env.step(actions)
+            step_count += 1
+
+        assert step_count > 1, (
+            f"Episode lasted only {step_count} step(s) -- expected > 1"
+        )

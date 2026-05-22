@@ -98,5 +98,17 @@ class BaseScenario(ABC):
         """
         return []
 
+    def get_initial_positions(self) -> dict[str, tuple[float, float]] | None:
+        """Return initial (lat, lon) positions for each agent, or None to use random placement.
+
+        Override this in scenarios that need aircraft spawned at specific locations
+        (e.g. inside a polygon sector). When None is returned, the environment
+        spawns aircraft at random positions within the airspace bounds.
+
+        Returns:
+            Dict mapping agent ID to (lat, lon) tuple, or None.
+        """
+        return None
+
     def reset(self) -> None:
         """Reset scenario-internal state (default: no-op)."""

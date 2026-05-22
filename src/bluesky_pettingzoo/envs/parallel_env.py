@@ -123,9 +123,17 @@ class BlueSkyMARLEnv(ParallelEnv):
             self._scenario.reset()
             self.agents = self._scenario.setup(self._rng, self._airspace)
             spawn = self._scenario.get_spawn_config()
+            initial_positions = (
+                self._scenario.get_initial_positions()
+                if hasattr(self._scenario, "get_initial_positions")
+                else None
+            )
             for acid in self.agents:
-                lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
-                lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
+                if initial_positions is not None and acid in initial_positions:
+                    lat, lon = initial_positions[acid]
+                else:
+                    lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
+                    lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
                 alt = self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
                 hdg = self._rng.uniform(spawn.heading_range[0], spawn.heading_range[1])
                 spd = self._rng.uniform(spawn.speed_range[0], spawn.speed_range[1])

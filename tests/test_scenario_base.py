@@ -189,3 +189,20 @@ class TestResetDefaultNoop:
         scenario = DummyScenario()
         # reset is inherited from BaseScenario (DummyScenario doesn't override it)
         scenario.reset()  # Should not raise
+
+
+class TestGetInitialPositionsDefault:
+    """get_initial_positions() should return None by default."""
+
+    def test_get_initial_positions_returns_none(self) -> None:
+        """BaseScenario.get_initial_positions() returns None by default."""
+        scenario = DummyScenario()
+        assert scenario.get_initial_positions() is None
+
+    def test_get_initial_positions_returns_none_after_setup(self) -> None:
+        """BaseScenario.get_initial_positions() returns None even after setup()."""
+        scenario = DummyScenario()
+        rng = np.random.RandomState(42)
+        bounds = {"lat_min": 39.0, "lat_max": 39.5, "lon_min": 116.0, "lon_max": 116.5}
+        scenario.setup(rng, bounds)
+        assert scenario.get_initial_positions() is None

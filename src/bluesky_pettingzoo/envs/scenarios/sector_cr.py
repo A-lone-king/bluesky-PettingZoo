@@ -90,6 +90,7 @@ class SectorCRScenario(BaseScenario):
         self._waypoints: dict[str, dict[str, float]] = {}
         self._polygon: list[tuple[float, float]] = []
         self._bounds: dict[str, float] = {}
+        self._initial_positions: dict[str, tuple[float, float]] | None = None
 
     @property
     def action_dimensions(self) -> list[int]:
@@ -99,6 +100,10 @@ class SectorCRScenario(BaseScenario):
     def get_sector_polygon(self) -> list[tuple[float, float]]:
         """Return the polygon vertices of the sector."""
         return self._polygon
+
+    def get_initial_positions(self) -> dict[str, tuple[float, float]] | None:
+        """Return initial positions inside the polygon for each agent."""
+        return self._initial_positions
 
     def setup(
         self,
@@ -126,13 +131,18 @@ class SectorCRScenario(BaseScenario):
         min_lon = min(v[1] for v in self._polygon)
         max_lon = max(v[1] for v in self._polygon)
 
+        self._initial_positions = {}
         for acid in self._agents:
             # Rejection sampling: keep generating until inside polygon
+            ac_lat = center_lat
+            ac_lon = center_lon
             for _ in range(1000):
                 ac_lat = rng.uniform(min_lat, max_lat)
                 ac_lon = rng.uniform(min_lon, max_lon)
                 if _point_in_polygon(ac_lat, ac_lon, self._polygon):
                     break
+
+            self._initial_positions[acid] = (ac_lat, ac_lon)
 
             # Generate a waypoint on the polygon perimeter
             wp_idx = rng.randint(0, len(self._polygon))
