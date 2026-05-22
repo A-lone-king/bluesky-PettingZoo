@@ -15,11 +15,16 @@ dist/
 build/
 eggs/
 *.whl
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
 
 # ========== 虚拟环境 ==========
 venv/
 .venv/
 ENV/
+.python-version
 
 # ========== IDE ==========
 .vscode/
@@ -35,11 +40,31 @@ htmlcov/
 .coverage.*
 coverage.xml
 
-# ========== mypy ==========
+# ========== 代码质量 ==========
 .mypy_cache/
-
-# ========== ruff ==========
 .ruff_cache/
+
+# ========== 环境变量 ==========
+.env
+.env.*
+!.env.example
+
+# ========== Jupyter ==========
+.ipynb_checkpoints/
+
+# ========== 实验跟踪 ==========
+wandb/
+runs/
+tensorboard/
+mlruns/
+mlartifacts/
+
+# ========== 训练产物 ==========
+checkpoints/
+models/
+*.pt
+*.pth
+*.onnx
 
 # ========== 日志与数据 ==========
 logs/
@@ -49,12 +74,8 @@ logs/
 *.hdf5
 *.pkl
 *.pickle
-
-# ========== 模型文件 ==========
-models/
-*.pt
-*.pth
-*.onnx
+*.npy
+*.npz
 
 # ========== 系统文件 ==========
 .DS_Store
