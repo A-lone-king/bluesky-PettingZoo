@@ -1,0 +1,26 @@
+components:
+  conflict:
+    enabled: true
+    weight: 1.0
+    nmac_penalty: -100
+    warning_penalty: -10
+    separation_penalty: -5
+    thresholds:
+      nmac_horizontal_nm: 5
+      nmac_vertical_ft: 1000
+      warning_horizontal_nm: 10
+      warning_vertical_ft: 2000
+
+  smoothness:
+    enabled: true
+    weight: 0.5
+    action_penalty: -0.1
+
+  efficiency:
+    enabled: true
+    weight: 0.3
+    max_deviation_nm: 50
+    deviation_penalty_scale: 5
+    arrival_reward: 10
+    step_penalty: -0.01
+    arrival_threshold_nm: 2

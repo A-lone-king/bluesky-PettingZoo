@@ -1,4 +1,66 @@
+# ========== 参考仓库（clone 的外部项目） ==========
 bluesky/
 bluesky.wiki/
 bluesky-gym/
 PettingZoo/
+
+# ========== Python ==========
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+
+# ========== 虚拟环境 ==========
+venv/
+.venv/
+ENV/
+
+# ========== IDE ==========
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ========== 测试与覆盖率 ==========
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ========== mypy ==========
+.mypy_cache/
+
+# ========== ruff ==========
+.ruff_cache/
+
+# ========== 日志与数据 ==========
+logs/
+*.log
+*.csv
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# ========== 模型文件 ==========
+models/
+*.pt
+*.pth
+*.onnx
+
+# ========== 系统文件 ==========
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========== 工具目录 ==========
+.claude/
+.rtk/

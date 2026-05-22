@@ -1,0 +1,42 @@
+simulation:
+  dt: 5.0                    # 仿真步长（秒）
+  max_episode_steps: 360     # 最大步数（30分钟）
+  headless: true
+
+airspace:
+  name: "two_sector_crossing"
+  sectors:
+    - id: "sector_a"
+      bounds: [[39.0, 116.0], [39.5, 116.5]]
+    - id: "sector_b"
+      bounds: [[39.0, 116.5], [39.5, 117.0]]
+
+aircraft:
+  initial_count: 5
+  spawn:
+    altitude_range: [29000, 37000]  # FL290-FL370
+    speed_range: [400, 500]         # 节
+    heading_range: [0, 360]
+
+observation:
+  perception_radius_nm: 20
+  perception_alt_diff_ft: 3000
+  max_observable_aircraft: 10
+
+action:
+  heading_adjustments: [-20, -10, 0, 10, 20]
+  altitude_adjustments: [-2000, -1000, 0, 1000, 2000]
+  speed_adjustments: [-20, -10, 0, 10, 20]
+
+normalization:
+  heading:
+    mid: 180
+    range: 180
+  altitude:
+    mid: 33000
+    range: 10000
+  speed:
+    mid: 450
+    range: 100
+  distance:
+    max: 20  # 海里
