@@ -31,6 +31,11 @@ class Normalizer:
         self._speed_mid = norm_config.get("speed", {}).get("mid", 450)
         self._speed_range = norm_config.get("speed", {}).get("range", 100)
         self._distance_max = norm_config.get("distance", {}).get("max", 20)
+        self._lat_mid = norm_config.get("latitude", {}).get("mid", 0.0)
+        self._lat_range = norm_config.get("latitude", {}).get("range", 90.0)
+        self._lon_mid = norm_config.get("longitude", {}).get("mid", 0.0)
+        self._lon_range = norm_config.get("longitude", {}).get("range", 180.0)
+        self._vs_max = norm_config.get("vertical_speed", {}).get("max", 6000)
 
     def _clip(self, value: float) -> float:
         """Clip value to [-1, 1] range.
@@ -75,6 +80,39 @@ class Normalizer:
             Normalized speed
         """
         return self._clip((speed - self._speed_mid) / self._speed_range)
+
+    def normalize_lat(self, lat: float) -> float:
+        """Normalize latitude to [-1, 1] relative to airspace center.
+
+        Args:
+            lat: Latitude in degrees
+
+        Returns:
+            Normalized latitude
+        """
+        return self._clip((lat - self._lat_mid) / self._lat_range)
+
+    def normalize_lon(self, lon: float) -> float:
+        """Normalize longitude to [-1, 1] relative to airspace center.
+
+        Args:
+            lon: Longitude in degrees
+
+        Returns:
+            Normalized longitude
+        """
+        return self._clip((lon - self._lon_mid) / self._lon_range)
+
+    def normalize_vs(self, vs: float) -> float:
+        """Normalize vertical speed to [-1, 1].
+
+        Args:
+            vs: Vertical speed in ft/min
+
+        Returns:
+            Normalized vertical speed
+        """
+        return self._clip(vs / self._vs_max)
 
     def normalize_distance(self, distance: float) -> float:
         """Normalize distance to [0, 1].
@@ -155,9 +193,9 @@ class Normalizer:
             "heading": self.normalize_heading(state["hdg"]),
             "altitude": self.normalize_altitude(state["alt"]),
             "speed": self.normalize_speed(state["tas"]),
-            "lat": float(state["lat"]),
-            "lon": float(state["lon"]),
-            "vs": float(state["vs"]),
+            "lat": self.normalize_lat(state["lat"]),
+            "lon": self.normalize_lon(state["lon"]),
+            "vs": self.normalize_vs(state["vs"]),
         }
 
     def normalize_relative_position(

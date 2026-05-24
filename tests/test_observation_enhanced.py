@@ -252,3 +252,86 @@ class TestRelativeSpeed:
         # All values should be in [-1, 1]
         for i in range(9):
             assert -1.0 <= other_row[i] <= 1.0, f"other_aircraft[{i}] = {other_row[i]} out of range"
+
+
+# ===========================================================================
+# Observation normalization: lat/lon/vs should be in [-1, 1]
+# ===========================================================================
+
+
+class TestLatLonVsNormalization:
+    """lat, lon, vs should be normalized to [-1, 1] like other features."""
+
+    def _make_config_with_airspace(self) -> dict:
+        config = _make_config()
+        config["normalization"]["latitude"] = {"mid": 39.25, "range": 0.25}
+        config["normalization"]["longitude"] = {"mid": 116.5, "range": 0.5}
+        config["normalization"]["vertical_speed"] = {"max": 6000}
+        return config
+
+    def test_lat_center_maps_to_zero(self) -> None:
+        """lat at airspace center should normalize to ~0."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = self._make_config_with_airspace()
+        mgr = ObservationManager(config)
+        own = AircraftState(id="AC000", lat=39.25, lon=116.5, alt=35000, hdg=0.0, tas=450, vs=0)
+        goal = {"lat": 39.25, "lon": 116.5, "alt": 35000, "hdg": 0.0}
+        obs = mgr.generate(own, [], goal)["observation"]["self_state"]
+        # lat is index 4
+        assert -1.0 <= obs[4] <= 1.0, f"lat={obs[4]} out of [-1, 1]"
+        assert abs(obs[4]) < 0.01, f"lat at center should be ~0, got {obs[4]}"
+
+    def test_lon_center_maps_to_zero(self) -> None:
+        """lon at airspace center should normalize to ~0."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = self._make_config_with_airspace()
+        mgr = ObservationManager(config)
+        own = AircraftState(id="AC000", lat=39.25, lon=116.5, alt=35000, hdg=0.0, tas=450, vs=0)
+        goal = {"lat": 39.25, "lon": 116.5, "alt": 35000, "hdg": 0.0}
+        obs = mgr.generate(own, [], goal)["observation"]["self_state"]
+        # lon is index 5
+        assert -1.0 <= obs[5] <= 1.0, f"lon={obs[5]} out of [-1, 1]"
+        assert abs(obs[5]) < 0.01, f"lon at center should be ~0, got {obs[5]}"
+
+    def test_vs_zero_maps_to_zero(self) -> None:
+        """vs=0 should normalize to ~0."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = self._make_config_with_airspace()
+        mgr = ObservationManager(config)
+        own = AircraftState(id="AC000", lat=39.25, lon=116.5, alt=35000, hdg=0.0, tas=450, vs=0)
+        goal = {"lat": 39.25, "lon": 116.5, "alt": 35000, "hdg": 0.0}
+        obs = mgr.generate(own, [], goal)["observation"]["self_state"]
+        # vs is index 6
+        assert abs(obs[6]) < 0.01, f"vs=0 should normalize to ~0, got {obs[6]}"
+
+    def test_vs_positive_normalized(self) -> None:
+        """vs=3000 should normalize to ~0.5."""
+        norm = Normalizer(_make_config())
+        result = norm.normalize_vs(3000.0)
+        assert -1.0 <= result <= 1.0
+        assert abs(result - 0.5) < 0.01
+
+    def test_vs_negative_normalized(self) -> None:
+        """vs=-6000 should normalize to ~-1.0."""
+        norm = Normalizer(_make_config())
+        result = norm.normalize_vs(-6000.0)
+        assert abs(result - (-1.0)) < 0.01
+
+    def test_all_self_state_in_minus1_1(self) -> None:
+        """All 9 self_state features should be in [-1, 1]."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = self._make_config_with_airspace()
+        mgr = ObservationManager(config)
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=29000, hdg=0.0, tas=400, vs=-3000)
+        goal = {"lat": 39.5, "lon": 117.0, "alt": 37000, "hdg": 180.0}
+        obs = mgr.generate(own, [], goal)["observation"]["self_state"]
+        for i in range(9):
+            assert -1.0 <= obs[i] <= 1.0, f"self_state[{i}] = {obs[i]} out of [-1, 1]"

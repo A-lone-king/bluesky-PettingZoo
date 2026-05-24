@@ -10,6 +10,17 @@ import pytest
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
 
+class TestLazyImport:
+    """Test that BlueSkyWrapper can be imported without bluesky installed."""
+
+    def test_init_simulation_raises_if_bluesky_missing(self, default_config: dict) -> None:
+        """init_simulation() raises ImportError when bluesky is not installed."""
+        with patch("bluesky_pettingzoo.bluesky.wrapper.bs", None):
+            wrapper = BlueSkyWrapper(default_config)
+            with pytest.raises(ImportError, match="bluesky"):
+                wrapper.init_simulation()
+
+
 class TestBlueSkyWrapperInit:
     """Test BlueSkyWrapper initialization."""
 
@@ -134,6 +145,7 @@ class TestBlueSkyWrapperAircraft:
         mock_bs.traf.hdg = np.array([90.0])
         mock_bs.traf.tas = np.array([450.0])
         mock_bs.traf.vs = np.array([0.0])
+        mock_bs.traf.id2idx.return_value = 0
 
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -152,6 +164,7 @@ class TestBlueSkyWrapperAircraft:
     def test_get_aircraft_state_not_found(self, mock_bs: MagicMock, default_config: dict) -> None:
         """Test getting state of non-existent aircraft."""
         mock_bs.traf.id = np.array([], dtype="U10")
+        mock_bs.traf.id2idx.return_value = np.array([])
 
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -254,6 +267,7 @@ class TestBlueSkyWrapperAirspace:
         mock_bs.traf.id = np.array(["AC001"], dtype="U10")
         mock_bs.traf.lat = np.array([39.25])
         mock_bs.traf.lon = np.array([116.25])
+        mock_bs.traf.id2idx.return_value = 0
 
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -266,6 +280,7 @@ class TestBlueSkyWrapperAirspace:
         mock_bs.traf.id = np.array(["AC001"], dtype="U10")
         mock_bs.traf.lat = np.array([40.0])  # Outside bounds
         mock_bs.traf.lon = np.array([116.25])
+        mock_bs.traf.id2idx.return_value = 0
 
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -276,6 +291,7 @@ class TestBlueSkyWrapperAirspace:
     def test_is_aircraft_in_airspace_not_found(self, mock_bs: MagicMock, default_config: dict) -> None:
         """Test non-existent aircraft not in airspace."""
         mock_bs.traf.id = np.array([], dtype="U10")
+        mock_bs.traf.id2idx.return_value = np.array([])
 
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -284,15 +300,109 @@ class TestBlueSkyWrapperAirspace:
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
     def test_close(self, mock_bs: MagicMock, default_config: dict) -> None:
-        """Test closing the wrapper."""
-        mock_bs.traf.id = ["AC000"]
+        """Test closing the wrapper deletes managed aircraft."""
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
+
+        wrapper.create_aircraft("AC000", "B737", 39.0, 116.0, 35000, 90, 450)
+        mock_bs.stack.stack.reset_mock()
 
         wrapper.close()
 
         assert wrapper._initialized is False
-        # Should delete aircraft during close
         calls = mock_bs.stack.stack.call_args_list
         delete_calls = [c for c in calls if "DELETE" in str(c)]
         assert len(delete_calls) >= 1
+
+
+class TestCloseScoping:
+    """Test that close() only deletes managed aircraft."""
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_close_only_deletes_managed_aircraft(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """close() only deletes aircraft created by this wrapper instance."""
+        mock_bs.traf.id = np.array(["AC001", "EXTERNAL001"], dtype="U10")
+        mock_bs.traf.cre = MagicMock()
+        mock_bs.sim.simt = 0.0
+
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        # Only create AC001 through the wrapper
+        wrapper.create_aircraft("AC001", "B737", 39.0, 116.0, 35000, 90, 450)
+        mock_bs.stack.stack.reset_mock()
+
+        wrapper.close()
+
+        # Should only delete AC001, not EXTERNAL001
+        calls = mock_bs.stack.stack.call_args_list
+        delete_calls = [c for c in calls if "DELETE" in str(c)]
+        assert len(delete_calls) == 1
+        assert "AC001" in str(delete_calls[0])
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_create_aircraft_tracks_managed(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """create_aircraft adds to managed set."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        wrapper.create_aircraft("AC001", "B737", 39.0, 116.0, 35000, 90, 450)
+        assert "AC001" in wrapper._managed_aircraft
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_remove_aircraft_untracks_managed(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """remove_aircraft removes from managed set."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        wrapper.create_aircraft("AC001", "B737", 39.0, 116.0, 35000, 90, 450)
+        wrapper.remove_aircraft("AC001")
+        assert "AC001" not in wrapper._managed_aircraft
+
+
+class TestResolveIdx:
+    """Test _resolve_idx handles different BlueSky return types."""
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_resolve_idx_returns_int(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """id2idx returning int is passed through."""
+        mock_bs.traf.id = np.array(["AC001"], dtype="U10")
+        mock_bs.traf.id2idx.return_value = 3
+
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        assert wrapper._resolve_idx("AC001") == 3
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_resolve_idx_handles_ndarray(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """id2idx returning ndarray extracts first element."""
+        mock_bs.traf.id = np.array(["AC001"], dtype="U10")
+        mock_bs.traf.id2idx.return_value = np.array([5])
+
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        assert wrapper._resolve_idx("AC001") == 5
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_resolve_idx_empty_ndarray_returns_neg1(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """id2idx returning empty ndarray gives -1."""
+        mock_bs.traf.id = np.array([], dtype="U10")
+        mock_bs.traf.id2idx.return_value = np.array([])
+
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        assert wrapper._resolve_idx("AC999") == -1
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_resolve_idx_handles_list(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """id2idx returning list extracts first element."""
+        mock_bs.traf.id = np.array(["AC001"], dtype="U10")
+        mock_bs.traf.id2idx.return_value = [2]
+
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        assert wrapper._resolve_idx("AC001") == 2

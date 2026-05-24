@@ -111,6 +111,15 @@ class BlueSkyMARLEnv(ParallelEnv):
     def action_space(self, agent_id: str) -> spaces.MultiDiscrete:
         return self._act_space
 
+    @property
+    def aircraft_states(self) -> dict[str, AircraftState]:
+        """Current aircraft states from the last reset/step call.
+
+        Returns:
+            Dictionary mapping aircraft IDs to their current states.
+        """
+        return dict(self._prev_states)
+
     def reset(
         self,
         seed: int | None = None,

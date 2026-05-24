@@ -48,15 +48,16 @@ def _make_mock_env(
     truncations = {aid: False for aid in agents}
     env.step = MagicMock(return_value=(obs, rewards, terminations, truncations, infos))
 
-    # Mock BlueSky wrapper on unwrapped env
-    mock_wrapper = MagicMock()
-    mock_wrapper.get_aircraft_state = MagicMock(side_effect=lambda acid: {
-        "id": acid,
-        "lat": 39.0, "lon": 116.0, "alt": 35000.0,
-        "hdg": headings.get(acid, 0.0),
-        "tas": 450.0, "vs": 0.0,
-    })
-    env.unwrapped._wrapper = mock_wrapper
+    # Mock aircraft_states property on unwrapped env (public API)
+    from bluesky_pettingzoo.utils.types import AircraftState
+
+    env.unwrapped.aircraft_states = {
+        acid: AircraftState(
+            id=acid, lat=39.0, lon=116.0, alt=35000.0,
+            hdg=headings.get(acid, 0.0), tas=450.0, vs=0.0,
+        )
+        for acid in agents
+    }
 
     return env
 

@@ -41,3 +41,11 @@ normalization:
     range: 100
   distance:
     max: 20  # 海里
+  latitude:
+    mid: 39.25
+    range: 0.25
+  longitude:
+    mid: 116.5
+    range: 0.5
+  vertical_speed:
+    max: 6000

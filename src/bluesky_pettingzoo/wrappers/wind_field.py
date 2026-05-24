@@ -5,9 +5,13 @@ from __future__ import annotations
 import math
 from typing import Any
 
-import bluesky as bs
 import numpy as np
 from gymnasium import spaces
+
+try:
+    import bluesky as bs
+except ImportError:
+    bs = None  # type: ignore[assignment]
 
 MAX_WIND = 50.0
 
@@ -93,6 +97,11 @@ class WindFieldWrapper:
 
     def reset(self, **kwargs: Any) -> tuple[dict[str, Any], dict[str, Any]]:
         observations, infos = self.env.reset(**kwargs)
+        if bs is None:
+            raise ImportError(
+                "bluesky is required for WindFieldWrapper. "
+                "Install with: pip install bluesky-pettingzoo[bluesky]"
+            )
         bs.traf.wind.addpointvne(self.lat, self.lon, self.vnorth, self.veast, self.alt)
         if self.augment_obs:
             observations = self._augment(observations)
@@ -125,7 +134,8 @@ class WindFieldWrapper:
 
     def _get_wind_observation(self, agent_id: str) -> tuple[float, float]:
         """Get body-frame wind components for an agent, normalized by MAX_WIND."""
-        state = self.env.unwrapped._wrapper.get_aircraft_state(agent_id)
+        states = self.env.unwrapped.aircraft_states
+        state = states[agent_id]
         lat, lon, alt = state["lat"], state["lon"], state["alt"]
         hdg = state["hdg"]
 

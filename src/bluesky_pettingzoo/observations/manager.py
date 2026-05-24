@@ -40,10 +40,10 @@ class ObservationManager:
         other_aircraft layout: [heading, altitude, speed, distance, bearing_cos, bearing_sin, relative_altitude, relative_speed_x, relative_speed_y, priority]
         obstacles layout (per obstacle): [distance, bearing_cos, bearing_sin, radius]
         """
-        low = np.array([-1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -6000.0, -1.0, -1.0], dtype=np.float32)
-        high = np.array([1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 6000.0, 1.0, 1.0], dtype=np.float32)
-        other_low = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -1.0, -1.0], dtype=np.float32)
-        other_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 1.0, 1.0], dtype=np.float32)
+        low = np.full(9, -1.0, dtype=np.float32)
+        high = np.full(9, 1.0, dtype=np.float32)
+        other_low = np.full(10, -1.0, dtype=np.float32)
+        other_high = np.full(10, 1.0, dtype=np.float32)
         space_dict: dict[str, spaces.Space] = {
             "self_state": spaces.Box(low=low, high=high, dtype=np.float32),
             "other_aircraft": spaces.Box(
