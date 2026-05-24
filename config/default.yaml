@@ -2,6 +2,7 @@ simulation:
   dt: 5.0                    # 仿真步长（秒）
   max_episode_steps: 360     # 最大步数（30分钟）
   headless: true
+  action_frequency: 10       # 每个 RL step 执行的仿真步数
 
 airspace:
   name: "two_sector_crossing"

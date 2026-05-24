@@ -28,12 +28,14 @@ class RewardCalculator:
         action: DiscreteAction,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
+        step_count: int = 0,
     ) -> float:
         """Compute weighted sum of all component rewards."""
         total = 0.0
         for component, weight in self._components:
             total += weight * component.compute(
                 agent_id, prev_state, action, curr_state, all_states,
+                step_count=step_count,
             )
         return total
 

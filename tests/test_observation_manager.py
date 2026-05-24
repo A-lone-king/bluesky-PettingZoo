@@ -43,16 +43,16 @@ class TestObservationSpaceShape:
         assert "goal" in space.spaces
 
     def test_self_state_shape(self, default_config: dict) -> None:
-        """self_state should be shape (8,)."""
+        """self_state should be shape (9,)."""
         mgr = ObservationManager(default_config)
         space = mgr.observation_space()
-        assert space["self_state"].shape == (8,)
+        assert space["self_state"].shape == (9,)
 
     def test_other_aircraft_shape(self, default_config: dict) -> None:
-        """other_aircraft should be shape (MAX_OBS, 9)."""
+        """other_aircraft should be shape (MAX_OBS, 10)."""
         mgr = ObservationManager(default_config)
         space = mgr.observation_space()
-        assert space["other_aircraft"].shape == (10, 9)
+        assert space["other_aircraft"].shape == (10, 10)
 
     def test_other_aircraft_mask_shape(self, default_config: dict) -> None:
         """other_aircraft_mask should be shape (MAX_OBS,)."""
@@ -79,7 +79,7 @@ class TestSelfStateFields:
         result = mgr.generate(own, [], goal)
         obs = result["observation"]
 
-        assert obs["self_state"].shape == (8,)
+        assert obs["self_state"].shape == (9,)
         assert obs["self_state"].dtype == np.float32
 
 
@@ -96,7 +96,7 @@ class TestOtherAircraftFields:
         result = mgr.generate(own, [other], goal)
         obs = result["observation"]
 
-        assert obs["other_aircraft"].shape == (10, 9)
+        assert obs["other_aircraft"].shape == (10, 10)
         assert obs["other_aircraft"].dtype == np.float32
 
 

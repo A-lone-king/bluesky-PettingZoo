@@ -250,7 +250,7 @@ class TestSectorCRInitialPositions:
 
     def test_get_initial_positions_returns_dict(self) -> None:
         """After setup(), get_initial_positions() returns a dict mapping agent IDs to (lat, lon)."""
-        from bluesky_pettingzoo.envs.scenarios.sector_cr import _point_in_polygon
+        from bluesky_pettingzoo.utils.geometry import point_in_polygon
 
         scenario = SectorCRScenario(num_aircraft=3, seed=42)
         rng = np.random.RandomState(42)
@@ -264,7 +264,7 @@ class TestSectorCRInitialPositions:
 
         polygon = scenario.get_sector_polygon()
         for acid, (lat, lon) in positions.items():
-            assert _point_in_polygon(lat, lon, polygon), (
+            assert point_in_polygon(lat, lon, polygon), (
                 f"{acid} position ({lat}, {lon}) is outside the polygon"
             )
 

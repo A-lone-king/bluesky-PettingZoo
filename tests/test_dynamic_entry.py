@@ -74,7 +74,7 @@ class TestDynamicEntry:
         for agent_id in new_agents:
             assert agent_id in obs
             assert "self_state" in obs[agent_id]
-            assert obs[agent_id]["self_state"].shape == (8,)
+            assert obs[agent_id]["self_state"].shape == (9,)
 
     def test_dynamic_entry_configurable_interval(self) -> None:
         """Entry interval is respected — no entry before interval steps."""

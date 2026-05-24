@@ -592,7 +592,7 @@ class TestBoundaryConditions:
         obs, rewards, _, _, _ = env.step(actions)
 
         # Observation should still be valid
-        assert obs["AC000"]["self_state"].shape == (8,)
+        assert obs["AC000"]["self_state"].shape == (9,)
 
 
 # ===========================================================================
@@ -968,8 +968,8 @@ class TestObservationIntegration:
 
         for agent_id in obs:
             o = obs[agent_id]
-            assert o["self_state"].shape == (8,)
-            assert o["other_aircraft"].shape == (10, 9)
+            assert o["self_state"].shape == (9,)
+            assert o["other_aircraft"].shape == (10, 10)
             assert o["other_aircraft_mask"].shape == (10,)
             assert o["goal"].shape == (4,)
 

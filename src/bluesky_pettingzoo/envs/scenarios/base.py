@@ -110,5 +110,20 @@ class BaseScenario(ABC):
         """
         return None
 
+    def get_priority(self, agent_id: str, state: AircraftState) -> float:
+        """Return priority value for an agent (higher = higher priority).
+
+        When multiple aircraft face a conflict, higher-priority aircraft
+        maintain course while lower-priority aircraft yield.
+
+        Args:
+            agent_id: Agent identifier.
+            state: Current aircraft state.
+
+        Returns:
+            Priority value, normalized to [-1, 1]. Default: 0.0 (equal).
+        """
+        return 0.0
+
     def reset(self) -> None:
         """Reset scenario-internal state (default: no-op)."""

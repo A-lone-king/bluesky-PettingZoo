@@ -32,6 +32,15 @@ class ConflictPenalty(RewardComponent):
         self._nmac_v: float = thresholds.get("nmac_vertical_ft", 1000)
         self._warn_h: float = thresholds.get("warning_horizontal_nm", 10)
         self._warn_v: float = thresholds.get("warning_vertical_ft", 2000)
+        self._routes: dict[str, Any] = {}  # agent_id → Route
+
+    def set_routes(self, routes: dict[str, Any]) -> None:
+        """Set route data for route-aware conflict detection.
+
+        Args:
+            routes: Mapping of agent_id to Route objects.
+        """
+        self._routes = routes
 
     def compute(
         self,
@@ -40,6 +49,7 @@ class ConflictPenalty(RewardComponent):
         action: DiscreteAction,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
+        step_count: int = 0,
     ) -> float:
         """Compute conflict penalty for the agent.
 

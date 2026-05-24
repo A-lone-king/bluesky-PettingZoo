@@ -1,4 +1,4 @@
-"""Tests for delay penalty reward component (T-V13)."""
+"""Tests for delay penalty reward component."""
 
 from __future__ import annotations
 
@@ -28,74 +28,97 @@ def make_action() -> DiscreteAction:
 
 @pytest.fixture()
 def delay_config() -> dict:
-    """Minimal config with delay penalty component."""
     return {
         "components": {
             "delay": {
                 "enabled": True,
                 "weight": 1.0,
-                "penalty": -0.01,
+                "delay_penalty_per_step": -0.05,
             },
         },
     }
 
 
-class TestDelayPenaltyPerStep:
-    """Each step should return a fixed penalty."""
+class TestDelayNoGoal:
+    """Agent without a goal should return 0."""
 
-    def test_delay_penalty_per_step(self, delay_config: dict) -> None:
-        """Default penalty is -0.01 per step."""
+    def test_no_goal_returns_zero(self, delay_config: dict) -> None:
         comp = DelayPenalty(delay_config)
         own = make_state()
-        action = make_action()
-        all_states = {"OWN": own}
-
-        result = comp.compute("OWN", own, action, own, all_states)
-        assert result == -0.01
+        result = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=10)
+        assert result == 0.0
 
 
-class TestDelayPenaltyConfigurable:
-    """Penalty value should be configurable."""
+class TestDelayBeforeDeadline:
+    """Agent before expected arrival should return 0."""
 
-    def test_delay_penalty_configurable(self, delay_config: dict) -> None:
-        """Custom penalty value is used."""
-        delay_config["components"]["delay"]["penalty"] = -0.05
+    def test_before_deadline(self, delay_config: dict) -> None:
         comp = DelayPenalty(delay_config)
+        comp.set_goal("OWN", distance_nm=100.0, speed_kt=450.0, dt=5.0)
         own = make_state()
-        action = make_action()
-        all_states = {"OWN": own}
-
-        result = comp.compute("OWN", own, action, own, all_states)
-        assert result == -0.05
+        # expected_steps = 100 / (450 * 5/3600) = 100 / 0.625 = 160 steps
+        result = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=50)
+        assert result == 0.0
 
 
-class TestDelayPenaltyWeight:
-    """Weight should correctly scale the penalty."""
+class TestDelayAfterDeadline:
+    """Agent past expected arrival should be penalized."""
 
-    def test_delay_penalty_weight(self, delay_config: dict) -> None:
-        """Weight parameter is accessible from config."""
-        delay_config["components"]["delay"]["weight"] = 2.0
+    def test_after_deadline(self, delay_config: dict) -> None:
         comp = DelayPenalty(delay_config)
-        # Weight is applied by RewardCalculator, not by the component itself.
-        # The component just returns the raw penalty.
+        comp.set_goal("OWN", distance_nm=100.0, speed_kt=450.0, dt=5.0)
         own = make_state()
-        action = make_action()
-        all_states = {"OWN": own}
+        # expected_steps = 160; at step 170 → overdue by 10
+        result = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=170)
+        assert result < 0
+        # -0.05 * 10 = -0.5
+        assert abs(result - (-0.5)) < 0.01
 
-        result = comp.compute("OWN", own, action, own, all_states)
-        # Raw penalty is still -0.01; weight is handled externally
-        assert result == -0.01
-
-
-class TestDelayPenaltyReset:
-    """Reset should not crash (stateless component)."""
-
-    def test_delay_penalty_reset(self, delay_config: dict) -> None:
-        """reset() completes without error."""
+    def test_penalty_proportional_to_overdue(self, delay_config: dict) -> None:
         comp = DelayPenalty(delay_config)
+        comp.set_goal("OWN", distance_nm=100.0, speed_kt=450.0, dt=5.0)
+        own = make_state()
+        r1 = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=170)
+        r2 = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=180)
+        assert r2 < r1  # more overdue → more penalty
+
+
+class TestDelayConfigurable:
+    """Penalty per step should be configurable."""
+
+    def test_custom_penalty(self, delay_config: dict) -> None:
+        delay_config["components"]["delay"]["delay_penalty_per_step"] = -0.1
+        comp = DelayPenalty(delay_config)
+        comp.set_goal("OWN", distance_nm=10.0, speed_kt=450.0, dt=5.0)
+        own = make_state()
+        # expected = 10 / 0.625 = 16 steps; at step 20 → overdue 4
+        result = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=20)
+        assert abs(result - (-0.4)) < 0.01
+
+
+class TestDelayMultipleAgents:
+    """Different agents can have different goals."""
+
+    def test_independent_agents(self, delay_config: dict) -> None:
+        comp = DelayPenalty(delay_config)
+        comp.set_goal("A", distance_nm=100.0, speed_kt=450.0, dt=5.0)  # 160 steps
+        comp.set_goal("B", distance_nm=10.0, speed_kt=450.0, dt=5.0)   # 16 steps
+        a = make_state("A")
+        b = make_state("B")
+        all_states = {"A": a, "B": b}
+        action = make_action()
+        # At step 20: A on time, B overdue by 4
+        assert comp.compute("A", a, action, a, all_states, step_count=20) == 0.0
+        assert comp.compute("B", b, action, b, all_states, step_count=20) < 0
+
+
+class TestDelayReset:
+    """Reset should clear all goals and step counts."""
+
+    def test_reset_clears_state(self, delay_config: dict) -> None:
+        comp = DelayPenalty(delay_config)
+        comp.set_goal("OWN", distance_nm=10.0, speed_kt=450.0, dt=5.0)
         comp.reset()
-        # After reset, compute should still work normally
         own = make_state()
-        action = make_action()
-        result = comp.compute("OWN", own, action, own, {"OWN": own})
-        assert result == -0.01
+        result = comp.compute("OWN", own, make_action(), own, {"OWN": own}, step_count=100)
+        assert result == 0.0  # goal was cleared

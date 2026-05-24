@@ -28,6 +28,7 @@ class SmoothnessPenalty(RewardComponent):
         action: DiscreteAction,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
+        step_count: int = 0,
     ) -> float:
         """Return penalty if any action axis is non-zero."""
         if (

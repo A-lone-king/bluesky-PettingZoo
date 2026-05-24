@@ -24,3 +24,35 @@ components:
     arrival_reward: 10
     step_penalty: -0.01
     arrival_threshold_nm: 2
+
+  obstacle_intrusion:
+    enabled: true
+    weight: 1.0
+    intrusion_penalty: -5
+
+  capacity:
+    enabled: false
+    weight: 1.0
+    penalty_per_excess: -10
+    warning_threshold: 0.8
+    warning_penalty: -5
+    # Per-sector config (scenario-specific, override in scenario config)
+    # sectors:
+    #   - id: "sector_a"
+    #     bounds: [[39.0, 116.0], [39.5, 116.5]]
+    #     capacity: 4
+
+  delay:
+    enabled: false
+    weight: 0.2
+    delay_penalty_per_step: -0.05
+
+  flow_efficiency:
+    enabled: false
+    weight: 0.2
+    reward_per_aircraft: 0.1
+
+  fairness:
+    enabled: false
+    weight: 0.1
+    penalty_factor: 0.1

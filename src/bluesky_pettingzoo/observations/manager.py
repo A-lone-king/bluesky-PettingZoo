@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -9,6 +10,7 @@ from gymnasium import spaces
 
 from bluesky_pettingzoo.observations.filters import PerceptionFilter
 from bluesky_pettingzoo.observations.normalizer import Normalizer
+from bluesky_pettingzoo.utils.geometry import bearing, haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState
 
 
@@ -17,6 +19,10 @@ class ObservationManager:
 
     Combines perception filtering and value normalization to produce
     Dict-format observations, textual state, and airspace snapshots.
+
+    When ``max_obstacles > 0``, the observation space includes an
+    optional ``obstacles`` key with per-obstacle distance, bearing,
+    and radius information.
     """
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -25,18 +31,20 @@ class ObservationManager:
         self._filter = PerceptionFilter(config)
         obs = config.get("observation", {})
         self._max_obs: int = obs.get("max_observable_aircraft", 10)
+        self._max_obstacles: int = obs.get("max_obstacles", 0)
 
     def observation_space(self) -> spaces.Dict:
         """Return the gymnasium observation space definition.
 
-        self_state layout: [heading_cos, heading_sin, altitude, speed, lat, lon, vs, ground_speed]
-        other_aircraft layout: [heading, altitude, speed, distance, bearing_cos, bearing_sin, lat, lon, relative_altitude]
+        self_state layout: [heading_cos, heading_sin, altitude, speed, lat, lon, vs, ground_speed, priority]
+        other_aircraft layout: [heading, altitude, speed, distance, bearing_cos, bearing_sin, relative_altitude, relative_speed_x, relative_speed_y, priority]
+        obstacles layout (per obstacle): [distance, bearing_cos, bearing_sin, radius]
         """
-        low = np.array([-1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -6000.0, -1.0], dtype=np.float32)
-        high = np.array([1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 6000.0, 1.0], dtype=np.float32)
-        other_low = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -1.0], dtype=np.float32)
-        other_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 1.0], dtype=np.float32)
-        return spaces.Dict({
+        low = np.array([-1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -6000.0, -1.0, -1.0], dtype=np.float32)
+        high = np.array([1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 6000.0, 1.0, 1.0], dtype=np.float32)
+        other_low = np.array([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -90.0, -180.0, -1.0, -1.0], dtype=np.float32)
+        other_high = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 90.0, 180.0, 1.0, 1.0], dtype=np.float32)
+        space_dict: dict[str, spaces.Space] = {
             "self_state": spaces.Box(low=low, high=high, dtype=np.float32),
             "other_aircraft": spaces.Box(
                 low=np.tile(other_low, (self._max_obs, 1)),
@@ -47,7 +55,21 @@ class ObservationManager:
                 low=0, high=1, shape=(self._max_obs,), dtype=np.int8,
             ),
             "goal": spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32),
-        })
+        }
+        if self._max_obstacles > 0:
+            obs_feat_low = np.array([0.0, -1.0, -1.0, 0.0], dtype=np.float32)
+            obs_feat_high = np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32)
+            space_dict["obstacles"] = spaces.Dict({
+                "position": spaces.Box(
+                    low=np.tile(obs_feat_low, (self._max_obstacles, 1)),
+                    high=np.tile(obs_feat_high, (self._max_obstacles, 1)),
+                    dtype=np.float32,
+                ),
+                "mask": spaces.Box(
+                    low=0, high=1, shape=(self._max_obstacles,), dtype=np.int8,
+                ),
+            })
+        return spaces.Dict(space_dict)
 
     def generate(
         self,
@@ -56,6 +78,8 @@ class ObservationManager:
         goal: dict[str, float],
         conflict_status: str = "safe",
         airspace: dict[str, Any] | None = None,
+        obstacle_polygons: list[list[tuple[float, float]]] | None = None,
+        agent_priorities: dict[str, float] | None = None,
     ) -> dict[str, Any]:
         """Generate complete observation package.
 
@@ -65,6 +89,10 @@ class ObservationManager:
             goal: Goal waypoint {lat, lon, alt, hdg}.
             conflict_status: Current conflict status string.
             airspace: Optional airspace topology data.
+            obstacle_polygons: Optional list of obstacle polygons, each a
+                list of (lat, lon) vertices.
+            agent_priorities: Optional dict mapping agent ID to priority value
+                (normalized [-1, 1]).
 
         Returns:
             Dict with keys: observation, textual_state, airspace_snapshot.
@@ -72,8 +100,9 @@ class ObservationManager:
         # Filter and get observable aircraft
         filtered = self._filter.filter(own_state, other_states)
 
-        # Build self_state: [heading_cos, heading_sin, altitude, speed, lat, lon, vs, ground_speed]
+        # Build self_state: [heading_cos, heading_sin, altitude, speed, lat, lon, vs, ground_speed, priority]
         norm_self = self._normalizer.normalize_aircraft_state(own_state)
+        own_priority = float(np.clip((agent_priorities or {}).get(own_state.id, 0.0), -1.0, 1.0))
         self_state = np.array([
             self._normalizer.normalize_heading_cos(own_state["hdg"]),
             self._normalizer.normalize_heading_sin(own_state["hdg"]),
@@ -83,11 +112,12 @@ class ObservationManager:
             norm_self["lon"],
             norm_self["vs"],
             norm_self["speed"],  # ground_speed ≈ tas for now
+            own_priority,
         ], dtype=np.float32)
 
-        # Build other_aircraft array: [heading, altitude, speed, distance, bearing_cos, bearing_sin, relative_altitude, relative_speed_x, relative_speed_y]
+        # Build other_aircraft array: [heading, altitude, speed, distance, bearing_cos, bearing_sin, relative_altitude, relative_speed_x, relative_speed_y, priority]
         import math
-        other_aircraft = np.zeros((self._max_obs, 9), dtype=np.float32)
+        other_aircraft = np.zeros((self._max_obs, 10), dtype=np.float32)
         mask = np.zeros(self._max_obs, dtype=np.int8)
 
         # Own ship velocity components (north/east)
@@ -108,6 +138,7 @@ class ObservationManager:
             rel_speed_x = (other_vx - own_vx) / max_speed
             rel_speed_y = (other_vy - own_vy) / max_speed
 
+            priority = (agent_priorities or {}).get(st.id, 0.0)
             other_aircraft[i] = [
                 norm["heading"],
                 norm["altitude"],
@@ -118,12 +149,11 @@ class ObservationManager:
                 self._normalizer.normalize_altitude(st["alt"]) - norm_self["altitude"],
                 float(np.clip(rel_speed_x, -1.0, 1.0)),
                 float(np.clip(rel_speed_y, -1.0, 1.0)),
+                float(np.clip(priority, -1.0, 1.0)),
             ]
             mask[i] = 1
 
         # Build goal: [distance, bearing_cos, bearing_sin, alt_diff]
-        from bluesky_pettingzoo.utils.geometry import haversine_distance, bearing
-
         goal_dist = haversine_distance(
             own_state["lat"], own_state["lon"], goal["lat"], goal["lon"],
         )
@@ -137,12 +167,44 @@ class ObservationManager:
             self._normalizer.normalize_altitude(goal["alt"]) - self._normalizer.normalize_altitude(own_state["alt"]),
         ], dtype=np.float32)
 
+        # Build obstacles observation (optional)
+        obstacles_obs = None
+        if self._max_obstacles > 0 and obstacle_polygons:
+            obs_position = np.zeros((self._max_obstacles, 4), dtype=np.float32)
+            obs_mask = np.zeros(self._max_obstacles, dtype=np.int8)
+            for i, polygon in enumerate(obstacle_polygons[: self._max_obstacles]):
+                # Compute centroid of the polygon
+                c_lat = sum(v[0] for v in polygon) / len(polygon)
+                c_lon = sum(v[1] for v in polygon) / len(polygon)
+                dist = haversine_distance(own_state["lat"], own_state["lon"], c_lat, c_lon)
+                bear = bearing(own_state["lat"], own_state["lon"], c_lat, c_lon)
+                # Approximate radius as max distance from centroid to any vertex
+                radius_nm = max(
+                    haversine_distance(c_lat, c_lon, v[0], v[1])
+                    for v in polygon
+                )
+                # Normalize radius by perception radius (default 20 NM)
+                max_dist = self.config.get("observation", {}).get("perception_radius_nm", 20)
+                obs_position[i] = [
+                    self._normalizer.normalize_distance(dist),
+                    self._normalizer.normalize_bearing_cos(bear),
+                    self._normalizer.normalize_bearing_sin(bear),
+                    float(np.clip(radius_nm / max_dist, 0.0, 1.0)),
+                ]
+                obs_mask[i] = 1
+            obstacles_obs = {
+                "position": obs_position,
+                "mask": obs_mask,
+            }
+
         observation = {
             "self_state": self_state,
             "other_aircraft": other_aircraft,
             "other_aircraft_mask": mask,
             "goal": goal_vec,
         }
+        if obstacles_obs is not None:
+            observation["obstacles"] = obstacles_obs
 
         # Build textual state
         observable_list = [

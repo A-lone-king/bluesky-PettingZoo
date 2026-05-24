@@ -38,6 +38,7 @@ class EfficiencyReward(RewardComponent):
         action: DiscreteAction,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
+        step_count: int = 0,
     ) -> float:
         reward = self._step_penalty
 

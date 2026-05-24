@@ -82,6 +82,46 @@ class AirspaceSnapshot(TypedDict):
     aircraft_positions: dict[str, dict[str, float]]
 
 
+class Route:
+    """Ordered sequence of waypoints forming a route."""
+
+    __slots__ = ("waypoints",)
+
+    def __init__(self, waypoints: list[dict[str, float]]) -> None:
+        self.waypoints = waypoints
+
+    def total_distance_nm(self) -> float:
+        """Total route distance in nautical miles."""
+        from bluesky_pettingzoo.utils.geometry import haversine_distance
+
+        total = 0.0
+        for i in range(len(self.waypoints) - 1):
+            w1, w2 = self.waypoints[i], self.waypoints[i + 1]
+            total += haversine_distance(w1["lat"], w1["lon"], w2["lat"], w2["lon"])
+        return total
+
+    def segment_count(self) -> int:
+        """Number of segments (waypoints - 1)."""
+        return max(0, len(self.waypoints) - 1)
+
+    def get_segment(self, index: int) -> tuple[tuple[float, float], tuple[float, float]]:
+        """Get segment endpoints by index.
+
+        Args:
+            index: Segment index (0-based).
+
+        Returns:
+            ((lat1, lon1), (lat2, lon2)) for the segment.
+
+        Raises:
+            IndexError: If index is out of range.
+        """
+        if index < 0 or index >= self.segment_count():
+            raise IndexError(f"Segment index {index} out of range (0..{self.segment_count() - 1})")
+        w1, w2 = self.waypoints[index], self.waypoints[index + 1]
+        return (w1["lat"], w1["lon"]), (w2["lat"], w2["lon"])
+
+
 class DiscreteAction(NamedTuple):
     """Discrete action indices."""
 

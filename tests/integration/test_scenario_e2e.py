@@ -22,13 +22,17 @@ from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
 from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
 from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
+from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
 from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
 from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
+from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
 from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
+from bluesky_pettingzoo.rewards.components.capacity import CapacityPenalty
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
+from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 
@@ -73,6 +77,13 @@ def _run_episode(
     calc.register(SmoothnessPenalty(merged), weight=0.5)
     eff = EfficiencyReward(merged)
     calc.register(eff, weight=0.3)
+    if hasattr(scenario, "get_obstacles"):
+        obs_comp = ObstacleIntrusion()
+        obs_comp.set_obstacles(scenario.get_obstacles())
+        calc.register(obs_comp, weight=1.0)
+    if hasattr(scenario, "get_sectors"):
+        cap_comp = CapacityPenalty(merged)
+        calc.register(cap_comp, weight=1.0)
 
     env = BlueSkyMARLEnv(
         config=config,
@@ -204,3 +215,29 @@ class TestDescentE2E:
         assert stats["steps"] > 0
         assert np.isfinite(stats["total_reward"])
         assert len(stats["initial_agents"]) == 3
+
+
+class TestStaticObstacleE2E:
+    """StaticObstacle scenario full episode."""
+
+    def test_static_obstacle_e2e(self, tmp_path: Path) -> None:
+        config = _make_config(max_steps=20, observation={"max_obstacles": 10})
+        scenario = StaticObstacleScenario(num_aircraft=1, num_obstacles=10, seed=42)
+        stats = _run_episode(tmp_path, config, scenario, num_steps=20)
+
+        assert stats["steps"] > 0
+        assert np.isfinite(stats["total_reward"])
+        assert len(stats["initial_agents"]) == 1
+
+
+class TestSectorCapacityE2E:
+    """SectorCapacity scenario full episode."""
+
+    def test_sector_capacity_e2e(self, tmp_path: Path) -> None:
+        config = _make_config(max_steps=30)
+        scenario = SectorCapacityScenario(num_aircraft=6, num_sectors=2, sector_capacity=4, seed=42)
+        stats = _run_episode(tmp_path, config, scenario, num_steps=30)
+
+        assert stats["steps"] > 0
+        assert np.isfinite(stats["total_reward"])
+        assert len(stats["initial_agents"]) == 6

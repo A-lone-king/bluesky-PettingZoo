@@ -157,4 +157,4 @@ class TestComputeArgs:
 
         calc.compute("AC001", state, action, state, all_states)
 
-        comp.compute.assert_called_once_with("AC001", state, action, state, all_states)
+        comp.compute.assert_called_once_with("AC001", state, action, state, all_states, step_count=0)

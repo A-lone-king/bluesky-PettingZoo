@@ -103,3 +103,8 @@ class VerticalCRScenario(BaseScenario):
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
         """Return the assigned waypoint for an agent."""
         return self._waypoints[agent_id]
+
+    def get_priority(self, agent_id: str, state: AircraftState) -> float:
+        """Faster speed → higher priority (normalized to [-1, 1])."""
+        speed_min, speed_max = 400.0, 500.0
+        return max(-1.0, min(1.0, (state.tas - (speed_min + speed_max) / 2) / ((speed_max - speed_min) / 2)))

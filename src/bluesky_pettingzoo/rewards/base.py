@@ -24,6 +24,7 @@ class RewardComponent(ABC):
         action: DiscreteAction,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
+        step_count: int = 0,
     ) -> float:
         """Compute the reward component value.
 
@@ -33,6 +34,7 @@ class RewardComponent(ABC):
             action: The discrete action taken
             curr_state: Aircraft state after action
             all_states: Current states of all aircraft
+            step_count: Current episode step number (0-indexed)
 
         Returns:
             Reward value (unweighted)

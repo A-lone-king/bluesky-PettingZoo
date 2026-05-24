@@ -123,7 +123,7 @@ class TestObservationShape:
         config = _make_config()
         mgr = ObservationManager(config)
         space = mgr.observation_space()
-        assert space["self_state"].shape == (8,)
+        assert space["self_state"].shape == (9,)
 
     def test_goal_bearing_cos_sin(self) -> None:
         """Goal should contain bearing_cos and bearing_sin (not raw bearing)."""
@@ -231,7 +231,7 @@ class TestRelativeSpeed:
         config = _make_config()
         mgr = ObservationManager(config)
         space = mgr.observation_space()
-        assert space["other_aircraft"].shape == (10, 9)
+        assert space["other_aircraft"].shape == (10, 10)
 
     def test_relative_speed_normalized(self) -> None:
         """Relative speed values should be in [-1, 1]."""

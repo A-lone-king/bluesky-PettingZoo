@@ -24,8 +24,12 @@ from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
+from bluesky_pettingzoo.rewards.components.capacity import CapacityPenalty
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
+from bluesky_pettingzoo.rewards.components.fairness import FairnessReward
+from bluesky_pettingzoo.rewards.components.flow_efficiency import FlowEfficiencyReward
+from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
 
@@ -70,6 +74,19 @@ def make_scenario_env_factory(
         calc.register(ConflictPenalty(merged), weight=1.0)
         calc.register(SmoothnessPenalty(merged), weight=0.5)
         calc.register(EfficiencyReward(merged), weight=0.3)
+        # Register obstacle intrusion if scenario has obstacles
+        if hasattr(scenario, "get_obstacles"):
+            obs_comp = ObstacleIntrusion()
+            obs_comp.set_obstacles(scenario.get_obstacles())
+            calc.register(obs_comp, weight=1.0)
+        # Register capacity penalty if scenario has sectors
+        if hasattr(scenario, "get_sectors"):
+            cap_comp = CapacityPenalty(merged)
+            calc.register(cap_comp, weight=1.0)
+        # Register flow efficiency reward if scenario has sectors
+        if hasattr(scenario, "get_sectors"):
+            calc.register(FlowEfficiencyReward(merged), weight=0.2)
+            calc.register(FairnessReward(merged), weight=0.1)
 
         env = BlueSkyMARLEnv(
             config=config,
@@ -211,6 +228,16 @@ def make_baseline_env_factory(
         calc.register(ConflictPenalty(merged), weight=1.0)
         calc.register(SmoothnessPenalty(merged), weight=0.5)
         calc.register(EfficiencyReward(merged), weight=0.3)
+        if hasattr(scenario, "get_obstacles"):
+            obs_comp = ObstacleIntrusion()
+            obs_comp.set_obstacles(scenario.get_obstacles())
+            calc.register(obs_comp, weight=1.0)
+        if hasattr(scenario, "get_sectors"):
+            cap_comp = CapacityPenalty(merged)
+            calc.register(cap_comp, weight=1.0)
+        if hasattr(scenario, "get_sectors"):
+            calc.register(FlowEfficiencyReward(merged), weight=0.2)
+            calc.register(FairnessReward(merged), weight=0.1)
 
         return BlueSkyMARLEnv(
             config=config,
@@ -235,6 +262,9 @@ def main() -> None:
     from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
     from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
     from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
+    from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
+    from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
+    from bluesky_pettingzoo.envs.scenarios.route_nav import RouteNavScenario
     from scripts.evaluate_baselines import evaluate_agent
 
     scenarios = [
@@ -244,6 +274,9 @@ def main() -> None:
         {"name": "WaypointNav", "scenario": WaypointNavScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
         {"name": "Merge", "scenario": MergeScenario(num_aircraft=5, seed=42), "num_aircraft": 5},
         {"name": "Descent", "scenario": DescentScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
+        {"name": "StaticObstacle", "scenario": StaticObstacleScenario(num_aircraft=1, seed=42), "num_aircraft": 1},
+        {"name": "SectorCapacity", "scenario": SectorCapacityScenario(num_aircraft=6, num_sectors=2, sector_capacity=4, seed=42), "num_aircraft": 6},
+        {"name": "RouteNav", "scenario": RouteNavScenario(num_aircraft=4, seed=42), "num_aircraft": 4},
     ]
 
     total_timesteps = 50_000

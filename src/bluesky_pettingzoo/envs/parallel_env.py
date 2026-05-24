@@ -13,7 +13,7 @@ from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-from bluesky_pettingzoo.utils.geometry import haversine_distance
+from bluesky_pettingzoo.utils.geometry import assign_sector, haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 _AIRCRAFT_TYPE = "B737"
@@ -90,6 +90,13 @@ class BlueSkyMARLEnv(ParallelEnv):
         self._entry_step_count: int = 0
         self._next_entry_id: int = self._num_aircraft
 
+        # Flow scheduler (optional, only active when config present)
+        from bluesky_pettingzoo.flow.scheduler import FlowScheduler
+        self._flow_scheduler = FlowScheduler(config)
+
+        # Track per-agent sector for sector-change detection
+        self._agent_sectors: dict[str, str | None] = {}
+
         # Cache space objects (PettingZoo requires identity stability)
         self._obs_space: spaces.Dict = self._obs_manager.observation_space()
         self._act_space: spaces.MultiDiscrete = spaces.MultiDiscrete([5, 5, 5])
@@ -116,6 +123,8 @@ class BlueSkyMARLEnv(ParallelEnv):
         self._entry_step_count = 0
         self._next_entry_id = self._num_aircraft
         self._reward_calculator.reset()
+        self._flow_scheduler.reset()
+        self._agent_sectors.clear()
         self._wrapper.init_simulation()
         self._wrapper.reset()
 
@@ -145,6 +154,26 @@ class BlueSkyMARLEnv(ParallelEnv):
                 for acid in self.agents:
                     wp = self._scenario.get_waypoint(acid)
                     eff.set_goal(acid, wp["lat"], wp["lon"])
+
+            # Set delay goals (expected arrival time)
+            delay_comp = self._find_delay_component()
+            if delay_comp is not None:
+                from bluesky_pettingzoo.utils.geometry import haversine_distance
+                dt = self._config.get("simulation", {}).get("dt", 5.0)
+                for acid in self.agents:
+                    wp = self._scenario.get_waypoint(acid)
+                    own = new_states.get(acid) if 'new_states' in dir() else None
+                    # Estimate initial distance from waypoint (use midpoint if no state yet)
+                    mid_lat = (self._airspace["lat_min"] + self._airspace["lat_max"]) / 2
+                    mid_lon = (self._airspace["lon_min"] + self._airspace["lon_max"]) / 2
+                    dist = haversine_distance(mid_lat, mid_lon, wp["lat"], wp["lon"])
+                    speed = (spawn.speed_range[0] + spawn.speed_range[1]) / 2
+                    delay_comp.set_goal(acid, dist, speed, dt)
+
+            # Set obstacles on ObstacleIntrusion component if present
+            obs_intrusion = self._find_obstacle_intrusion_component()
+            if obs_intrusion is not None and hasattr(self._scenario, "get_obstacles"):
+                obs_intrusion.set_obstacles(self._scenario.get_obstacles())
         else:
             # V1.0 default: spawn aircraft at deterministic positions
             self.agents = []
@@ -237,6 +266,27 @@ class BlueSkyMARLEnv(ParallelEnv):
                 # Refresh new_states to include the new aircraft
                 new_states = self._get_all_aircraft_states()
 
+        # Sector change detection — notify FlowEfficiencyReward and FlowScheduler
+        sectors_cfg = self._airspace_cfg.get("sectors", [])
+        if sectors_cfg:
+            flow_eff = self._find_flow_efficiency_component()
+            for agent_id in self.agents:
+                st = new_states.get(agent_id)
+                if st is None:
+                    continue
+                curr_sector = assign_sector(st.lat, st.lon, sectors_cfg)
+                prev_sector = self._agent_sectors.get(agent_id)
+                if curr_sector is not None and curr_sector != prev_sector:
+                    self._flow_scheduler.notify_sector_change(agent_id, prev_sector, curr_sector)
+                    if flow_eff is not None:
+                        flow_eff.notify_sector_entry(agent_id, curr_sector)
+                self._agent_sectors[agent_id] = curr_sector
+
+            # Feed handoff delays to FairnessReward
+            fairness = self._find_fairness_component()
+            if fairness is not None:
+                fairness.set_delays(self._flow_scheduler.get_handoff_delays())
+
         # Compute rewards (before removing departed aircraft)
         rewards: dict[str, float] = {}
         for agent_id in list(self.agents):
@@ -253,6 +303,7 @@ class BlueSkyMARLEnv(ParallelEnv):
             )
             rewards[agent_id] = self._reward_calculator.compute(
                 agent_id, prev_st, action, curr_st, new_states,
+                step_count=self._step_count,
             )
 
         # Build observations for all current agents (before removal)
@@ -283,6 +334,12 @@ class BlueSkyMARLEnv(ParallelEnv):
                             self.agents.remove(agent_id)
                             self._wrapper.remove_aircraft(agent_id)
                             continue
+                # Obstacle intrusion termination
+                obs_intrusion = self._find_obstacle_intrusion_component()
+                if obs_intrusion is not None and obs_intrusion.is_intruded(own):
+                    self.agents.remove(agent_id)
+                    self._wrapper.remove_aircraft(agent_id)
+                    continue
             if self._scenario is not None and own is not None:
                 if self._scenario.should_truncate(agent_id, own, self._airspace):
                     scenario_truncated.add(agent_id)
@@ -346,6 +403,13 @@ class BlueSkyMARLEnv(ParallelEnv):
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         observations: dict[str, Any] = {}
         infos: dict[str, Any] = {}
+        obstacle_polygons = self._get_obstacle_polygons()
+
+        # Compute priorities for all agents
+        priorities: dict[str, float] = {}
+        if self._scenario is not None and hasattr(self._scenario, "get_priority"):
+            for aid, st in all_states.items():
+                priorities[aid] = self._scenario.get_priority(aid, st)
 
         for agent_id in self.agents:
             own = all_states.get(agent_id)
@@ -362,6 +426,8 @@ class BlueSkyMARLEnv(ParallelEnv):
                 goal=goal,
                 conflict_status=conflict_status,
                 airspace=self._airspace_cfg,
+                obstacle_polygons=obstacle_polygons,
+                agent_priorities=priorities,
             )
             observations[agent_id] = result["observation"]
             infos[agent_id] = {
@@ -388,8 +454,39 @@ class BlueSkyMARLEnv(ParallelEnv):
 
     def _find_efficiency_component(self) -> Any:
         for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "set_goal"):
+            if hasattr(comp, "set_goal") and hasattr(comp, "_goals"):
                 return comp
+        return None
+
+    def _find_delay_component(self) -> Any:
+        for comp, _ in self._reward_calculator.components:
+            if hasattr(comp, "set_goal") and hasattr(comp, "_expected_steps"):
+                return comp
+        return None
+
+    def _find_obstacle_intrusion_component(self) -> Any:
+        for comp, _ in self._reward_calculator.components:
+            if hasattr(comp, "set_obstacles"):
+                return comp
+        return None
+
+    def _find_flow_efficiency_component(self) -> Any:
+        for comp, _ in self._reward_calculator.components:
+            if hasattr(comp, "notify_sector_entry"):
+                return comp
+        return None
+
+    def _find_fairness_component(self) -> Any:
+        for comp, _ in self._reward_calculator.components:
+            if hasattr(comp, "set_delays") and hasattr(comp, "_delays"):
+                return comp
+        return None
+
+    def _get_obstacle_polygons(self) -> list[list[tuple[float, float]]] | None:
+        """Get obstacle polygons from the ObstacleIntrusion component."""
+        comp = self._find_obstacle_intrusion_component()
+        if comp is not None and hasattr(comp, "_obstacles"):
+            return comp._obstacles
         return None
 
     def _compute_conflict_status(

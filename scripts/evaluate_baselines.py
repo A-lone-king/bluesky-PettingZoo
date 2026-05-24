@@ -18,8 +18,10 @@ from bluesky_pettingzoo.agents.base import BaseAgent
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
+from bluesky_pettingzoo.rewards.components.capacity import CapacityPenalty
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
+from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.types import AgentID
 
@@ -149,6 +151,13 @@ def make_env_factory(
         calc.register(ConflictPenalty(merged), weight=1.0)
         calc.register(SmoothnessPenalty(merged), weight=0.5)
         calc.register(EfficiencyReward(merged), weight=0.3)
+        if hasattr(scenario, "get_obstacles"):
+            obs_comp = ObstacleIntrusion()
+            obs_comp.set_obstacles(scenario.get_obstacles())
+            calc.register(obs_comp, weight=1.0)
+        if hasattr(scenario, "get_sectors"):
+            cap_comp = CapacityPenalty(merged)
+            calc.register(cap_comp, weight=1.0)
 
         return BlueSkyMARLEnv(
             config=config,
@@ -173,6 +182,8 @@ def main() -> None:
     from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
     from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
     from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
+    from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
+    from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
 
     scenarios = {
         "HorizontalCR": HorizontalCRScenario(num_aircraft=3, seed=42),
@@ -181,6 +192,8 @@ def main() -> None:
         "WaypointNav": WaypointNavScenario(num_aircraft=3, seed=42),
         "Merge": MergeScenario(num_aircraft=5, seed=42),
         "Descent": DescentScenario(num_aircraft=3, seed=42),
+        "StaticObstacle": StaticObstacleScenario(num_aircraft=1, seed=42),
+        "SectorCapacity": SectorCapacityScenario(num_aircraft=6, num_sectors=2, sector_capacity=4, seed=42),
     }
 
     agents = {
@@ -200,13 +213,16 @@ def main() -> None:
     print(header)
     print("-" * 80)
 
+    _num_aircraft = {"Merge": 5, "StaticObstacle": 1, "SectorCapacity": 6}
+
     for scenario_name, scenario in scenarios.items():
+        n_ac = _num_aircraft.get(scenario_name, 3)
         for agent_name, agent in agents.items():
             with tempfile.TemporaryDirectory() as tmp:
                 tmp_path = Path(tmp)
                 factory = make_env_factory(
                     tmp_path=tmp_path,
-                    num_aircraft=3 if scenario_name != "Merge" else 5,
+                    num_aircraft=n_ac,
                     max_steps=max_steps,
                     seed=42,
                     scenario=scenario,

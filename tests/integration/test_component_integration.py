@@ -90,8 +90,8 @@ class TestObservationToAction:
         obs = pkg["observation"]
 
         # Observation has expected keys and shapes
-        assert obs["self_state"].shape == (8,)
-        assert obs["other_aircraft"].shape == (10, 9)
+        assert obs["self_state"].shape == (9,)
+        assert obs["other_aircraft"].shape == (10, 10)
         assert obs["other_aircraft_mask"].shape == (10,)
         assert obs["goal"].shape == (4,)
 
@@ -194,7 +194,7 @@ class TestFullPipeline:
         # Step 1: observe
         pkg = obs_manager.generate(own, [other], goal, conflict_status="safe")
         obs = pkg["observation"]
-        assert obs["self_state"].shape == (8,)
+        assert obs["self_state"].shape == (9,)
         assert obs["other_aircraft_mask"][0] == 1  # other is observable
 
         # Step 2: act (straight — no adjustment)
@@ -424,7 +424,7 @@ class TestBoundaryConditions:
         action = DiscreteAction(heading_idx=2, altitude_idx=2, speed_idx=2)
 
         pkg = obs_manager.generate(pos, others, goal)
-        assert pkg["observation"]["self_state"].shape == (8,)
+        assert pkg["observation"]["self_state"].shape == (9,)
 
         all_states = {"A": pos, "B": others[0], "C": others[1]}
         reward = reward_calculator.compute("A", pos, action, pos, all_states)

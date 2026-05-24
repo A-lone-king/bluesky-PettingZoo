@@ -103,3 +103,8 @@ class HorizontalCRScenario(BaseScenario):
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
         """Return the assigned waypoint for an agent."""
         return self._waypoints[agent_id]
+
+    def get_priority(self, agent_id: str, state: AircraftState) -> float:
+        """Higher altitude → higher priority (normalized to [-1, 1])."""
+        alt_min, alt_max = 29000.0, 37000.0
+        return max(-1.0, min(1.0, (state.alt - (alt_min + alt_max) / 2) / ((alt_max - alt_min) / 2)))

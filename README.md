@@ -1,17 +1,17 @@
 # bluesky-pettingzoo
 
-基于 [BlueSky](https://github.com/TUDelft-CNS-ATM/bluesky) 空中交通仿真平台与 [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) 多智能体强化学习框架，构建支持多智能体强化学习（MARL）的空管仿真环境。
+将 [BlueSky](https://github.com/TUDelft-CNS-ATM/bluesky) 空中交通仿真平台从单智能体环境（[bluesky-gym](https://github.com/jfink87/bluesky-gym)）扩展为多智能体环境，基于 [PettingZoo](https://github.com/Farama-Foundation/PettingZoo) ParallelEnv 标准，专注于空中交通管理（ATM）领域的多智能体强化学习研究。
 
-目标是为低空经济空中交通管理研究提供长期可用的多智能体实验平台。
+BlueSky 是底层仿真引擎，负责飞行动力学、冲突检测和空域管理；本项目在其上构建多智能体 RL 接口，使多个飞机 Agent 能够同时观测、同时决策。
 
 ## 特性
 
-- **PettingZoo ParallelEnv** — 所有智能体同时观测、同时动作，原生支持主流 MARL 框架
-- **7 个场景** — 水平/垂直冲突解脱、扇区冲突、航路导航、进近汇合、下降阶段
+- **BlueSky 多智能体扩展** — 基于 PettingZoo ParallelEnv，将 BlueSky 从单智能体扩展为多智能体，原生支持主流 MARL 框架
+- **9 个场景** — 水平/垂直冲突解脱、扇区冲突、航路导航、进近汇合、下降阶段、禁飞区规避、扇区容量、航路网络
 - **模块化奖励函数** — 冲突惩罚、效率奖励、平滑惩罚，支持动态注册和权重配置
 - **SB3 集成** — 通过 `SingleAgentGymWrapper` 无缝对接 Stable-Baselines3
 - **配置驱动** — YAML 管理环境参数、奖励函数、观测空间
-- **449 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
+- **601 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
 - **真实 BlueSky 集成** — 支持 headless 模式运行真实仿真器
 
 ## 安装
@@ -80,6 +80,9 @@ python scripts/evaluate_baselines.py
 
 # 训练 smoke test（快速验证）
 python scripts/train_smoke_test.py
+
+# 性能基准
+python scripts/benchmark_performance.py
 ```
 
 ## 场景
@@ -92,6 +95,9 @@ python scripts/train_smoke_test.py
 | WaypointNav | `waypoint_nav.py` | 3 | 航向 | 纯导航任务，航路点追踪 |
 | Merge | `merge.py` | 5 | 全部 | 进近汇合，1 可控 + 4 背景 |
 | Descent | `descent.py` | 3 | 高度 | 下降阶段，从巡航高度下降 |
+| StaticObstacle | `static_obstacle.py` | 1 | 航向+速度 | 禁飞区规避，多边形障碍物检测 |
+| SectorCapacity | `sector_capacity.py` | 6 | 航向+速度 | 扇区容量管理，per-sector 容量约束 |
+| RouteNav | `route_nav.py` | 4 | 航向+速度 | 航路网络导航，交叉路线冲突检测 |
 
 所有场景继承自 `BaseScenario`，可自定义：
 - `setup()` — 初始化飞机位置和航路点
@@ -109,11 +115,11 @@ bluesky-PettingZoo/
 │   ├── bluesky/          # BlueSky wrapper
 │   ├── envs/
 │   │   ├── parallel_env.py    # PettingZoo ParallelEnv 核心
-│   │   └── scenarios/         # 6 个场景实现
+│   │   └── scenarios/         # 8 个场景实现
 │   ├── observations/     # 观测管理器
 │   ├── rewards/
 │   │   ├── calculator.py      # 模块化奖励计算器
-│   │   └── components/        # 冲突/效率/平滑奖励组件
+│   │   └── components/        # 冲突/效率/平滑/障碍物奖励组件
 │   ├── utils/            # 类型定义、几何工具
 │   └── wrappers/
 │       ├── single_agent.py    # SB3 单智能体包装
@@ -121,7 +127,7 @@ bluesky-PettingZoo/
 │       └── wind_field.py
 ├── config/               # YAML 配置文件
 ├── scripts/              # 训练和评估脚本
-└── tests/                # 449 个测试用例
+└── tests/                # 601 个测试用例
 ```
 
 ## 配置
@@ -189,6 +195,9 @@ PPO（50k timesteps）在所有场景上显著优于基线：
 | WaypointNav | **-64** | -212 | -281 |
 | Merge | **-50** | -613 | -250 |
 | Descent | **-36** | -173 | -138 |
+| StaticObstacle | **-28** | -145 | -120 |
+| SectorCapacity | **-246** | -2032 | -1572 |
+| RouteNav | **-48** | -216 | -202 |
 
 ## 依赖
 

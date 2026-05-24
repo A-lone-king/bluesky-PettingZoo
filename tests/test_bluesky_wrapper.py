@@ -224,6 +224,7 @@ class TestBlueSkyWrapperCommands:
         """Test sending batch commands."""
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
+        mock_bs.stack.stack.reset_mock()
 
         commands = ["HDG AC001 90", "ALT AC001 35000", "SPD AC001 450"]
         wrapper.send_commands_batch(commands)
@@ -237,6 +238,7 @@ class TestBlueSkyWrapperCommands:
         """Test sending empty batch commands."""
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
+        mock_bs.stack.stack.reset_mock()
 
         wrapper.send_commands_batch([])
 

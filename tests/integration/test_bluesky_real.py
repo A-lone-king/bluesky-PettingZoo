@@ -19,6 +19,14 @@ from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
+from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
+from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
+from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
+from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
+from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
+from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
+from bluesky_pettingzoo.envs.scenarios.route_nav import RouteNavScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
@@ -82,7 +90,7 @@ class TestRealBlueSkyReset:
             for agent_id in env.agents:
                 assert agent_id in obs
                 assert "self_state" in obs[agent_id]
-                assert obs[agent_id]["self_state"].shape == (8,)
+                assert obs[agent_id]["self_state"].shape == (9,)
         finally:
             env.close()
 
@@ -177,7 +185,7 @@ class TestRealBlueSkyFullEpisode:
                 # All observations should be valid
                 for agent_id in env.agents:
                     if agent_id in obs:
-                        assert obs[agent_id]["self_state"].shape == (8,)
+                        assert obs[agent_id]["self_state"].shape == (9,)
 
                 # Check truncation
                 if any(trunks.values()):
@@ -389,7 +397,7 @@ class TestRealBlueSkyObservationStructure:
             for agent_id in env.agents:
                 assert "self_state" in obs[agent_id]
                 assert isinstance(obs[agent_id]["self_state"], np.ndarray)
-                assert obs[agent_id]["self_state"].shape == (8,)
+                assert obs[agent_id]["self_state"].shape == (9,)
         finally:
             env.close()
 
@@ -466,3 +474,99 @@ class TestRealBlueSkyResetIdempotency:
                 assert agent_id in obs
         finally:
             env.close()
+
+
+# ===========================================================================
+# G-V02: Real BlueSky scenario integration tests
+# ===========================================================================
+
+
+def _run_scenario_episode(scenario, num_aircraft: int, max_steps: int = 10) -> None:
+    """Helper: run a full episode with a scenario on real BlueSky."""
+    config = _make_config()
+    config["aircraft"]["initial_count"] = num_aircraft
+    config["simulation"]["max_episode_steps"] = max_steps
+    env = _make_env(config, scenario=scenario)
+    try:
+        obs, info = env.reset(seed=42)
+        assert len(env.agents) >= 1
+        for agent_id in env.agents:
+            assert agent_id in obs
+            assert obs[agent_id]["self_state"].shape == (9,)
+
+        noop = {aid: [2, 2, 2] for aid in env.agents}
+        for _ in range(max_steps + 5):
+            if not env.agents:
+                break
+            obs, rewards, terms, trunks, infos = env.step({aid: [2, 2, 2] for aid in env.agents})
+            for agent_id in env.agents:
+                if agent_id in obs:
+                    assert np.all(np.isfinite(obs[agent_id]["self_state"]))
+            if any(trunks.values()):
+                break
+    finally:
+        env.close()
+
+
+class TestRealBlueSkyHorizontalCR:
+    """HorizontalCR scenario on real BlueSky."""
+
+    def test_horizontal_cr_episode(self) -> None:
+        scenario = HorizontalCRScenario(num_aircraft=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=3)
+
+
+class TestRealBlueSkyVerticalCR:
+    """VerticalCR scenario on real BlueSky."""
+
+    def test_vertical_cr_episode(self) -> None:
+        scenario = VerticalCRScenario(num_aircraft=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=3)
+
+
+class TestRealBlueSkySectorCR:
+    """SectorCR scenario on real BlueSky."""
+
+    def test_sector_cr_episode(self) -> None:
+        scenario = SectorCRScenario(num_aircraft=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=3)
+
+
+class TestRealBlueSkyMerge:
+    """Merge scenario on real BlueSky."""
+
+    def test_merge_episode(self) -> None:
+        scenario = MergeScenario(num_aircraft=5, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=5)
+
+
+class TestRealBlueSkyDescent:
+    """Descent scenario on real BlueSky."""
+
+    def test_descent_episode(self) -> None:
+        scenario = DescentScenario(num_aircraft=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=3)
+
+
+class TestRealBlueSkyStaticObstacle:
+    """StaticObstacle scenario on real BlueSky."""
+
+    def test_static_obstacle_episode(self) -> None:
+        scenario = StaticObstacleScenario(num_aircraft=1, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=1)
+
+
+class TestRealBlueSkySectorCapacity:
+    """SectorCapacity scenario on real BlueSky."""
+
+    def test_sector_capacity_episode(self) -> None:
+        scenario = SectorCapacityScenario(num_aircraft=4, num_sectors=2, sector_capacity=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=4)
+
+
+class TestRealBlueSkyRouteNav:
+    """RouteNav scenario on real BlueSky."""
+
+    def test_route_nav_episode(self) -> None:
+        scenario = RouteNavScenario(num_aircraft=3, seed=42)
+        _run_scenario_episode(scenario, num_aircraft=3)
