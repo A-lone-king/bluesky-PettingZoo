@@ -31,7 +31,7 @@ components:
     intrusion_penalty: -5
 
   capacity:
-    enabled: false
+    enabled: true
     weight: 1.0
     penalty_per_excess: -10
     warning_threshold: 0.8
@@ -43,16 +43,16 @@ components:
     #     capacity: 4
 
   delay:
-    enabled: false
+    enabled: true
     weight: 0.2
     delay_penalty_per_step: -0.05
 
   flow_efficiency:
-    enabled: false
+    enabled: true
     weight: 0.2
     reward_per_aircraft: 0.1
 
   fairness:
-    enabled: false
+    enabled: true
     weight: 0.1
     penalty_factor: 0.1
