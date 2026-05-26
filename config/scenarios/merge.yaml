@@ -1,0 +1,12 @@
+scenario: Merge
+num_aircraft: 20
+seed: 42
+action_space: discrete
+control_mode: SINGLE_RL
+conflict_generation: none
+
+reward_overrides:
+  conflict:
+    weight: 0.7
+  efficiency:
+    weight: 0.3

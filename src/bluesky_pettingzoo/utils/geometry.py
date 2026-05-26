@@ -42,6 +42,37 @@ def haversine_distance(
     return R_nm * c
 
 
+def haversine_distance_matrix(
+    lats: np.ndarray,
+    lons: np.ndarray,
+) -> np.ndarray:
+    """Compute pairwise haversine distance matrix using numpy vectorization.
+
+    Args:
+        lats: Array of latitudes (degrees), shape (n,).
+        lons: Array of longitudes (degrees), shape (n,).
+
+    Returns:
+        Distance matrix (n, n) in nautical miles.
+    """
+    R_nm = 3440.065
+
+    lats_rad = np.radians(lats)
+    lons_rad = np.radians(lons)
+
+    # Broadcast: (n,1) vs (1,n)
+    dlat = lats_rad[:, None] - lats_rad[None, :]
+    dlon = lons_rad[:, None] - lons_rad[None, :]
+
+    a = (
+        np.sin(dlat / 2) ** 2
+        + np.cos(lats_rad[:, None]) * np.cos(lats_rad[None, :]) * np.sin(dlon / 2) ** 2
+    )
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+
+    return R_nm * c
+
+
 def bearing(
     lat1: float,
     lon1: float,

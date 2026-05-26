@@ -24,9 +24,9 @@ class ConflictPenalty(RewardComponent):
 
     def __init__(self, config: dict[str, Any]) -> None:
         comp = config.get("components", {}).get("conflict", {})
-        self._nmac_penalty: float = comp.get("nmac_penalty", -100)
-        self._warning_penalty: float = comp.get("warning_penalty", -10)
-        self._separation_penalty: float = comp.get("separation_penalty", -5)
+        self._nmac_penalty: float = comp.get("nmac_penalty", -1.0)
+        self._warning_penalty: float = comp.get("warning_penalty", 0.0)
+        self._separation_penalty: float = comp.get("separation_penalty", 0.0)
         thresholds = comp.get("thresholds", {})
         self._nmac_h: float = thresholds.get("nmac_horizontal_nm", 5)
         self._nmac_v: float = thresholds.get("nmac_vertical_ft", 1000)

@@ -26,7 +26,7 @@ from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -49,7 +49,7 @@ def _make_env_with_scenario(
     scenario: VerticalCRScenario,
 ) -> BlueSkyMARLEnv:
     """Create a BlueSkyMARLEnv with a VerticalCRScenario."""
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -116,8 +116,8 @@ class TestVerticalCRConflictBoth:
         wrapper = env._wrapper
 
         # Position aircraft close horizontally (3 NM) and vertically (500 ft)
-        wrapper._aircraft[agents[0]].update({"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": 39.25, "lon": 116.30, "alt": 34500, "hdg": 270.0})
+        wrapper.set_aircraft_state(agents[0], lat=39.25, lon=116.25, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=39.25, lon=116.30, alt=34500, hdg=270.0)
 
         h_dist = haversine_distance(39.25, 116.25, 39.25, 116.30)
         v_dist = abs(35000 - 34500)
@@ -150,8 +150,8 @@ class TestVerticalCRHorizontalOnly:
         wrapper = env._wrapper
 
         # Close horizontally (3 NM) but far vertically (5000 ft)
-        wrapper._aircraft[agents[0]].update({"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": 39.25, "lon": 116.30, "alt": 30000, "hdg": 270.0})
+        wrapper.set_aircraft_state(agents[0], lat=39.25, lon=116.25, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=39.25, lon=116.30, alt=30000, hdg=270.0)
 
         h_dist = haversine_distance(39.25, 116.25, 39.25, 116.30)
         v_dist = abs(35000 - 30000)
@@ -184,8 +184,8 @@ class TestVerticalCRVerticalOnly:
         wrapper = env._wrapper
 
         # Close vertically (500 ft) but far horizontally (20 NM)
-        wrapper._aircraft[agents[0]].update({"lat": 39.1, "lon": 116.1, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": 39.4, "lon": 116.4, "alt": 34500, "hdg": 270.0})
+        wrapper.set_aircraft_state(agents[0], lat=39.1, lon=116.1, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=39.4, lon=116.4, alt=34500, hdg=270.0)
 
         h_dist = haversine_distance(39.1, 116.1, 39.4, 116.4)
         v_dist = abs(35000 - 34500)

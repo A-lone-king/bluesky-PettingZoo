@@ -26,7 +26,7 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 from tests.helpers.env_factory import make_env as _make_env

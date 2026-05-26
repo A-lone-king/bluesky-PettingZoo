@@ -41,7 +41,7 @@ from bluesky_pettingzoo.utils.types import AircraftState
 # ---------------------------------------------------------------------------
 
 
-class EnhancedFakeBlueSkyWrapper:
+class EnhancedBlueSkyWrapper:
     """Fake wrapper that processes HDG, ALT, SPD commands for integration tests."""
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -68,8 +68,8 @@ class EnhancedFakeBlueSkyWrapper:
     def step(self) -> float:
         return self.step_n(1)
 
-    def step_n(self, n: int) -> float:
-        for _ in range(n):
+    def step_n(self, n: int, on_substep: Any = None) -> float:
+        for i in range(n):
             self._simt += self.dt
             for st in self._aircraft.values():
                 spd_nm_s = st["tas"] / 3600.0
@@ -78,6 +78,8 @@ class EnhancedFakeBlueSkyWrapper:
                 st["lon"] += math.sin(hdg_rad) * spd_nm_s * self.dt / (
                     60.0 * math.cos(math.radians(st["lat"]))
                 )
+            if on_substep is not None and not on_substep(i):
+                break
         return self._simt
 
     def reset(self) -> None:
@@ -227,7 +229,7 @@ def _make_rewards_config() -> dict[str, Any]:
 def _make_env(
     initial_count: int = 3,
     max_steps: int = 360,
-    wrapper_cls: type = EnhancedFakeBlueSkyWrapper,
+    wrapper_cls: type = EnhancedBlueSkyWrapper,
     lat_range: tuple[float, float] = (39.0, 39.5),
     lon_range: tuple[float, float] = (116.0, 116.5),
 ) -> BlueSkyMARLEnv:
@@ -268,6 +270,8 @@ def _place_aircraft(
     for acid, pos in positions.items():
         if acid in wrapper._aircraft:
             wrapper._aircraft[acid].update(pos)
+    # Sync prev_states so reward computation uses updated positions
+    env._prev_states = env._get_all_aircraft_states()
 
 
 # ===========================================================================

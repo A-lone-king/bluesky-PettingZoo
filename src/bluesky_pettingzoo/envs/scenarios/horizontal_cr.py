@@ -6,6 +6,8 @@ to avoid conflicts, and terminate upon reaching waypoints.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
@@ -108,3 +110,31 @@ class HorizontalCRScenario(BaseScenario):
         """Higher altitude → higher priority (normalized to [-1, 1])."""
         alt_min, alt_max = 29000.0, 37000.0
         return max(-1.0, min(1.0, (state.alt - (alt_min + alt_max) / 2) / ((alt_max - alt_min) / 2)))
+
+    def create_intruders(self, wrapper: Any, rng: np.random.RandomState | None = None) -> list[str]:
+        """Create intruder aircraft using creconfs for head-on conflicts.
+
+        Args:
+            wrapper: BlueSkyWrapper instance.
+            rng: Random number generator (optional).
+
+        Returns:
+            List of created aircraft IDs (ownship + intruders).
+        """
+        mid_lat = (self._bounds["lat_min"] + self._bounds["lat_max"]) / 2
+        mid_lon = (self._bounds["lon_min"] + self._bounds["lon_max"]) / 2
+
+        dpsi = 150.0 + (rng.uniform(-20, 20) if rng is not None else 0)
+        dcpa = 3.0 + (rng.uniform(-1, 1) if rng is not None else 0)
+
+        return wrapper.create_conflict_aircraft(
+            ownship_lat=mid_lat,
+            ownship_lon=mid_lon,
+            ownship_alt=CRUISE_ALT_FT,
+            ownship_hdg=90.0,
+            ownship_spd=450.0,
+            count=self._num_aircraft - 1,
+            dpsi=dpsi,
+            dcpa=max(dcpa, 1.0),
+            prefix="CR",
+        )

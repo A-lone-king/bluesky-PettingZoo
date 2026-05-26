@@ -1,0 +1,14 @@
+scenario: RouteNav
+num_aircraft: 3
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: none
+
+reward_overrides:
+  conflict:
+    weight: 0.6
+  efficiency:
+    weight: 0.4
+  drift_penalty:
+    weight: 0.2

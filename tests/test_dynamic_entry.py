@@ -12,13 +12,13 @@ import yaml
 
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import make_env as _make_env
 
 
 # ---------------------------------------------------------------------------
-# FakeBlueSkyWrapper
+# BlueSkyWrapper
 # ---------------------------------------------------------------------------
 
 

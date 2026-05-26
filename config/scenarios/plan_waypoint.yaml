@@ -1,0 +1,12 @@
+scenario: PlanWaypoint
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: none
+
+reward_overrides:
+  efficiency:
+    weight: 1.0
+    arrival_reward: 1.0
+  smoothness:
+    weight: 0.3

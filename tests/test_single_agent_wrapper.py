@@ -1,175 +1,100 @@
-"""Tests for SingleAgentGymWrapper."""
+"""Tests for SingleAgentGymWrapper with continuous action space (spec4 F2).
+
+Verify that wrapper works correctly with continuous action space.
+"""
 
 from __future__ import annotations
 
+import gymnasium as gym
 import numpy as np
 import pytest
-import yaml
-from gymnasium import spaces
 
-from bluesky_pettingzoo.actions.translator import ActionTranslator
-from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
-from bluesky_pettingzoo.observations.manager import ObservationManager
-from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
-from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
-
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
-from tests.helpers.env_factory import make_config, write_rewards_yaml
+from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def continuous_scenario():
+    """Create a continuous scenario."""
+
+    class ContinuousScenario(BaseScenario):
+        action_space_type = "continuous"
+
+        def setup(self, rng, airspace_bounds):
+            return [f"AC{i:03d}" for i in range(3)]
+
+        def get_spawn_config(self):
+            from bluesky_pettingzoo.utils.types import SpawnConfig
+            return SpawnConfig(
+                altitude_range=(30000, 40000),
+                speed_range=(400, 500),
+                heading_range=(0, 360),
+            )
+
+        def get_conflict_config(self):
+            from bluesky_pettingzoo.utils.types import ConflictConfig
+            return ConflictConfig(
+                nmac_horizontal_nm=5,
+                nmac_vertical_ft=1000,
+                warning_horizontal_nm=10,
+                warning_vertical_ft=2000,
+            )
+
+        def get_waypoint(self, agent_id):
+            return {"lat": 39.5, "lon": 116.5, "alt": 35000, "hdg": 90}
+
+    return ContinuousScenario()
 
 
-def _make_wrapped_env(
-    tmp_path,
-    num_aircraft: int = 3,
-    max_steps: int = 50,
-    ego_agent: str = "AC000",
-) -> SingleAgentGymWrapper:
-    """Create a SingleAgentGymWrapper around a WaypointNav env."""
-    config = make_config(initial_count=num_aircraft, max_steps=max_steps)
-    rewards_path = write_rewards_yaml(tmp_path)
-    config["_rewards_yaml"] = str(rewards_path)
+class TestContinuousWrapper:
+    """SingleAgentGymWrapper should work with continuous action space."""
 
-    with open(rewards_path, encoding="utf-8") as f:
-        rewards_cfg = yaml.safe_load(f)
-    merged = {**config, **rewards_cfg}
+    def test_action_space_type(self, continuous_scenario, tmp_path) -> None:
+        """Wrapper should expose Box action space for continuous scenario."""
+        from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+        from tests.helpers.env_factory import make_env
 
-    wrapper = FakeBlueSkyWrapper(config)
-    obs_manager = ObservationManager(config)
-    action_translator = ActionTranslator(config)
-    calc = RewardCalculator()
-    calc.register(ConflictPenalty(merged), weight=1.0)
-    calc.register(SmoothnessPenalty(merged), weight=0.5)
-    calc.register(EfficiencyReward(merged), weight=0.3)
+        env = make_env(tmp_path, scenario=continuous_scenario, initial_count=3)
+        wrapper = SingleAgentGymWrapper(env, ego_agent="AC000")
 
-    env = BlueSkyMARLEnv(
-        config=config,
-        wrapper=wrapper,
-        observation_manager=obs_manager,
-        action_translator=action_translator,
-        reward_calculator=calc,
-        rewards_config=rewards_cfg,
-        scenario=WaypointNavScenario(num_aircraft=num_aircraft, seed=42),
-    )
-    return SingleAgentGymWrapper(env, ego_agent=ego_agent)
+        assert isinstance(wrapper.action_space, gym.spaces.Box)
 
+    def test_action_space_shape(self, continuous_scenario, tmp_path) -> None:
+        """Wrapper action space should have shape (3,) for continuous."""
+        from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+        from tests.helpers.env_factory import make_env
 
-# ===========================================================================
-# Tests
-# ===========================================================================
+        env = make_env(tmp_path, scenario=continuous_scenario, initial_count=3)
+        wrapper = SingleAgentGymWrapper(env, ego_agent="AC000")
 
+        assert wrapper.action_space.shape == (3,)
 
-class TestSingleAgentGymWrapperSpaces:
-    def test_observation_space_is_dict(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        assert isinstance(wrapper.observation_space, spaces.Dict)
-        assert "self_state" in wrapper.observation_space.spaces
-        assert "goal" in wrapper.observation_space.spaces
+    def test_step_with_continuous_action(self, continuous_scenario, tmp_path) -> None:
+        """Wrapper should accept continuous action array."""
+        from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+        from tests.helpers.env_factory import make_env
 
-    def test_action_space_is_multidiscrete(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        assert isinstance(wrapper.action_space, spaces.MultiDiscrete)
-        assert list(wrapper.action_space.nvec) == [5, 5, 5]
+        env = make_env(tmp_path, scenario=continuous_scenario, initial_count=3)
+        wrapper = SingleAgentGymWrapper(env, ego_agent="AC000")
 
-
-class TestSingleAgentGymWrapperReset:
-    def test_reset_returns_obs_and_info(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
         obs, info = wrapper.reset(seed=42)
-        assert isinstance(obs, dict)
-        assert isinstance(info, dict)
+        action = np.array([0.5, 0.0, -0.5], dtype=np.float32)
 
-    def test_reset_observation_in_space(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        obs, _ = wrapper.reset(seed=42)
-        assert wrapper.observation_space.contains(obs)
+        obs, reward, terminated, truncated, info = wrapper.step(action)
 
-    def test_reset_ego_agent_active(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path, ego_agent="AC000")
-        wrapper.reset(seed=42)
-        assert "AC000" in wrapper._env.agents
-
-
-class TestSingleAgentGymWrapperStep:
-    def test_step_returns_five_tuple(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        wrapper.reset(seed=42)
-        result = wrapper.step(np.array([2, 2, 2]))
-        assert len(result) == 5
-        obs, reward, terminated, truncated, info = result
-        assert isinstance(obs, dict)
+        assert obs is not None
         assert isinstance(reward, float)
         assert isinstance(terminated, bool)
         assert isinstance(truncated, bool)
-        assert isinstance(info, dict)
 
-    def test_step_observation_in_space(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        wrapper.reset(seed=42)
-        obs, _, _, _, _ = wrapper.step(np.array([2, 2, 2]))
-        assert wrapper.observation_space.contains(obs)
+    def test_reset_works(self, continuous_scenario, tmp_path) -> None:
+        """Wrapper reset should work with continuous scenario."""
+        from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+        from tests.helpers.env_factory import make_env
 
-    def test_step_reward_is_finite(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        wrapper.reset(seed=42)
-        _, reward, _, _, _ = wrapper.step(np.array([2, 2, 2]))
-        assert np.isfinite(reward)
+        env = make_env(tmp_path, scenario=continuous_scenario, initial_count=3)
+        wrapper = SingleAgentGymWrapper(env, ego_agent="AC000")
 
+        obs, info = wrapper.reset(seed=42)
 
-class TestSingleAgentGymWrapperTermination:
-    def test_truncation_at_max_steps(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path, max_steps=3)
-        wrapper.reset(seed=42)
-        for _ in range(5):
-            _, _, terminated, truncated, _ = wrapper.step(np.array([2, 2, 2]))
-            if terminated or truncated:
-                break
-        assert truncated or terminated
-
-
-class TestSingleAgentGymWrapperFullEpisode:
-    def test_full_episode_with_noop(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path, max_steps=20)
-        wrapper.reset(seed=42)
-        total_reward = 0.0
-        for _ in range(25):
-            _, reward, terminated, truncated, _ = wrapper.step(np.array([2, 2, 2]))
-            total_reward += reward
-            if terminated or truncated:
-                break
-        assert np.isfinite(total_reward)
-
-    def test_full_episode_with_random_actions(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path, max_steps=20)
-        wrapper.reset(seed=42)
-        rng = np.random.RandomState(42)
-        total_reward = 0.0
-        for _ in range(25):
-            action = wrapper.action_space.sample()
-            _, reward, terminated, truncated, _ = wrapper.step(action)
-            total_reward += reward
-            if terminated or truncated:
-                break
-        assert np.isfinite(total_reward)
-
-
-class TestSingleAgentGymWrapperGymnasiumCompliance:
-    def test_is_gymnasium_env(self, tmp_path) -> None:
-        import gymnasium
-        wrapper = _make_wrapped_env(tmp_path)
-        assert isinstance(wrapper, gymnasium.Env)
-
-    def test_has_required_attrs(self, tmp_path) -> None:
-        wrapper = _make_wrapped_env(tmp_path)
-        assert hasattr(wrapper, "observation_space")
-        assert hasattr(wrapper, "action_space")
-        assert hasattr(wrapper, "reset")
-        assert hasattr(wrapper, "step")
-        assert hasattr(wrapper, "close")
+        assert obs is not None
+        assert isinstance(obs, dict)

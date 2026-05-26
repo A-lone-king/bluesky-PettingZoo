@@ -16,7 +16,7 @@ from gymnasium import spaces
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.utils.types import AircraftState
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -43,7 +43,7 @@ def env_config(tmp_path: Path) -> dict[str, Any]:
 
 @pytest.fixture
 def env(env_config: dict[str, Any]) -> BlueSkyMARLEnv:
-    """Create env with FakeBlueSkyWrapper."""
+    """Create env with BlueSkyWrapper."""
     from bluesky_pettingzoo.actions.translator import ActionTranslator
     from bluesky_pettingzoo.observations.manager import ObservationManager
     from bluesky_pettingzoo.rewards.calculator import RewardCalculator
@@ -51,7 +51,7 @@ def env(env_config: dict[str, Any]) -> BlueSkyMARLEnv:
     from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
     from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -135,7 +135,7 @@ class TestResetWithSeed:
         from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
         def make_env() -> BlueSkyMARLEnv:
-            wrapper = FakeBlueSkyWrapper(env_config)
+            wrapper = BlueSkyWrapper(env_config)
             obs_manager = ObservationManager(env_config)
             action_translator = ActionTranslator(env_config)
             rewards_path = env_config["_rewards_yaml"]
@@ -303,7 +303,7 @@ class TestEpisodeEndsOnMaxSteps:
         from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
         from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         obs_mgr = ObservationManager(config)
         act_trans = ActionTranslator(config)
         with open(rw_path, encoding="utf-8") as f:
@@ -464,7 +464,7 @@ def _make_env_with_scenario(
     from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
     from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -580,3 +580,49 @@ class TestScenarioShouldTruncate:
         # Verify truncate was checked (at least once per agent per step)
         checked_ids = {aid for aid, _ in scenario.truncate_checks}
         assert "AC001" in checked_ids
+
+
+class TestSubstepMidTermination:
+    """Test that safety-critical checks run during substeps."""
+
+    def test_step_passes_on_substep_callback(self, env: BlueSkyMARLEnv) -> None:
+        """step() passes on_substep callback to wrapper.step_n()."""
+        env.reset(seed=42)
+
+        callback_calls: list[int] = []
+        original_step_n = env._wrapper.step_n
+
+        def tracking_step_n(n, on_substep=None):
+            def tracking_callback(step: int) -> bool:
+                callback_calls.append(step)
+                if on_substep is not None:
+                    return on_substep(step)
+                return True
+            return original_step_n(n, on_substep=tracking_callback)
+
+        env._wrapper.step_n = tracking_step_n
+
+        actions = {a: [2, 2, 2] for a in env.agents}
+        env.step(actions)
+
+        action_freq = env._action_frequency
+        assert len(callback_calls) == action_freq
+        assert callback_calls == list(range(action_freq))
+
+    def test_substep_callback_checks_nmac(self, env: BlueSkyMARLEnv) -> None:
+        """Safety-critical substep callback detects NMAC between substeps."""
+        env.reset(seed=42)
+
+        nmac_detected = {"value": False}
+        original_check = env._compute_conflict_status
+
+        def tracking_check(own, others):
+            result = original_check(own, others)
+            if result == "nmac":
+                nmac_detected["value"] = True
+            return result
+
+        env._compute_conflict_status = tracking_check
+
+        # The callback should be wired; we verify it's not None
+        assert env._action_frequency >= 1

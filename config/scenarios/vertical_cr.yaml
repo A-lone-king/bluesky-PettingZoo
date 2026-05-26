@@ -1,0 +1,12 @@
+scenario: VerticalCR
+num_aircraft: 5
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: creconfs
+
+reward_overrides:
+  conflict:
+    weight: 0.6
+  efficiency:
+    weight: 0.4

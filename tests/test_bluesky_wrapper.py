@@ -10,6 +10,14 @@ import pytest
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
 
+@pytest.fixture(autouse=True)
+def _reset_bs_global_flag():
+    """Reset the module-level bs init flag before each test."""
+    import bluesky_pettingzoo.bluesky.wrapper as w
+    w._bs_global_initialized = False
+    yield
+
+
 class TestLazyImport:
     """Test that BlueSkyWrapper can be imported without bluesky installed."""
 
@@ -86,17 +94,18 @@ class TestBlueSkyWrapperSimulation:
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
     def test_reset_clears_state(self, mock_bs: MagicMock, default_config: dict) -> None:
-        """Test that reset clears all aircraft."""
+        """Test that reset clears simulation state."""
         mock_bs.traf.id = ["AC000", "AC001"]
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
 
         wrapper.reset()
 
-        # Should delete each aircraft individually
-        calls = mock_bs.stack.stack.call_args_list
-        delete_calls = [c for c in calls if "DELETE" in str(c)]
-        assert len(delete_calls) == 2
+        # Should call bs.sim.reset() to clear simulation state
+        mock_bs.sim.reset.assert_called()
+        # Should reset internal counters
+        assert wrapper._step_count == 0
+        assert wrapper._simt == 0.0
 
 
 class TestBlueSkyWrapperAircraft:
@@ -137,13 +146,13 @@ class TestBlueSkyWrapperAircraft:
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
     def test_get_aircraft_state(self, mock_bs: MagicMock, default_config: dict) -> None:
-        """Test getting aircraft state."""
+        """Test getting aircraft state with unit conversion (m→ft, m/s→kts)."""
         mock_bs.traf.id = np.array(["AC001"], dtype="U10")
         mock_bs.traf.lat = np.array([39.25])
         mock_bs.traf.lon = np.array([116.25])
-        mock_bs.traf.alt = np.array([35000.0])
+        mock_bs.traf.alt = np.array([35000.0 * 0.3048])  # 35000 ft in meters
         mock_bs.traf.hdg = np.array([90.0])
-        mock_bs.traf.tas = np.array([450.0])
+        mock_bs.traf.tas = np.array([450.0 * 1852.0 / 3600.0])  # 450 kts in m/s
         mock_bs.traf.vs = np.array([0.0])
         mock_bs.traf.id2idx.return_value = 0
 
@@ -360,6 +369,44 @@ class TestCloseScoping:
         assert "AC001" not in wrapper._managed_aircraft
 
 
+class TestSpeedUnitRoundTrip:
+    """Test that speed round-trips correctly through BlueSky (TAS in/out)."""
+
+    def test_create_and_read_speed_roundtrip(self, default_config: dict) -> None:
+        """Creating aircraft with 450 kts TAS should read back ~450 kts TAS.
+
+        BlueSky's cre() interprets speed as CAS, then converts to TAS at altitude.
+        The wrapper must convert TAS→CAS before calling cre() so that the stored
+        TAS matches the intended value.
+        """
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        wrapper.create_aircraft("SPD001", "B737", 39.2, 116.2, 35000.0, 90.0, 450.0)
+        wrapper.step()  # Let BlueSky process
+        state = wrapper.get_aircraft_state("SPD001")
+
+        assert state["tas"] == pytest.approx(450.0, abs=20.0), (
+            f"Expected TAS ~450 kts, got {state['tas']:.0f} kts. "
+            "Wrapper may be passing TAS as CAS to cre()."
+        )
+        wrapper.close()
+
+    def test_create_and_read_altitude_roundtrip(self, default_config: dict) -> None:
+        """Creating aircraft at 35000 ft should read back ~35000 ft."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        wrapper.create_aircraft("ALT001", "B737", 39.2, 116.2, 35000.0, 90.0, 450.0)
+        wrapper.step()
+        state = wrapper.get_aircraft_state("ALT001")
+
+        assert state["alt"] == pytest.approx(35000.0, abs=100.0), (
+            f"Expected alt ~35000 ft, got {state['alt']:.0f} ft"
+        )
+        wrapper.close()
+
+
 class TestResolveIdx:
     """Test _resolve_idx handles different BlueSky return types."""
 
@@ -406,3 +453,80 @@ class TestResolveIdx:
         wrapper.init_simulation()
 
         assert wrapper._resolve_idx("AC001") == 2
+
+
+class TestStepNCallback:
+    """Test step_n() with on_substep callback for mid-step termination."""
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_step_n_calls_callback_after_each_substep(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """on_substep callback is invoked after each bs.sim.step()."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        call_count = 0
+
+        def on_substep(step: int) -> bool:
+            nonlocal call_count
+            call_count += 1
+            return True  # continue
+
+        wrapper.step_n(3, on_substep=on_substep)
+        assert call_count == 3
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_step_n_stops_early_when_callback_returns_false(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """step_n() stops when on_substep returns False."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        call_count = 0
+
+        def on_substep(step: int) -> bool:
+            nonlocal call_count
+            call_count += 1
+            return call_count < 2  # stop after 2nd call
+
+        wrapper.step_n(5, on_substep=on_substep)
+        assert call_count == 2
+        assert mock_bs.sim.step.call_count == 2
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_step_n_backward_compatible_without_callback(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """step_n() without on_substep works as before."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        wrapper.step_n(3)
+        assert mock_bs.sim.step.call_count == 3
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_step_n_callback_receives_correct_step_index(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """on_substep receives 0-based step index."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        steps_seen: list[int] = []
+
+        def on_substep(step: int) -> bool:
+            steps_seen.append(step)
+            return True
+
+        wrapper.step_n(4, on_substep=on_substep)
+        assert steps_seen == [0, 1, 2, 3]
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_step_delegates_to_step_n_with_callback(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """step() forwards on_substep to step_n()."""
+        wrapper = BlueSkyWrapper(default_config)
+        wrapper.init_simulation()
+
+        called = False
+
+        def on_substep(step: int) -> bool:
+            nonlocal called
+            called = True
+            return True
+
+        wrapper.step(on_substep=on_substep)
+        assert called is True

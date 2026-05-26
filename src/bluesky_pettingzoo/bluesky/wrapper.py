@@ -2,14 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
 
 try:
     import bluesky as bs
+    from bluesky.tools.aero import vtas2cas
 except ImportError:
     bs = None  # type: ignore[assignment]
+    vtas2cas = None  # type: ignore[assignment,misc]
+
+
+_FT_TO_M = 0.3048
+_KTS_TO_MS = 1852.0 / 3600.0
+_bs_global_initialized = False
 
 
 class BlueSkyWrapper:
@@ -17,6 +25,11 @@ class BlueSkyWrapper:
 
     Provides a clean Python API for interacting with BlueSky
     without GUI dependencies.
+
+    The public interface uses **feet** for altitude, **knots** for speed,
+    and **ft/min** for vertical speed.  BlueSky's internal arrays use SI
+    (meters and m/s), so conversions are applied in ``create_aircraft`` /
+    ``get_aircraft_state`` / ``get_all_aircraft_states``.
 
     Requires the ``bluesky`` package. Install with::
 
@@ -32,6 +45,8 @@ class BlueSkyWrapper:
         self.config = config
         self.dt: float = config["simulation"]["dt"]
         self._initialized: bool = False
+        self._step_count: int = 0
+        self._simt: float = 0.0
         self._managed_aircraft: set[str] = set()
         self._airspace_bounds: dict[str, tuple[float, float]] = {}
         self._parse_airspace_bounds()
@@ -62,48 +77,73 @@ class BlueSkyWrapper:
         Raises:
             ImportError: If the bluesky package is not installed.
         """
-        if self._initialized:
-            return
+        global _bs_global_initialized
         if bs is None:
             raise ImportError(
                 "bluesky is required for real simulation. "
                 "Install with: pip install bluesky-pettingzoo[bluesky]"
             )
-        bs.init(mode="sim", detached=True)
-        # Set simulation timestep from config
+        if not _bs_global_initialized:
+            bs.init(mode="sim", detached=True)
+            _bs_global_initialized = True
+        # Reset simulation state for this wrapper instance
+        try:
+            bs.sim.reset()
+        except Exception:
+            # If reset fails, re-initialize from scratch
+            bs.init(mode="sim", detached=True)
+            bs.sim.reset()
         bs.stack.stack(f"DT {self.dt};FF")
-        # Disable built-in conflict resolution so agent commands are not overridden
         bs.stack.stack("reso off")
         self._initialized = True
+        self._step_count = 0
+        self._simt = 0.0
 
-    def step(self) -> float:
+    def step(self, on_substep: "Callable[[int], bool] | None" = None) -> float:
         """Advance simulation by one timestep.
+
+        Args:
+            on_substep: Optional callback invoked after each substep.
+                Receives 0-based step index. Return True to continue,
+                False to stop early.
 
         Returns:
             Current simulation time
         """
-        return self.step_n(1)
+        return self.step_n(1, on_substep=on_substep)
 
-    def step_n(self, n: int) -> float:
+    def step_n(
+        self,
+        n: int,
+        on_substep: "Callable[[int], bool] | None" = None,
+    ) -> float:
         """Advance simulation by n timesteps.
 
         Args:
             n: Number of simulation steps to execute
+            on_substep: Optional callback invoked after each substep.
+                Receives 0-based step index. Return True to continue,
+                False to stop early.
 
         Returns:
             Current simulation time
         """
-        for _ in range(n):
+        for i in range(n):
             bs.sim.step()
-        return float(bs.sim.simt)
+            self._step_count += 1
+            if on_substep is not None and not on_substep(i):
+                break
+        self._simt = float(bs.sim.simt)
+        return self._simt
 
     def reset(self) -> None:
-        """Reset the simulation by deleting all aircraft."""
+        """Reset the simulation by deleting all aircraft and resetting the clock."""
         if not self._initialized:
             return
-        for acid in list(bs.traf.id):
-            bs.stack.stack(f"DELETE {acid}")
-        bs.sim.step()
+        bs.sim.reset()
+        bs.stack.stack(f"DT {self.dt};FF")
+        self._step_count = 0
+        self._simt = 0.0
 
     def create_aircraft(
         self,
@@ -126,7 +166,11 @@ class BlueSkyWrapper:
             hdg: Heading (degrees)
             spd: True airspeed (knots)
         """
-        bs.traf.cre(acid, actype, lat, lon, hdg, alt, spd)
+        alt_m = alt * _FT_TO_M
+        spd_mps = spd * _KTS_TO_MS
+        # BlueSky's cre() interprets speed as CAS, so convert TAS → CAS
+        cas_mps = vtas2cas(spd_mps, alt_m) if vtas2cas is not None else spd_mps
+        bs.traf.cre(acid, actype, lat, lon, hdg, alt_m, cas_mps)
         self._managed_aircraft.add(acid)
 
     def remove_aircraft(self, acid: str) -> None:
@@ -137,6 +181,70 @@ class BlueSkyWrapper:
         """
         bs.stack.stack(f"DELETE {acid}")
         self._managed_aircraft.discard(acid)
+
+    def create_conflict_aircraft(
+        self,
+        ownship_lat: float,
+        ownship_lon: float,
+        ownship_alt: float,
+        ownship_hdg: float,
+        ownship_spd: float,
+        count: int = 5,
+        dpsi: float = 45.0,
+        dcpa: float = 5.0,
+        tlosh: float = 120.0,
+        dH: float | None = None,
+        tlosv: float | None = None,
+        prefix: str = "CR",
+        dpsi_list: list[float] | None = None,
+        dcpa_list: list[float] | None = None,
+        tlosh_list: list[float] | None = None,
+    ) -> list[str]:
+        """Create conflict aircraft using BlueSky's creconfs.
+
+        Creates one ownship and ``count`` intruder aircraft using
+        ``bs.traf.creconfs`` so that loss-of-separation events occur
+        at a predictable time.
+
+        Args:
+            ownship_lat: Ownship latitude (deg).
+            ownship_lon: Ownship longitude (deg).
+            ownship_alt: Ownship altitude (ft).
+            ownship_hdg: Ownship heading (deg).
+            ownship_spd: Ownship speed (kts).
+            count: Number of intruder aircraft to create.
+            dpsi: Conflict angle spread (deg). Overridden by dpsi_list per intruder.
+            dcpa: Distance at closest point of approach (NM). Overridden by dcpa_list per intruder.
+            tlosh: Horizontal time to loss of separation (sec). Overridden by tlosh_list per intruder.
+            dH: Vertical distance offset (ft). None = same altitude.
+            tlosv: Vertical time to loss of separation (sec).
+            prefix: Callsign prefix for intruder aircraft.
+            dpsi_list: Per-intruder dpsi values. Overrides scalar dpsi.
+            dcpa_list: Per-intruder dcpa values. Overrides scalar dcpa.
+            tlosh_list: Per-intruder tlosh values. Overrides scalar tlosh.
+
+        Returns:
+            List of all created aircraft IDs (ownship + intruders).
+        """
+        # Create ownship
+        own_id = f"{prefix}000"
+        self.create_aircraft(own_id, "B737", ownship_lat, ownship_lon, ownship_alt, ownship_hdg, ownship_spd)
+        own_idx = self._resolve_idx(own_id)
+
+        # Create intruders via creconfs
+        intruder_ids: list[str] = []
+        for i in range(count):
+            acid = f"{prefix}{i + 1:03d}"
+            angle = dpsi_list[i] if dpsi_list is not None else dpsi * (i + 1) / max(count, 1)
+            cpa = dcpa_list[i] if dcpa_list is not None else dcpa
+            tsh = tlosh_list[i] if tlosh_list is not None else tlosh
+            bs.traf.creconfs(
+                acid, "B737", own_idx, angle, cpa, tsh,
+                dH=dH, tlosv=tlosv,
+            )
+            intruder_ids.append(acid)
+
+        return [own_id] + intruder_ids
 
     def send_command(self, command: str) -> None:
         """Send a single command to BlueSky.
@@ -191,10 +299,10 @@ class BlueSkyWrapper:
             "id": str(bs.traf.id[idx]),
             "lat": float(bs.traf.lat[idx]),
             "lon": float(bs.traf.lon[idx]),
-            "alt": float(bs.traf.alt[idx]),
+            "alt": float(bs.traf.alt[idx]) / _FT_TO_M,
             "hdg": float(bs.traf.hdg[idx]),
-            "tas": float(bs.traf.tas[idx]),
-            "vs": float(bs.traf.vs[idx]),
+            "tas": float(bs.traf.tas[idx]) / _KTS_TO_MS,
+            "vs": float(bs.traf.vs[idx]) * 60.0 / _FT_TO_M,
         }
 
     def get_all_aircraft_states(self) -> dict[str, dict[str, Any]]:
@@ -210,12 +318,36 @@ class BlueSkyWrapper:
                 "id": acid,
                 "lat": float(bs.traf.lat[i]),
                 "lon": float(bs.traf.lon[i]),
-                "alt": float(bs.traf.alt[i]),
+                "alt": float(bs.traf.alt[i]) / _FT_TO_M,
                 "hdg": float(bs.traf.hdg[i]),
-                "tas": float(bs.traf.tas[i]),
-                "vs": float(bs.traf.vs[i]),
+                "tas": float(bs.traf.tas[i]) / _KTS_TO_MS,
+                "vs": float(bs.traf.vs[i]) * 60.0 / _FT_TO_M,
             }
         return states
+
+    def set_aircraft_state(self, acid: str, **kwargs: Any) -> None:
+        """Set state fields of an aircraft.
+
+        Args:
+            acid: Aircraft ID.
+            **kwargs: State fields to set (lat, lon, alt, hdg, tas, vs).
+                alt is in feet, tas in knots, vs in ft/min.
+        """
+        idx = self._resolve_idx(acid)
+        if idx < 0:
+            raise ValueError(f"Aircraft {acid} not found")
+        if "lat" in kwargs:
+            bs.traf.lat[idx] = kwargs["lat"]
+        if "lon" in kwargs:
+            bs.traf.lon[idx] = kwargs["lon"]
+        if "alt" in kwargs:
+            bs.traf.alt[idx] = kwargs["alt"] * _FT_TO_M
+        if "hdg" in kwargs:
+            bs.traf.hdg[idx] = kwargs["hdg"]
+        if "tas" in kwargs:
+            bs.traf.tas[idx] = kwargs["tas"] * _KTS_TO_MS
+        if "vs" in kwargs:
+            bs.traf.vs[idx] = kwargs["vs"] * _FT_TO_M / 60.0
 
     def get_active_aircraft_ids(self) -> list[str]:
         """Get list of active aircraft IDs.

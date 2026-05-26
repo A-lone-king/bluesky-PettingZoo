@@ -25,7 +25,7 @@ from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -48,7 +48,7 @@ def _make_env_with_scenario(
     scenario: WaypointNavScenario,
 ) -> BlueSkyMARLEnv:
     """Create a BlueSkyMARLEnv with a WaypointNavScenario."""
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -137,11 +137,7 @@ class TestWaypointNavArrival:
 
         # Place the first aircraft at its waypoint
         wp = scenario.get_waypoint(agents[0])
-        wrapper._aircraft[agents[0]].update({
-            "lat": wp["lat"],
-            "lon": wp["lon"],
-            "alt": wp["alt"],
-        })
+        wrapper.set_aircraft_state(agents[0], lat=wp["lat"], lon=wp["lon"], alt=wp["alt"])
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)
@@ -168,7 +164,7 @@ class TestWaypointNavGuidance:
         wp = scenario.get_waypoint(acid)
 
         # Set aircraft heading to point toward its waypoint
-        wrapper._aircraft[acid]["hdg"] = wp["hdg"]
+        wrapper.set_aircraft_state(acid, hdg=wp["hdg"])
 
         # Get initial distance to waypoint
         st = wrapper.get_aircraft_state(acid)

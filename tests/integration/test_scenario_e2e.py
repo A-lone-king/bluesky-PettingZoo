@@ -36,7 +36,7 @@ from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleInt
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -64,7 +64,7 @@ def _run_episode(
     _write_rewards_yaml(tmp_path)
     config["_rewards_yaml"] = str(tmp_path / "rewards.yaml")
 
-    wrapper = FakeBlueSkyWrapper(config)
+    wrapper = BlueSkyWrapper(config)
     obs_manager = ObservationManager(config)
     action_translator = ActionTranslator(config)
 

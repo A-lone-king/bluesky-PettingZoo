@@ -23,7 +23,7 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import _DEFAULT_REWARDS as _make_rewards_config
 from tests.helpers.env_factory import make_env as _make_env
@@ -49,8 +49,8 @@ def _place_aircraft(
 ) -> None:
     wrapper = env._wrapper
     for acid, pos in positions.items():
-        if acid in wrapper._aircraft:
-            wrapper._aircraft[acid].update(pos)
+        if acid in wrapper.get_active_aircraft_ids():
+            wrapper.set_aircraft_state(acid, **pos)
 
 
 # ===========================================================================

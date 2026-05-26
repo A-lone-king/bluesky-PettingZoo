@@ -1,0 +1,47 @@
+# Algorithm hyperparameters configuration
+# Values aligned with bluesky-gym main.py
+
+PPO:
+  learning_rate: 3.0e-4
+  n_steps: 2048
+  batch_size: 64
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+
+SAC:
+  learning_rate: 3.0e-4
+  buffer_size: 100000
+  batch_size: 256
+  tau: 0.005
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  learning_starts: 100
+
+TD3:
+  learning_rate: 3.0e-4
+  buffer_size: 100000
+  batch_size: 100
+  tau: 0.005
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  learning_starts: 100
+  policy_delay: 2
+  target_policy_noise: 0.2
+  target_noise_clip: 0.5
+
+DDPG:
+  learning_rate: 3.0e-4
+  buffer_size: 100000
+  batch_size: 128
+  tau: 0.005
+  gamma: 0.99
+  train_freq: 1
+  gradient_steps: 1
+  learning_starts: 100

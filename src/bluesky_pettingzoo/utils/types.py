@@ -250,6 +250,15 @@ class SpawnConfig:
     def __contains__(self, key: str) -> bool:
         return hasattr(self, key)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SpawnConfig):
+            return NotImplemented
+        return (
+            self.altitude_range == other.altitude_range
+            and self.speed_range == other.speed_range
+            and self.heading_range == other.heading_range
+        )
+
 
 class DynamicEntryConfig:
     """Dynamic aircraft entry parameters."""

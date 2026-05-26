@@ -11,14 +11,14 @@ import yaml
 
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 from tests.helpers.env_factory import make_env as _make_env
 
 
 # ---------------------------------------------------------------------------
-# FakeBlueSkyWrapper (same as test_env.py, with basic movement)
+# BlueSkyWrapper (same as test_env.py, with basic movement)
 # ---------------------------------------------------------------------------
 
 
@@ -43,15 +43,11 @@ class TestArrivalTriggersTermination:
         # AC000: place at goal → should terminate
         goal0 = (39.45, 116.45)
         eff.set_goal("AC000", goal0[0], goal0[1])
-        env._wrapper._aircraft["AC000"]["lat"] = goal0[0]
-        env._wrapper._aircraft["AC000"]["lon"] = goal0[1]
+        env._wrapper.set_aircraft_state("AC000", lat=goal0[0], lon=goal0[1])
 
         # AC001: far from goal → should not terminate
         eff.set_goal("AC001", 39.40, 116.40)
-        env._wrapper._aircraft["AC001"]["lat"] = 39.10
-        env._wrapper._aircraft["AC001"]["lon"] = 116.10
-        env._wrapper._aircraft["AC001"]["hdg"] = 90.0
-        env._wrapper._aircraft["AC001"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC001", lat=39.10, lon=116.10, hdg=90.0, tas=450.0)
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)
@@ -72,14 +68,10 @@ class TestArrivalRemovesFromAgents:
 
         goal0 = (39.45, 116.45)
         eff.set_goal("AC000", goal0[0], goal0[1])
-        env._wrapper._aircraft["AC000"]["lat"] = goal0[0]
-        env._wrapper._aircraft["AC000"]["lon"] = goal0[1]
+        env._wrapper.set_aircraft_state("AC000", lat=goal0[0], lon=goal0[1])
 
         eff.set_goal("AC001", 39.40, 116.40)
-        env._wrapper._aircraft["AC001"]["lat"] = 39.10
-        env._wrapper._aircraft["AC001"]["lon"] = 116.10
-        env._wrapper._aircraft["AC001"]["hdg"] = 90.0
-        env._wrapper._aircraft["AC001"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC001", lat=39.10, lon=116.10, hdg=90.0, tas=450.0)
 
         actions = {a: [2, 2, 2] for a in env.agents}
         env.step(actions)
@@ -100,14 +92,10 @@ class TestArrivalOtherAgentsUnaffected:
 
         goal0 = (39.45, 116.45)
         eff.set_goal("AC000", goal0[0], goal0[1])
-        env._wrapper._aircraft["AC000"]["lat"] = goal0[0]
-        env._wrapper._aircraft["AC000"]["lon"] = goal0[1]
+        env._wrapper.set_aircraft_state("AC000", lat=goal0[0], lon=goal0[1])
 
         eff.set_goal("AC001", 39.40, 116.40)
-        env._wrapper._aircraft["AC001"]["lat"] = 39.10
-        env._wrapper._aircraft["AC001"]["lon"] = 116.10
-        env._wrapper._aircraft["AC001"]["hdg"] = 90.0
-        env._wrapper._aircraft["AC001"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC001", lat=39.10, lon=116.10, hdg=90.0, tas=450.0)
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)
@@ -130,14 +118,10 @@ class TestArrivalThresholdConfigurable:
 
         # AC000 placed ~5 NM away from goal → within 10 NM threshold
         eff.set_goal("AC000", 39.45, 116.45)
-        env._wrapper._aircraft["AC000"]["lat"] = 39.40
-        env._wrapper._aircraft["AC000"]["lon"] = 116.40
+        env._wrapper.set_aircraft_state("AC000", lat=39.40, lon=116.40)
 
         eff.set_goal("AC001", 39.40, 116.40)
-        env._wrapper._aircraft["AC001"]["lat"] = 39.10
-        env._wrapper._aircraft["AC001"]["lon"] = 116.10
-        env._wrapper._aircraft["AC001"]["hdg"] = 90.0
-        env._wrapper._aircraft["AC001"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC001", lat=39.10, lon=116.10, hdg=90.0, tas=450.0)
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)
@@ -159,16 +143,10 @@ class TestArrivalNotReachedNoTermination:
 
         # Both aircraft far from their goals
         eff.set_goal("AC000", 39.45, 116.45)
-        env._wrapper._aircraft["AC000"]["lat"] = 39.10
-        env._wrapper._aircraft["AC000"]["lon"] = 116.10
-        env._wrapper._aircraft["AC000"]["hdg"] = 90.0
-        env._wrapper._aircraft["AC000"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC000", lat=39.10, lon=116.10, hdg=90.0, tas=450.0)
 
         eff.set_goal("AC001", 39.40, 116.40)
-        env._wrapper._aircraft["AC001"]["lat"] = 39.20
-        env._wrapper._aircraft["AC001"]["lon"] = 116.20
-        env._wrapper._aircraft["AC001"]["hdg"] = 180.0
-        env._wrapper._aircraft["AC001"]["tas"] = 450.0
+        env._wrapper.set_aircraft_state("AC001", lat=39.20, lon=116.20, hdg=180.0, tas=450.0)
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)

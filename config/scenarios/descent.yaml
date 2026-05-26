@@ -1,0 +1,14 @@
+scenario: Descent
+num_aircraft: 3
+seed: 42
+action_space: discrete
+control_mode: SINGLE_RL
+conflict_generation: none
+
+reward_overrides:
+  altitude_reward:
+    weight: 1.0
+  conflict:
+    weight: 0.5
+  smoothness:
+    weight: 0.2

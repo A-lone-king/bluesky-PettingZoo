@@ -85,3 +85,8 @@ desktop.ini
 # ========== 工具目录 ==========
 .claude/
 .rtk/
+
+# ========== 临时规划/实验 ==========
+spec3/
+spec4/
+models_test/

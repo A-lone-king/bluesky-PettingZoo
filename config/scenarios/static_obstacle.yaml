@@ -1,0 +1,13 @@
+scenario: StaticObstacle
+num_aircraft: 1
+num_obstacles: 3
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: none
+
+reward_overrides:
+  efficiency:
+    weight: 0.7
+  obstacle_intrusion:
+    weight: 0.3

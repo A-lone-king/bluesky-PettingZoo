@@ -28,7 +28,7 @@ from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -51,7 +51,7 @@ def _make_env_with_scenario(
     scenario: MergeScenario,
 ) -> BlueSkyMARLEnv:
     """Create a BlueSkyMARLEnv with a MergeScenario."""
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -168,11 +168,7 @@ class TestMergeArrivalAtFAF:
 
         # Place aircraft at its FAF waypoint
         faf = scenario.get_waypoint(acid)
-        wrapper._aircraft[acid].update({
-            "lat": faf["lat"],
-            "lon": faf["lon"],
-            "alt": faf["alt"],
-        })
+        wrapper.set_aircraft_state(acid, lat=faf["lat"], lon=faf["lon"], alt=faf["alt"])
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, terminations, _, _ = env.step(actions)

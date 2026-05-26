@@ -11,6 +11,22 @@ import yaml
 
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
+
+@pytest.fixture
+def bluesky_wrapper(default_config: dict[str, Any]):
+    """Provide a fresh BlueSkyWrapper with real BlueSky simulation.
+
+    Initializes BlueSky on first call (session-wide idempotent),
+    resets aircraft state before each test, and closes after.
+    """
+    from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+
+    wrapper = BlueSkyWrapper(default_config)
+    wrapper.init_simulation()
+    wrapper.reset()
+    yield wrapper
+    wrapper.close()
+
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 
 

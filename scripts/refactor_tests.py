@@ -35,15 +35,15 @@ def process_file(filepath: str) -> None:
     original = content
     changed = False
 
-    # Remove FakeBlueSkyWrapper class
+    # Remove BlueSkyWrapper class
     content, removed = remove_block(
         content,
-        r"class FakeBlueSkyWrapper:",
+        r"class BlueSkyWrapper:",
         [r"\n# -{10,}\n", r"\nclass [A-Z]", r"\ndef [a-z_]"],
     )
     if removed:
         changed = True
-        print(f"  Removed FakeBlueSkyWrapper from {filepath}")
+        print(f"  Removed BlueSkyWrapper from {filepath}")
 
     # Remove _make_config function
     content, removed = remove_block(
@@ -97,8 +97,8 @@ def process_file(filepath: str) -> None:
 
             # Determine what imports are needed
             imports = []
-            if "FakeBlueSkyWrapper" in original and "class FakeBlueSkyWrapper" not in content:
-                imports.append("from tests.helpers.fake_wrapper import FakeBlueSkyWrapper")
+            if "BlueSkyWrapper" in original and "class BlueSkyWrapper" not in content:
+                imports.append("from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper")
             if "_make_config" in original and "def _make_config" not in content:
                 imports.append("from tests.helpers.env_factory import make_config as _make_config")
             if "_write_rewards_yaml" in original and "def _write_rewards_yaml" not in content:

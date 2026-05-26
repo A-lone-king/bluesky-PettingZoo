@@ -16,7 +16,7 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-from .fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
 # Default test config template
 _DEFAULT_CONFIG: dict[str, Any] = {
@@ -125,7 +125,7 @@ def make_env(
     rewards: dict[str, Any] | None = None,
     **config_overrides: Any,
 ) -> BlueSkyMARLEnv:
-    """Create a fully wired BlueSkyMARLEnv with FakeBlueSkyWrapper.
+    """Create a fully wired BlueSkyMARLEnv with BlueSkyWrapper.
 
     Args:
         tmp_path: pytest tmp_path fixture for writing rewards YAML.
@@ -150,7 +150,7 @@ def make_env(
     rewards_path = write_rewards_yaml(tmp_path, rewards_yaml)
     config["_rewards_yaml"] = str(rewards_path)
 
-    wrapper = FakeBlueSkyWrapper(config)
+    wrapper = BlueSkyWrapper(config)
     obs_manager = ObservationManager(config)
     action_translator = ActionTranslator(config)
 

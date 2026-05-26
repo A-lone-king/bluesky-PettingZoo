@@ -1,6 +1,6 @@
 """Smoke test: verify PPO can learn in BlueSkyMARLEnv.
 
-Uses FakeBlueSkyWrapper + WaypointNavScenario (1 aircraft, no conflicts).
+Uses BlueSkyWrapper + WaypointNavScenario (1 aircraft, no conflicts).
 The agent must learn to turn toward its waypoint to collect arrival rewards.
 
 Success criteria:
@@ -34,7 +34,7 @@ from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config, write_rewards_yaml
 
 
@@ -48,7 +48,7 @@ def _make_env(tmp_path: Path) -> SingleAgentGymWrapper:
         rewards_cfg = yaml.safe_load(f)
     merged = {**config, **rewards_cfg}
 
-    wrapper = FakeBlueSkyWrapper(config)
+    wrapper = BlueSkyWrapper(config)
     obs_manager = ObservationManager(config)
     action_translator = ActionTranslator(config)
     calc = RewardCalculator()

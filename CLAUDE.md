@@ -14,12 +14,16 @@
 
 ```
 bluesky-PettingZoo/
-├── bluesky/          # BlueSky 官方仿真平台（clone）
 ├── bluesky-gym/      # BlueSky-Gym 单智能体环境（clone，参考实现）
 ├── PettingZoo/       # PettingZoo 多智能体框架（clone）
 ├── bluesky.wiki/     # BlueSky 官方文档
-└── src/              # 本项目核心代码
+├── src/              # 本项目核心代码
+├── config/           # YAML 配置文件（default, rewards, scenarios）
+├── scripts/          # 训练和评估脚本
+└── tests/            # 测试套件（1026 个用例）
 ```
+
+BlueSky 仿真引擎通过 `pip install "bluesky-simulator[full]"` 安装，无需本地 clone。
 
 ## 技术架构
 
@@ -69,6 +73,8 @@ class ParallelEnv:
 - `sector_cr_env.py` — 扇区冲突解脱
 - `descent_env.py` — 下降阶段
 - `merge_env.py` — 汇合冲突
+- `static_obstacle_env.py` — 禁飞区规避
+- `plan_waypoint_env.py` — 顺序航路点导航
 
 ## 工程规范
 

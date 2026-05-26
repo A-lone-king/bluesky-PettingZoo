@@ -21,9 +21,9 @@ class EfficiencyReward(RewardComponent):
     def __init__(self, config: dict[str, Any]) -> None:
         comp = config.get("components", {}).get("efficiency", {})
         self._max_deviation: float = comp.get("max_deviation_nm", 50)
-        self._deviation_scale: float = comp.get("deviation_penalty_scale", 5)
-        self._arrival_reward: float = comp.get("arrival_reward", 10)
-        self._step_penalty: float = comp.get("step_penalty", -0.01)
+        self._deviation_scale: float = comp.get("deviation_penalty_scale", 0.0)
+        self._arrival_reward: float = comp.get("arrival_reward", 1.0)
+        self._step_penalty: float = comp.get("step_penalty", 0.0)
         self._arrival_threshold: float = comp.get("arrival_threshold_nm", 2)
         self._goals: dict[str, tuple[float, float]] = {}
 

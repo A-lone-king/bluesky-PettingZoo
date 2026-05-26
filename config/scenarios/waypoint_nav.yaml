@@ -1,0 +1,12 @@
+scenario: WaypointNav
+num_aircraft: 3
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: none
+
+reward_overrides:
+  efficiency:
+    weight: 0.8
+  drift_penalty:
+    weight: 0.2

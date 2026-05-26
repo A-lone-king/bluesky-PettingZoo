@@ -1,0 +1,16 @@
+scenario: SectorCapacity
+num_aircraft: 6
+num_sectors: 2
+sector_capacity: 4
+seed: 42
+action_space: discrete
+control_mode: MULTI_RL
+conflict_generation: none
+
+reward_overrides:
+  conflict:
+    weight: 0.5
+  capacity:
+    weight: 0.3
+  efficiency:
+    weight: 0.2

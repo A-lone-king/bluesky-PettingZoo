@@ -80,6 +80,8 @@ class ObservationManager:
         airspace: dict[str, Any] | None = None,
         obstacle_polygons: list[list[tuple[float, float]]] | None = None,
         agent_priorities: dict[str, float] | None = None,
+        waypoints: list[dict[str, float]] | None = None,
+        waypoints_reached: list[bool] | None = None,
     ) -> dict[str, Any]:
         """Generate complete observation package.
 
@@ -205,6 +207,31 @@ class ObservationManager:
         }
         if obstacles_obs is not None:
             observation["obstacles"] = obstacles_obs
+
+        # Build waypoints observation (for PlanWaypoint scenario)
+        if waypoints is not None:
+            num_wp = len(waypoints)
+            wp_features = np.zeros((num_wp, 4), dtype=np.float32)
+            wp_mask = np.zeros(num_wp, dtype=np.int8)
+            for i, wp in enumerate(waypoints):
+                dist = haversine_distance(
+                    own_state["lat"], own_state["lon"], wp["lat"], wp["lon"],
+                )
+                bear = bearing(
+                    own_state["lat"], own_state["lon"], wp["lat"], wp["lon"],
+                )
+                reached = (waypoints_reached[i] if waypoints_reached is not None else False)
+                wp_features[i] = [
+                    self._normalizer.normalize_distance(dist),
+                    self._normalizer.normalize_bearing_cos(bear),
+                    self._normalizer.normalize_bearing_sin(bear),
+                    1.0 if reached else 0.0,
+                ]
+                wp_mask[i] = 0 if reached else 1
+            observation["waypoints"] = {
+                "features": wp_features,
+                "mask": wp_mask,
+            }
 
         # Build textual state
         observable_list = [

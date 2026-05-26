@@ -3,14 +3,15 @@
 Train PPO on all scenarios and compare against Random and RuleBased baselines.
 
 Usage:
-    python scripts/train_ppo_scenarios.py
+    python scripts/train_ppo_scenarios.py --scenario HorizontalCR --timesteps 50000
+    python scripts/train_ppo_scenarios.py --scenario HorizontalCR --resume models/HorizontalCR/checkpoint_20000.zip
 """
 
 from __future__ import annotations
 
+import argparse
 import sys
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
@@ -31,23 +32,52 @@ from bluesky_pettingzoo.rewards.components.fairness import FairnessReward
 from bluesky_pettingzoo.rewards.components.flow_efficiency import FlowEfficiencyReward
 from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
+from bluesky_pettingzoo.training.checkpoint import CheckpointManager
+from bluesky_pettingzoo.training.logger import CSVLoggerCallback
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+from stable_baselines3.common.callbacks import BaseCallback
 
-from scripts.evaluate_baselines import BaselineMetrics
-
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config, write_rewards_yaml
 
 
-# Scenario configurations for training
-SCENARIO_CONFIGS: list[dict[str, Any]] = [
-    {"name": "HorizontalCR", "scenario": None, "num_aircraft": 3, "scenario_cls": "HorizontalCRScenario"},
-    {"name": "VerticalCR", "scenario": None, "num_aircraft": 3, "scenario_cls": "VerticalCRScenario"},
-    {"name": "SectorCR", "scenario": None, "num_aircraft": 3, "scenario_cls": "SectorCRScenario"},
-    {"name": "WaypointNav", "scenario": None, "num_aircraft": 3, "scenario_cls": "WaypointNavScenario"},
-    {"name": "Merge", "scenario": None, "num_aircraft": 5, "scenario_cls": "MergeScenario"},
-    {"name": "Descent", "scenario": None, "num_aircraft": 3, "scenario_cls": "DescentScenario"},
-]
+SCENARIO_MAP: dict[str, str] = {
+    "HorizontalCR": "HorizontalCRScenario",
+    "VerticalCR": "VerticalCRScenario",
+    "SectorCR": "SectorCRScenario",
+    "WaypointNav": "WaypointNavScenario",
+    "Merge": "MergeScenario",
+    "Descent": "DescentScenario",
+    "StaticObstacle": "StaticObstacleScenario",
+    "SectorCapacity": "SectorCapacityScenario",
+    "RouteNav": "RouteNavScenario",
+    "PlanWaypoint": "PlanWaypointScenario",
+}
+
+
+def _resolve_scenario(name: str, num_aircraft: int, seed: int) -> BaseScenario:
+    """Import and instantiate a scenario class by name."""
+    cls_name = SCENARIO_MAP[name]
+    from bluesky_pettingzoo.envs.scenarios import horizontal_cr, vertical_cr, sector_cr
+    from bluesky_pettingzoo.envs.scenarios import waypoint_nav, merge, descent
+    from bluesky_pettingzoo.envs.scenarios import static_obstacle, sector_capacity, route_nav
+    from bluesky_pettingzoo.envs.scenarios import plan_waypoint
+
+    module_map = {
+        "HorizontalCRScenario": horizontal_cr,
+        "VerticalCRScenario": vertical_cr,
+        "SectorCRScenario": sector_cr,
+        "WaypointNavScenario": waypoint_nav,
+        "MergeScenario": merge,
+        "DescentScenario": descent,
+        "StaticObstacleScenario": static_obstacle,
+        "SectorCapacityScenario": sector_capacity,
+        "RouteNavScenario": route_nav,
+        "PlanWaypointScenario": plan_waypoint,
+    }
+    mod = module_map[cls_name]
+    cls = getattr(mod, cls_name)
+    return cls(num_aircraft=num_aircraft, seed=seed)
 
 
 def make_scenario_env_factory(
@@ -55,11 +85,15 @@ def make_scenario_env_factory(
     scenario: BaseScenario,
     num_aircraft: int,
     max_steps: int,
+    wrapper_cls: type | None = None,
+    render_mode: str | None = None,
 ) -> Callable[[], SingleAgentGymWrapper]:
     """Return a callable that creates a SingleAgentGymWrapper env."""
 
     def factory() -> SingleAgentGymWrapper:
         config = make_config(initial_count=num_aircraft, max_steps=max_steps)
+        if render_mode:
+            config["render_mode"] = render_mode
         rewards_path = write_rewards_yaml(tmp_path)
         config["_rewards_yaml"] = str(rewards_path)
 
@@ -67,23 +101,23 @@ def make_scenario_env_factory(
             rewards_cfg = yaml.safe_load(f)
         merged = {**config, **rewards_cfg}
 
-        wrapper = FakeBlueSkyWrapper(config)
+        if wrapper_cls is not None:
+            wrapper = wrapper_cls(config)
+        else:
+            wrapper = BlueSkyWrapper(config)
         obs_manager = ObservationManager(config)
         action_translator = ActionTranslator(config)
         calc = RewardCalculator()
         calc.register(ConflictPenalty(merged), weight=1.0)
         calc.register(SmoothnessPenalty(merged), weight=0.5)
         calc.register(EfficiencyReward(merged), weight=0.3)
-        # Register obstacle intrusion if scenario has obstacles
         if hasattr(scenario, "get_obstacles"):
             obs_comp = ObstacleIntrusion()
             obs_comp.set_obstacles(scenario.get_obstacles())
             calc.register(obs_comp, weight=1.0)
-        # Register capacity penalty if scenario has sectors
         if hasattr(scenario, "get_sectors"):
             cap_comp = CapacityPenalty(merged)
             calc.register(cap_comp, weight=1.0)
-        # Register flow efficiency reward if scenario has sectors
         if hasattr(scenario, "get_sectors"):
             calc.register(FlowEfficiencyReward(merged), weight=0.2)
             calc.register(FairnessReward(merged), weight=0.1)
@@ -102,250 +136,147 @@ def make_scenario_env_factory(
     return factory
 
 
-class PPOTrainer:
-    """Train and evaluate PPO on a single scenario."""
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments."""
+    parser = argparse.ArgumentParser(description="PPO training on BlueSky scenarios")
+    parser.add_argument("--scenario", type=str, default="HorizontalCR",
+                        choices=list(SCENARIO_MAP.keys()),
+                        help="Scenario to train on")
+    parser.add_argument("--algorithm", type=str, default="PPO",
+                        choices=["PPO", "SAC", "TD3", "DDPG"],
+                        help="RL algorithm to use")
+    parser.add_argument("--action-space", type=str, default="discrete",
+                        choices=["discrete", "continuous"],
+                        help="Action space type")
+    parser.add_argument("--timesteps", type=int, default=500_000,
+                        help="Total training timesteps")
+    parser.add_argument("--resume", type=str, default=None,
+                        help="Path to checkpoint to resume from")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed")
+    parser.add_argument("--save-dir", type=str, default="models",
+                        help="Directory to save models and logs")
+    parser.add_argument("--max-steps", type=int, default=50,
+                        help="Max steps per episode")
+    parser.add_argument("--num-aircraft", type=int, default=3,
+                        help="Number of aircraft in scenario")
+    parser.add_argument("--render", action="store_true", default=False,
+                        help="Enable Pygame rendering during training")
+    return parser.parse_args(argv)
 
-    def __init__(
-        self,
-        tmp_path: Path,
-        scenario_name: str,
-        scenario: BaseScenario,
-        num_aircraft: int,
-        max_steps: int = 50,
-        total_timesteps: int = 50_000,
-    ) -> None:
+
+def _get_algo_class(algorithm: str):
+    """Return the SB3 model class for the given algorithm name."""
+    if algorithm == "PPO":
         from stable_baselines3 import PPO
+        return PPO
+    elif algorithm == "SAC":
+        from stable_baselines3 import SAC
+        return SAC
+    elif algorithm == "TD3":
+        from stable_baselines3 import TD3
+        return TD3
+    elif algorithm == "DDPG":
+        from stable_baselines3 import DDPG
+        return DDPG
+    else:
+        raise ValueError(f"Unknown algorithm: {algorithm}")
 
-        self.scenario_name = scenario_name
-        self.total_timesteps = total_timesteps
-        self._tmp_path = tmp_path
-        self._factory = make_scenario_env_factory(tmp_path, scenario, num_aircraft, max_steps)
-        self.env = self._factory()
 
-        self.model = PPO(
-            "MultiInputPolicy",
-            self.env,
-            n_steps=128,
-            batch_size=64,
-            n_epochs=4,
-            learning_rate=3e-4,
-            verbose=0,
-            device="cpu",
-            seed=42,
+def _make_model(algo_cls, env, args):
+    """Create a new model instance for the given algorithm."""
+    common_kwargs = dict(
+        policy="MultiInputPolicy",
+        env=env,
+        learning_rate=3e-4,
+        verbose=0,
+        device="cpu",
+        seed=args.seed,
+    )
+    if args.algorithm == "PPO":
+        return algo_cls(n_steps=2048, batch_size=64, n_epochs=4, **common_kwargs)
+    else:
+        # SAC/TD3/DDPG use batch_size and buffer_size
+        return algo_cls(batch_size=256, buffer_size=100_000, **common_kwargs)
+
+
+def train_scenario(args: argparse.Namespace) -> dict[str, float]:
+    """Train an RL algorithm on a single scenario with logging and checkpoints."""
+    algo_cls = _get_algo_class(args.algorithm)
+    # SAC/TD3/DDPG require continuous action space
+    action_space = getattr(args, "action_space", "discrete")
+    if args.algorithm in ("SAC", "TD3", "DDPG"):
+        action_space = "continuous"
+
+    scenario = _resolve_scenario(args.scenario, args.num_aircraft, args.seed)
+    # Set action space type on scenario so env creates the right space
+    if action_space == "continuous":
+        scenario.action_space_type = "continuous"
+    save_dir = Path(args.save_dir)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        factory = make_scenario_env_factory(
+            tmp_path, scenario, args.num_aircraft, args.max_steps,
+            render_mode="human" if getattr(args, "render", False) else None,
+        )
+        env = factory()
+
+        # Setup checkpoint manager (saves to save_dir/{scenario}/{algorithm}/)
+        ckpt_mgr = CheckpointManager(
+            save_dir=save_dir,
+            scenario=args.scenario,
+            save_interval=max(args.timesteps // 5, 1),
+            max_checkpoints=5,
+            seed=args.seed,
+            algorithm=args.algorithm,
         )
 
-    def train(self) -> dict[str, float]:
-        """Train the model and return metrics."""
-        initial_reward = self._evaluate_model(n_episodes=3)
-        self.model.learn(total_timesteps=self.total_timesteps)
-        final_reward = self._evaluate_model(n_episodes=3)
-        return {
-            "initial_reward": initial_reward,
-            "final_reward": final_reward,
-            "improvement": final_reward - initial_reward,
-        }
-
-    def evaluate(self, n_episodes: int = 20) -> BaselineMetrics:
-        """Evaluate the trained model."""
-        from scripts.evaluate_baselines import EpisodeResult
-
-        results: list[Any] = []
-        for _ in range(n_episodes):
-            env = self._factory()
-            try:
-                obs, _ = env.reset(seed=None)
-                total_reward = 0.0
-                arrived = False
-                nmac = False
-                truncated = False
-
-                for step in range(60):
-                    action, _ = self.model.predict(obs, deterministic=True)
-                    obs, reward, terminated, truncated_flag, info = env.step(action)
-                    total_reward += reward
-                    if terminated:
-                        if reward > 0:
-                            arrived = True
-                        else:
-                            nmac = True
-                        break
-                    if truncated_flag:
-                        truncated = True
-                        break
-
-                results.append(EpisodeResult(
-                    total_reward=total_reward,
-                    steps=min(step + 1, 60),
-                    arrived=arrived,
-                    nmac=nmac,
-                    truncated=truncated,
-                ))
-            finally:
-                env.close()
-
-        return BaselineMetrics.from_results(results)
-
-    def _evaluate_model(self, n_episodes: int = 3) -> float:
-        """Quick evaluation during training."""
-        rewards = []
-        for _ in range(n_episodes):
-            obs, _ = self.env.reset(seed=None)
-            total = 0.0
-            for _ in range(60):
-                action, _ = self.model.predict(obs, deterministic=True)
-                obs, reward, terminated, truncated, _ = self.env.step(action)
-                total += reward
-                if terminated or truncated:
-                    break
-            rewards.append(total)
-        return float(np.mean(rewards))
-
-    def close(self) -> None:
-        self.env.close()
-
-
-def make_baseline_env_factory(
-    tmp_path: Path,
-    scenario: BaseScenario,
-    num_aircraft: int,
-    max_steps: int,
-) -> Callable[[], BlueSkyMARLEnv]:
-    """Return a callable that creates a raw BlueSkyMARLEnv for baseline evaluation."""
-
-    def factory() -> BlueSkyMARLEnv:
-        config = make_config(initial_count=num_aircraft, max_steps=max_steps)
-        rewards_path = write_rewards_yaml(tmp_path)
-        config["_rewards_yaml"] = str(rewards_path)
-
-        with open(rewards_path, encoding="utf-8") as f:
-            rewards_cfg = yaml.safe_load(f)
-        merged = {**config, **rewards_cfg}
-
-        wrapper = FakeBlueSkyWrapper(config)
-        obs_manager = ObservationManager(config)
-        action_translator = ActionTranslator(config)
-        calc = RewardCalculator()
-        calc.register(ConflictPenalty(merged), weight=1.0)
-        calc.register(SmoothnessPenalty(merged), weight=0.5)
-        calc.register(EfficiencyReward(merged), weight=0.3)
-        if hasattr(scenario, "get_obstacles"):
-            obs_comp = ObstacleIntrusion()
-            obs_comp.set_obstacles(scenario.get_obstacles())
-            calc.register(obs_comp, weight=1.0)
-        if hasattr(scenario, "get_sectors"):
-            cap_comp = CapacityPenalty(merged)
-            calc.register(cap_comp, weight=1.0)
-        if hasattr(scenario, "get_sectors"):
-            calc.register(FlowEfficiencyReward(merged), weight=0.2)
-            calc.register(FairnessReward(merged), weight=0.1)
-
-        return BlueSkyMARLEnv(
-            config=config,
-            wrapper=wrapper,
-            observation_manager=obs_manager,
-            action_translator=action_translator,
-            reward_calculator=calc,
-            rewards_config=rewards_cfg,
-            scenario=scenario,
+        # Setup CSV logger
+        log_dir = save_dir / args.scenario / args.algorithm / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        csv_callback = CSVLoggerCallback(
+            csv_path=log_dir / "training_log.csv",
+            algorithm=args.algorithm,
+            action_space=action_space,
         )
 
-    return factory
+        # Create or resume model
+        if args.resume:
+            model = algo_cls.load(args.resume, env=env)
+        else:
+            model = _make_model(algo_cls, env, args)
+
+        # Train
+        model.learn(
+            total_timesteps=args.timesteps,
+            callback=[csv_callback, _CheckpointCallback(ckpt_mgr)],
+        )
+
+        # Save final
+        ckpt_mgr.save_final(model, timestep=model.num_timesteps, episode=csv_callback._episode)
+        csv_callback._on_training_end()
+        env.close()
+
+    return {"timesteps": model.num_timesteps, "algorithm": args.algorithm}
+
+
+class _CheckpointCallback(BaseCallback):
+    """Callback that delegates checkpoint saving to CheckpointManager."""
+
+    def __init__(self, mgr: CheckpointManager, verbose: int = 0) -> None:
+        super().__init__(verbose=verbose)
+        self._mgr = mgr
+
+    def _on_step(self) -> bool:
+        self._mgr.maybe_save(self.model, timestep=self.num_timesteps, episode=self.n_calls)
+        return True
 
 
 def main() -> None:
-    """Train PPO on all scenarios and compare against baselines."""
-    from bluesky_pettingzoo.agents.random_agent import RandomAgent
-    from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
-    from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
-    from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
-    from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
-    from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
-    from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
-    from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
-    from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
-    from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
-    from bluesky_pettingzoo.envs.scenarios.route_nav import RouteNavScenario
-    from scripts.evaluate_baselines import evaluate_agent
-
-    scenarios = [
-        {"name": "HorizontalCR", "scenario": HorizontalCRScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
-        {"name": "VerticalCR", "scenario": VerticalCRScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
-        {"name": "SectorCR", "scenario": SectorCRScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
-        {"name": "WaypointNav", "scenario": WaypointNavScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
-        {"name": "Merge", "scenario": MergeScenario(num_aircraft=5, seed=42), "num_aircraft": 5},
-        {"name": "Descent", "scenario": DescentScenario(num_aircraft=3, seed=42), "num_aircraft": 3},
-        {"name": "StaticObstacle", "scenario": StaticObstacleScenario(num_aircraft=1, seed=42), "num_aircraft": 1},
-        {"name": "SectorCapacity", "scenario": SectorCapacityScenario(num_aircraft=6, num_sectors=2, sector_capacity=4, seed=42), "num_aircraft": 6},
-        {"name": "RouteNav", "scenario": RouteNavScenario(num_aircraft=4, seed=42), "num_aircraft": 4},
-    ]
-
-    total_timesteps = 50_000
-    max_steps = 50
-    eval_episodes = 20
-
-    print("=" * 90)
-    print("PPO Multi-Scenario Training & Baseline Comparison")
-    print(f"Timesteps per scenario: {total_timesteps}, Max steps/episode: {max_steps}")
-    print(f"Evaluation episodes: {eval_episodes}")
-    print("=" * 90)
-
-    header = f"{'Scenario':<15} {'Agent':<12} {'MeanReward':>12} {'StdReward':>10} {'Arrival%':>10} {'NMAC%':>8} {'MeanSteps':>10}"
-    print(header)
-    print("-" * 90)
-
-    for cfg in scenarios:
-        name = cfg["name"]
-        scenario = cfg["scenario"]
-        num_aircraft = cfg["num_aircraft"]
-
-        # Train PPO
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-            trainer = PPOTrainer(
-                tmp_path=tmp_path,
-                scenario_name=name,
-                scenario=scenario,
-                num_aircraft=num_aircraft,
-                max_steps=max_steps,
-                total_timesteps=total_timesteps,
-            )
-            train_metrics = trainer.train()
-            ppo_metrics = trainer.evaluate(n_episodes=eval_episodes)
-            trainer.close()
-
-        print(
-            f"{name:<15} {'PPO':<12} "
-            f"{ppo_metrics.mean_reward:>12.2f} {ppo_metrics.std_reward:>10.2f} "
-            f"{ppo_metrics.arrival_rate:>9.1%} {ppo_metrics.nmac_rate:>7.1%} "
-            f"{ppo_metrics.mean_steps:>10.1f}"
-        )
-
-        # Evaluate baselines using raw BlueSkyMARLEnv
-        with tempfile.TemporaryDirectory() as tmp:
-            tmp_path = Path(tmp)
-
-            def baseline_factory(s=scenario, n=num_aircraft, m=max_steps, t=tmp_path):
-                return make_baseline_env_factory(t, s, n, m)()
-
-            random_metrics = evaluate_agent(baseline_factory, RandomAgent(), num_episodes=eval_episodes)
-            rule_metrics = evaluate_agent(baseline_factory, RuleBasedAgent(), num_episodes=eval_episodes)
-
-        print(
-            f"{name:<15} {'Random':<12} "
-            f"{random_metrics.mean_reward:>12.2f} {random_metrics.std_reward:>10.2f} "
-            f"{random_metrics.arrival_rate:>9.1%} {random_metrics.nmac_rate:>7.1%} "
-            f"{random_metrics.mean_steps:>10.1f}"
-        )
-        print(
-            f"{name:<15} {'RuleBased':<12} "
-            f"{rule_metrics.mean_reward:>12.2f} {rule_metrics.std_reward:>10.2f} "
-            f"{rule_metrics.arrival_rate:>9.1%} {rule_metrics.nmac_rate:>7.1%} "
-            f"{rule_metrics.mean_steps:>10.1f}"
-        )
-        print("-" * 90)
-
-    print("=" * 90)
-    print("Training complete.")
+    """CLI entry point."""
+    args = parse_args()
+    train_scenario(args)
 
 
 if __name__ == "__main__":

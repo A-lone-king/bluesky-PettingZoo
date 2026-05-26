@@ -1,7 +1,13 @@
-"""Baseline evaluation — run agents on scenarios and collect metrics."""
+"""Baseline evaluation — run agents on scenarios and collect metrics.
+
+Usage:
+    python scripts/evaluate_baselines.py --scenario HorizontalCR --episodes 20
+    python scripts/evaluate_baselines.py --scenario HorizontalCR --model models/HorizontalCR/checkpoint_final.zip
+"""
 
 from __future__ import annotations
 
+import argparse
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -23,9 +29,10 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
+from bluesky_pettingzoo.training.evaluator import EvalResult, ModelEvaluator
 from bluesky_pettingzoo.utils.types import AgentID
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config, write_rewards_yaml
 
 
@@ -78,7 +85,6 @@ def run_episode(env: BlueSkyMARLEnv, agent: BaseAgent, max_steps: int = 100) -> 
         if not env.agents:
             break
 
-        # Build action spaces for active agents
         action_spaces = {aid: env.action_space(aid) for aid in env.agents}
         actions = agent.act(observations, action_spaces)
 
@@ -87,7 +93,6 @@ def run_episode(env: BlueSkyMARLEnv, agent: BaseAgent, max_steps: int = 100) -> 
 
         for aid, t in terminations.items():
             if t:
-                # Check if it was arrival (efficiency reward > 0) or NMAC
                 if rewards.get(aid, 0) > 0:
                     arrived = True
                 else:
@@ -144,7 +149,7 @@ def make_env_factory(
             rewards_cfg = yaml.safe_load(f)
         merged = {**config, **rewards_cfg}
 
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         obs_manager = ObservationManager(config)
         action_translator = ActionTranslator(config)
         calc = RewardCalculator()
@@ -172,71 +177,77 @@ def make_env_factory(
     return factory
 
 
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments."""
+    parser = argparse.ArgumentParser(description="Evaluate baselines and trained models")
+    parser.add_argument("--scenario", type=str, default="HorizontalCR",
+                        help="Scenario to evaluate on")
+    parser.add_argument("--model", type=str, default=None,
+                        help="Path to trained PPO model checkpoint")
+    parser.add_argument("--episodes", type=int, default=20,
+                        help="Number of evaluation episodes")
+    parser.add_argument("--seed", type=int, default=42,
+                        help="Random seed")
+    parser.add_argument("--max-steps", type=int, default=50,
+                        help="Max steps per episode")
+    parser.add_argument("--num-aircraft", type=int, default=3,
+                        help="Number of aircraft in scenario")
+    return parser.parse_args(argv)
+
+
+def run_evaluation(args: argparse.Namespace) -> list[EvalResult]:
+    """Run evaluation and print comparison table."""
+    from scripts.train_ppo_scenarios import _resolve_scenario, make_scenario_env_factory
+
+    scenario = _resolve_scenario(args.scenario, args.num_aircraft, args.seed)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        def env_factory():
+            return make_scenario_env_factory(
+                tmp_path, scenario, args.num_aircraft, args.max_steps,
+            )()
+
+        evaluator = ModelEvaluator(
+            env_factory=env_factory,
+            num_episodes=args.episodes,
+            max_steps=args.max_steps,
+            seed=args.seed,
+        )
+
+        from bluesky_pettingzoo.agents.random_agent import RandomAgent
+        from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
+
+        results: list[EvalResult] = []
+
+        # Random baseline
+        random_result = evaluator._run_episodes("Random", agent=RandomAgent())
+        random_result.scenario = args.scenario
+        results.append(random_result)
+
+        # RuleBased baseline
+        rule_result = evaluator._run_episodes("RuleBased", agent=RuleBasedAgent())
+        rule_result.scenario = args.scenario
+        results.append(rule_result)
+
+        # PPO (trained or untrained)
+        if args.model:
+            ppo_result = evaluator.evaluate_ppo(Path(args.model))
+        else:
+            ppo_result = evaluator._run_episodes("PPO", agent=None)
+        ppo_result.scenario = args.scenario
+        results.append(ppo_result)
+
+    print(f"\nScenario: {args.scenario} ({args.episodes} episodes, seed={args.seed})")
+    print(ModelEvaluator.format_table(results))
+    return results
+
+
 def main() -> None:
-    """Run baseline agents on all scenarios and print results."""
-    from bluesky_pettingzoo.agents.random_agent import RandomAgent
-    from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
-    from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
-    from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
-    from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
-    from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
-    from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
-    from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
-    from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
-    from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
-
-    scenarios = {
-        "HorizontalCR": HorizontalCRScenario(num_aircraft=3, seed=42),
-        "VerticalCR": VerticalCRScenario(num_aircraft=3, seed=42),
-        "SectorCR": SectorCRScenario(num_aircraft=3, seed=42),
-        "WaypointNav": WaypointNavScenario(num_aircraft=3, seed=42),
-        "Merge": MergeScenario(num_aircraft=5, seed=42),
-        "Descent": DescentScenario(num_aircraft=3, seed=42),
-        "StaticObstacle": StaticObstacleScenario(num_aircraft=1, seed=42),
-        "SectorCapacity": SectorCapacityScenario(num_aircraft=6, num_sectors=2, sector_capacity=4, seed=42),
-    }
-
-    agents = {
-        "Random": RandomAgent(),
-        "RuleBased": RuleBasedAgent(),
-    }
-
-    num_episodes = 20
-    max_steps = 50
-
-    print("=" * 80)
-    print("Baseline Evaluation Results")
-    print(f"Episodes per scenario: {num_episodes}, Max steps: {max_steps}")
-    print("=" * 80)
-
-    header = f"{'Scenario':<15} {'Agent':<10} {'MeanReward':>12} {'StdReward':>10} {'Arrival%':>10} {'NMAC%':>8} {'MeanSteps':>10}"
-    print(header)
-    print("-" * 80)
-
-    _num_aircraft = {"Merge": 5, "StaticObstacle": 1, "SectorCapacity": 6}
-
-    for scenario_name, scenario in scenarios.items():
-        n_ac = _num_aircraft.get(scenario_name, 3)
-        for agent_name, agent in agents.items():
-            with tempfile.TemporaryDirectory() as tmp:
-                tmp_path = Path(tmp)
-                factory = make_env_factory(
-                    tmp_path=tmp_path,
-                    num_aircraft=n_ac,
-                    max_steps=max_steps,
-                    seed=42,
-                    scenario=scenario,
-                )
-                metrics = evaluate_agent(factory, agent, num_episodes=num_episodes)
-
-            print(
-                f"{scenario_name:<15} {agent_name:<10} "
-                f"{metrics.mean_reward:>12.2f} {metrics.std_reward:>10.2f} "
-                f"{metrics.arrival_rate:>9.1%} {metrics.nmac_rate:>7.1%} "
-                f"{metrics.mean_steps:>10.1f}"
-            )
-
-    print("=" * 80)
+    """CLI entry point."""
+    args = parse_args()
+    run_evaluation(args)
 
 
 if __name__ == "__main__":

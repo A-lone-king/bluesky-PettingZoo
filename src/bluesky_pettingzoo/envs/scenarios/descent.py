@@ -41,6 +41,21 @@ class DescentScenario(BaseScenario):
         self._bounds: dict[str, float] = {}
 
     @property
+    def control_mode(self) -> str:
+        """Descent uses SINGLE_RL: only the first aircraft is agent-controlled."""
+        return "SINGLE_RL"
+
+    @property
+    def ego_agent(self) -> str | None:
+        """The controllable aircraft."""
+        return self._agents[0] if self._agents else None
+
+    @property
+    def background_agents(self) -> list[str]:
+        """Background traffic (uncontrollable)."""
+        return list(self._agents[1:]) if len(self._agents) > 1 else []
+
+    @property
     def action_dimensions(self) -> list[int]:
         """Return which action indices are valid (0=heading, 1=altitude, 2=speed)."""
         return [1]  # altitude/vertical speed only

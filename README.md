@@ -7,11 +7,11 @@ BlueSky 是底层仿真引擎，负责飞行动力学、冲突检测和空域管
 ## 特性
 
 - **BlueSky 多智能体扩展** — 基于 PettingZoo ParallelEnv，将 BlueSky 从单智能体扩展为多智能体，原生支持主流 MARL 框架
-- **9 个场景** — 水平/垂直冲突解脱、扇区冲突、航路导航、进近汇合、下降阶段、禁飞区规避、扇区容量、航路网络
+- **10 个场景** — 水平/垂直冲突解脱、扇区冲突、航路导航、进近汇合、下降阶段、禁飞区规避、扇区容量、航路网络、顺序航路点
 - **模块化奖励函数** — 冲突惩罚、效率奖励、平滑惩罚，支持动态注册和权重配置
 - **SB3 集成** — 通过 `SingleAgentGymWrapper` 无缝对接 Stable-Baselines3
 - **配置驱动** — YAML 管理环境参数、奖励函数、观测空间
-- **601 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
+- **1026 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
 - **真实 BlueSky 集成** — 支持 headless 模式运行真实仿真器
 
 ## 安装
@@ -27,6 +27,9 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 安装依赖
 pip install -e .
+
+# 安装 BlueSky 仿真引擎
+pip install "bluesky-simulator[full]"
 
 # 安装开发依赖
 pip install -r requirements-dev.txt
@@ -98,6 +101,7 @@ python scripts/benchmark_performance.py
 | StaticObstacle | `static_obstacle.py` | 1 | 航向+速度 | 禁飞区规避，多边形障碍物检测 |
 | SectorCapacity | `sector_capacity.py` | 6 | 航向+速度 | 扇区容量管理，per-sector 容量约束 |
 | RouteNav | `route_nav.py` | 4 | 航向+速度 | 航路网络导航，交叉路线冲突检测 |
+| PlanWaypoint | `plan_waypoint.py` | 1 | 航向 | 顺序航路点导航，逐一到达 5 个航路点 |
 
 所有场景继承自 `BaseScenario`，可自定义：
 - `setup()` — 初始化飞机位置和航路点
@@ -115,11 +119,14 @@ bluesky-PettingZoo/
 │   ├── bluesky/          # BlueSky wrapper
 │   ├── envs/
 │   │   ├── parallel_env.py    # PettingZoo ParallelEnv 核心
-│   │   └── scenarios/         # 8 个场景实现
+│   │   └── scenarios/         # 10 个场景实现
 │   ├── observations/     # 观测管理器
 │   ├── rewards/
 │   │   ├── calculator.py      # 模块化奖励计算器
 │   │   └── components/        # 冲突/效率/平滑/障碍物奖励组件
+│   ├── flow/             # 流量管理（扇区容量调度）
+│   ├── training/         # 训练框架（PPO、检查点、评估）
+│   ├── rendering/        # 场景渲染器
 │   ├── utils/            # 类型定义、几何工具
 │   └── wrappers/
 │       ├── single_agent.py    # SB3 单智能体包装
@@ -127,7 +134,7 @@ bluesky-PettingZoo/
 │       └── wind_field.py
 ├── config/               # YAML 配置文件
 ├── scripts/              # 训练和评估脚本
-└── tests/                # 601 个测试用例
+└── tests/                # 1026 个测试用例
 ```
 
 ## 配置

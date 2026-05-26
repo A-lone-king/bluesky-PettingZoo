@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-bluesky = ["bluesky>=2024.1"]
+bluesky = ["bluesky-simulator>=1.0.7"]
 full = ["bluesky-pettingzoo[bluesky]"]
 dev = [
     "pytest>=7.0",
@@ -53,4 +53,5 @@ warn_unused_configs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "--cov=src/bluesky_pettingzoo --cov-report=term-missing"

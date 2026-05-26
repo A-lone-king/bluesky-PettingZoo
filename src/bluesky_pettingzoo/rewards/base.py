@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Union
+
+import numpy as np
 
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
@@ -21,7 +23,7 @@ class RewardComponent(ABC):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: Union[DiscreteAction, list, np.ndarray],
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,
@@ -31,7 +33,7 @@ class RewardComponent(ABC):
         Args:
             agent_id: The agent receiving the reward
             prev_state: Aircraft state before action
-            action: The discrete action taken
+            action: Discrete action or continuous action array
             curr_state: Aircraft state after action
             all_states: Current states of all aircraft
             step_count: Current episode step number (0-indexed)

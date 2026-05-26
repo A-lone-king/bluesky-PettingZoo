@@ -26,7 +26,7 @@ from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -49,7 +49,7 @@ def _make_env_with_scenario(
     scenario: SectorCRScenario,
 ) -> BlueSkyMARLEnv:
     """Create a BlueSkyMARLEnv with a SectorCRScenario."""
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -131,12 +131,7 @@ class TestSectorCRExitTruncation:
         # Place one aircraft well outside the polygon
         # The polygon is centered around mid_lat/mid_lon, so placing
         # an aircraft at the edge of the bounding box should be outside
-        wrapper._aircraft[agents[0]].update({
-            "lat": 39.0,  # at boundary edge
-            "lon": 116.0,
-            "alt": 35000,
-            "hdg": 90.0,
-        })
+        wrapper.set_aircraft_state(agents[0], lat=39.0, lon=116.0, alt=35000, hdg=90.0)
 
         initial_agents = set(env.agents)
         actions = {a: [2, 2, 2] for a in env.agents}
@@ -165,8 +160,8 @@ class TestSectorCRConflictDetection:
         # Place aircraft close together (within NMAC distance)
         mid_lat = 39.25
         mid_lon = 116.25
-        wrapper._aircraft[agents[0]].update({"lat": mid_lat, "lon": mid_lon, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": mid_lat, "lon": mid_lon + 0.03, "alt": 35000, "hdg": 270.0})
+        wrapper.set_aircraft_state(agents[0], lat=mid_lat, lon=mid_lon, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=mid_lat, lon=mid_lon + 0.03, alt=35000, hdg=270.0)
 
         dist = haversine_distance(mid_lat, mid_lon, mid_lat, mid_lon + 0.03)
         assert dist < 5.0  # Within NMAC distance
@@ -263,7 +258,7 @@ class TestSectorCRInitialPositions:
         assert set(positions.keys()) == set(agents)
 
         polygon = scenario.get_sector_polygon()
-        for acid, (lat, lon) in positions.items():
+        for acid, (lat, lon, _alt) in positions.items():
             assert point_in_polygon(lat, lon, polygon), (
                 f"{acid} position ({lat}, {lon}) is outside the polygon"
             )

@@ -99,7 +99,62 @@ class BlueSkyMARLEnv(ParallelEnv):
 
         # Cache space objects (PettingZoo requires identity stability)
         self._obs_space: spaces.Dict = self._obs_manager.observation_space()
-        self._act_space: spaces.MultiDiscrete = spaces.MultiDiscrete([5, 5, 5])
+
+        # Determine action space type from scenario
+        action_space_type = "discrete"
+        if scenario is not None:
+            action_space_type = getattr(scenario, "action_space_type", "discrete")
+
+        if action_space_type == "continuous":
+            cont_dims = 3
+            if scenario is not None:
+                cont_dims = getattr(scenario, "continuous_action_dims", 3)
+            self._act_space: spaces.MultiDiscrete | spaces.Box = spaces.Box(
+                low=-1.0, high=1.0, shape=(cont_dims,), dtype=np.float32,
+            )
+        else:
+            self._act_space = spaces.MultiDiscrete([5, 5, 5])
+
+        # Rendering
+        self._render_mode: str | None = config.get("render_mode")
+        self._renderer: Any = None
+
+    def _init_renderer(self) -> None:
+        """Initialize the Pygame renderer if render_mode='human'."""
+        if self._render_mode != "human":
+            return
+        from bluesky_pettingzoo.rendering.descent_renderer import DescentRenderer
+        from bluesky_pettingzoo.rendering.horizontal_cr_renderer import HorizontalCRRenderer
+        from bluesky_pettingzoo.rendering.merge_renderer import MergeRenderer
+        from bluesky_pettingzoo.rendering.plan_waypoint_renderer import PlanWaypointRenderer
+        from bluesky_pettingzoo.rendering.route_nav_renderer import RouteNavRenderer
+        from bluesky_pettingzoo.rendering.sector_capacity_renderer import SectorCapacityRenderer
+        from bluesky_pettingzoo.rendering.sector_cr_renderer import SectorCRRenderer
+        from bluesky_pettingzoo.rendering.static_obstacle_renderer import StaticObstacleRenderer
+        from bluesky_pettingzoo.rendering.vertical_cr_renderer import VerticalCRRenderer
+        from bluesky_pettingzoo.rendering.waypoint_nav_renderer import WaypointNavRenderer
+
+        scenario_name = ""
+        if self._scenario is not None:
+            scenario_name = getattr(self._scenario, "name", "")
+
+        renderer_map: dict[str, type] = {
+            "HorizontalCR": HorizontalCRRenderer,
+            "VerticalCR": VerticalCRRenderer,
+            "SectorCR": SectorCRRenderer,
+            "WaypointNav": WaypointNavRenderer,
+            "PlanWaypoint": PlanWaypointRenderer,
+            "Merge": MergeRenderer,
+            "Descent": DescentRenderer,
+            "StaticObstacle": StaticObstacleRenderer,
+            "SectorCapacity": SectorCapacityRenderer,
+            "RouteNav": RouteNavRenderer,
+        }
+        renderer_cls = renderer_map.get(scenario_name, HorizontalCRRenderer)
+        self._renderer = renderer_cls(width=800, height=600)
+        self._renderer.display()
+        if hasattr(self._renderer, "set_bounds"):
+            self._renderer.set_bounds(self._airspace)
 
     # ------------------------------------------------------------------
     # PettingZoo ParallelEnv interface
@@ -136,6 +191,7 @@ class BlueSkyMARLEnv(ParallelEnv):
         self._agent_sectors.clear()
         self._wrapper.init_simulation()
         self._wrapper.reset()
+        self._init_renderer()
 
         if self._scenario is not None:
             self._scenario.reset()
@@ -148,11 +204,13 @@ class BlueSkyMARLEnv(ParallelEnv):
             )
             for acid in self.agents:
                 if initial_positions is not None and acid in initial_positions:
-                    lat, lon = initial_positions[acid]
+                    pos = initial_positions[acid]
+                    lat, lon = pos[0], pos[1]
+                    alt = pos[2] if len(pos) >= 3 else self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
                 else:
                     lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
                     lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
-                alt = self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
+                    alt = self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
                 hdg = self._rng.uniform(spawn.heading_range[0], spawn.heading_range[1])
                 spd = self._rng.uniform(spawn.speed_range[0], spawn.speed_range[1])
                 self._wrapper.create_aircraft(acid, _AIRCRAFT_TYPE, lat, lon, alt, hdg, spd)
@@ -167,11 +225,9 @@ class BlueSkyMARLEnv(ParallelEnv):
             # Set delay goals (expected arrival time)
             delay_comp = self._find_delay_component()
             if delay_comp is not None:
-                from bluesky_pettingzoo.utils.geometry import haversine_distance
-                dt = self._config.get("simulation", {}).get("dt", 5.0)
+                dt = self.config.get("simulation", {}).get("dt", 5.0)
                 for acid in self.agents:
                     wp = self._scenario.get_waypoint(acid)
-                    own = new_states.get(acid) if 'new_states' in dir() else None
                     # Estimate initial distance from waypoint (use midpoint if no state yet)
                     mid_lat = (self._airspace["lat_min"] + self._airspace["lat_max"]) / 2
                     mid_lon = (self._airspace["lon_min"] + self._airspace["lon_max"]) / 2
@@ -183,6 +239,10 @@ class BlueSkyMARLEnv(ParallelEnv):
             obs_intrusion = self._find_obstacle_intrusion_component()
             if obs_intrusion is not None and hasattr(self._scenario, "get_obstacles"):
                 obs_intrusion.set_obstacles(self._scenario.get_obstacles())
+
+            # Configure NPC navigation (e.g. reso off, heading commands)
+            if hasattr(self._scenario, "configure_npc_navigation"):
+                self._scenario.configure_npc_navigation(self._wrapper)
         else:
             # V1.0 default: spawn aircraft at deterministic positions
             self.agents = []
@@ -216,21 +276,70 @@ class BlueSkyMARLEnv(ParallelEnv):
 
         # Translate actions to BlueSky commands
         all_states = self._get_all_aircraft_states()
+
+        # In SINGLE_RL mode, fill background actions from scenario
+        effective_actions = dict(actions)
+        if (
+            self._scenario is not None
+            and getattr(self._scenario, "control_mode", "MULTI_RL") == "SINGLE_RL"
+        ):
+            bg_actions = self._scenario.get_background_actions(all_states)
+            for bg_id in getattr(self._scenario, "background_agents", []):
+                if bg_id not in effective_actions:
+                    effective_actions[bg_id] = bg_actions.get(bg_id, [2, 2, 2])
+
         commands: list[str] = []
+        is_continuous = isinstance(self._act_space, spaces.Box)
         for agent_id in self.agents:
-            raw_action = actions.get(agent_id, [2, 2, 2])
-            action = DiscreteAction(
-                heading_idx=int(raw_action[0]),
-                altitude_idx=int(raw_action[1]),
-                speed_idx=int(raw_action[2]),
-            )
+            raw_action = effective_actions.get(agent_id)
             state = all_states.get(agent_id)
-            if state is not None:
+            if state is None:
+                continue
+            if is_continuous:
+                if raw_action is None:
+                    raw_action = [0.0, 0.0, 0.0]
+                commands.extend(
+                    self._action_translator.translate_continuous(agent_id, state, raw_action)
+                )
+            else:
+                if raw_action is None:
+                    raw_action = [2, 2, 2]
+                action = DiscreteAction(
+                    heading_idx=int(raw_action[0]),
+                    altitude_idx=int(raw_action[1]),
+                    speed_idx=int(raw_action[2]),
+                )
                 commands.extend(self._action_translator.translate(agent_id, state, action))
 
-        # Execute commands and advance simulation
+        # Execute commands and advance simulation with substep safety checks
         self._wrapper.send_commands_batch(commands)
-        self._wrapper.step_n(self._action_frequency)
+        self._substep_terminated: set[str] = set()
+
+        def _on_substep(_step: int) -> bool:
+            """Check safety-critical conditions after each substep."""
+            substep_states = self._get_all_aircraft_states()
+            for agent_id in list(self.agents):
+                own = substep_states.get(agent_id)
+                if own is None:
+                    continue
+                # NMAC check
+                others = [s for aid, s in substep_states.items() if aid != agent_id]
+                conflict = self._compute_conflict_status(own, others)
+                if conflict == "nmac":
+                    self._substep_terminated.add(agent_id)
+                    self.agents.remove(agent_id)
+                    self._wrapper.remove_aircraft(agent_id)
+                    continue
+                # Obstacle intrusion check
+                obs_intrusion = self._find_obstacle_intrusion_component()
+                if obs_intrusion is not None and obs_intrusion.is_intruded(own):
+                    self._substep_terminated.add(agent_id)
+                    self.agents.remove(agent_id)
+                    self._wrapper.remove_aircraft(agent_id)
+                    continue
+            return True  # always continue remaining substeps
+
+        self._wrapper.step_n(self._action_frequency, on_substep=_on_substep)
 
         # Update states
         new_states = self._get_all_aircraft_states()
@@ -297,27 +406,49 @@ class BlueSkyMARLEnv(ParallelEnv):
                 fairness.set_delays(self._flow_scheduler.get_handoff_delays())
 
         # Compute rewards (before removing departed aircraft)
+        # Include agents terminated during substeps so they receive final reward
+        all_reward_agents = list(self.agents) + [
+            aid for aid in self._substep_terminated if aid not in self.agents
+        ]
+        # Merge substep-terminated agents' states into new_states for reward computation
+        reward_states = dict(new_states)
+        for aid in self._substep_terminated:
+            if aid not in reward_states and aid in self._prev_states:
+                reward_states[aid] = self._prev_states[aid]
         rewards: dict[str, float] = {}
-        for agent_id in list(self.agents):
+        for agent_id in all_reward_agents:
             prev_st = self._prev_states.get(agent_id)
-            curr_st = new_states.get(agent_id)
+            curr_st = reward_states.get(agent_id)
             if prev_st is None or curr_st is None:
                 rewards[agent_id] = 0.0
                 continue
-            raw_action = actions.get(agent_id, [2, 2, 2])
-            action = DiscreteAction(
-                heading_idx=int(raw_action[0]),
-                altitude_idx=int(raw_action[1]),
-                speed_idx=int(raw_action[2]),
-            )
+            raw_action = actions.get(agent_id)
+            if is_continuous:
+                if raw_action is None:
+                    raw_action = [0.0, 0.0, 0.0]
+            else:
+                if raw_action is None:
+                    raw_action = [2, 2, 2]
+                raw_action = DiscreteAction(
+                    heading_idx=int(raw_action[0]),
+                    altitude_idx=int(raw_action[1]),
+                    speed_idx=int(raw_action[2]),
+                )
             rewards[agent_id] = self._reward_calculator.compute(
-                agent_id, prev_st, action, curr_st, new_states,
+                agent_id, prev_st, raw_action, curr_st, reward_states,
                 step_count=self._step_count,
             )
 
         # Build observations for all current agents (before removal)
-        agents_snapshot = list(self.agents)
+        # Include substep-terminated agents so they get observations/infos
+        agents_snapshot = list(self.agents) + [
+            aid for aid in self._substep_terminated if aid not in self.agents
+        ]
+        # For substep-terminated agents, use prev_states since they were removed from simulation
         all_agent_states = {aid: new_states[aid] for aid in agents_snapshot if aid in new_states}
+        for aid in self._substep_terminated:
+            if aid not in all_agent_states and aid in self._prev_states:
+                all_agent_states[aid] = self._prev_states[aid]
         observations, infos = self._build_obs_and_infos(all_agent_states)
 
         # Remove NMAC, arrived, and departed aircraft
@@ -334,12 +465,20 @@ class BlueSkyMARLEnv(ParallelEnv):
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
                     continue
-                # Arrival termination
+                # Arrival detection — stream new waypoint or terminate
                 if eff is not None and hasattr(eff, "_goals"):
                     goal = eff._goals.get(agent_id)
                     if goal is not None:
                         dist = haversine_distance(own.lat, own.lon, goal[0], goal[1])
                         if dist < self._arrival_threshold:
+                            # Try waypoint streaming
+                            new_wp = None
+                            if self._scenario is not None:
+                                new_wp = self._scenario.update_waypoint(agent_id, own)
+                            if new_wp is not None:
+                                eff.set_goal(agent_id, new_wp["lat"], new_wp["lon"])
+                                continue
+                            # No streaming — terminate
                             self.agents.remove(agent_id)
                             self._wrapper.remove_aircraft(agent_id)
                             continue
@@ -380,10 +519,38 @@ class BlueSkyMARLEnv(ParallelEnv):
 
         self._prev_states = new_states
 
+        # Render frame if renderer is active
+        if self._renderer is not None:
+            self._renderer.render_frame(
+                states=new_states,
+                waypoints=self._get_waypoints_for_render(),
+                step=self._step_count,
+            )
+
         return observations, rewards, terminations, truncations, infos
 
     def close(self) -> None:
+        if self._renderer is not None:
+            self._renderer.close()
+            self._renderer = None
         self._wrapper.close()
+
+    def _get_waypoints_for_render(self) -> dict[str, dict[str, float]] | None:
+        """Get waypoints for rendering."""
+        eff = self._find_efficiency_component()
+        if eff is None or not hasattr(eff, "_goals"):
+            return None
+        waypoints: dict[str, dict[str, float]] = {}
+        for agent_id in self.agents:
+            goal = eff._goals.get(agent_id)
+            if goal is not None:
+                waypoints[agent_id] = {
+                    "lat": goal[0],
+                    "lon": goal[1],
+                    "alt": 35000.0,
+                    "hdg": 0.0,
+                }
+        return waypoints if waypoints else None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -420,7 +587,7 @@ class BlueSkyMARLEnv(ParallelEnv):
             for aid, st in all_states.items():
                 priorities[aid] = self._scenario.get_priority(aid, st)
 
-        for agent_id in self.agents:
+        for agent_id in all_states:
             own = all_states.get(agent_id)
             if own is None:
                 continue

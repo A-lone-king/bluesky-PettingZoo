@@ -2,14 +2,19 @@ components:
   conflict:
     enabled: true
     weight: 1.0
-    nmac_penalty: -100
-    warning_penalty: -10
-    separation_penalty: -5
+    nmac_penalty: -100.0
+    warning_penalty: -10.0
+    separation_penalty: -5.0
     thresholds:
       nmac_horizontal_nm: 5
       nmac_vertical_ft: 1000
       warning_horizontal_nm: 10
       warning_vertical_ft: 2000
+
+  drift_penalty:
+    enabled: true
+    weight: 0.5
+    scale: -0.1
 
   smoothness:
     enabled: true
@@ -20,8 +25,8 @@ components:
     enabled: true
     weight: 0.3
     max_deviation_nm: 50
-    deviation_penalty_scale: 5
-    arrival_reward: 10
+    deviation_penalty_scale: 5.0
+    arrival_reward: 10.0
     step_penalty: -0.01
     arrival_threshold_nm: 2
 
@@ -56,3 +61,11 @@ components:
     enabled: true
     weight: 0.1
     penalty_factor: 0.1
+
+  altitude_reward:
+    enabled: true
+    weight: 0.5
+    enroute_scale: 5.0
+    runway_scale: 50.0
+    crash_penalty: -100.0
+    runway_threshold_nm: 5.0

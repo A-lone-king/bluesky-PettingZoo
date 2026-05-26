@@ -7,6 +7,8 @@ Conflict requires BOTH horizontal < 5 NM AND vertical < 1000 ft.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
@@ -108,3 +110,30 @@ class VerticalCRScenario(BaseScenario):
         """Faster speed → higher priority (normalized to [-1, 1])."""
         speed_min, speed_max = 400.0, 500.0
         return max(-1.0, min(1.0, (state.tas - (speed_min + speed_max) / 2) / ((speed_max - speed_min) / 2)))
+
+    def create_intruders(self, wrapper: Any, rng: np.random.RandomState | None = None) -> list[str]:
+        """Create intruder aircraft using creconfs with vertical offset.
+
+        Args:
+            wrapper: BlueSkyWrapper instance.
+            rng: Random number generator (optional).
+
+        Returns:
+            List of created aircraft IDs (ownship + intruders).
+        """
+        mid_lat = (self._bounds["lat_min"] + self._bounds["lat_max"]) / 2
+        mid_lon = (self._bounds["lon_min"] + self._bounds["lon_max"]) / 2
+        base_alt = (ALT_MIN_FT + ALT_MAX_FT) / 2
+
+        return wrapper.create_conflict_aircraft(
+            ownship_lat=mid_lat,
+            ownship_lon=mid_lon,
+            ownship_alt=base_alt,
+            ownship_hdg=rng.uniform(0, 360) if rng is not None else 0.0,
+            ownship_spd=450.0,
+            count=self._num_aircraft - 1,
+            dpsi=rng.uniform(10, 45) if rng is not None else 30.0,
+            dcpa=3.0,
+            dH=rng.uniform(-3000, 3000) if rng is not None else 2000.0,
+            prefix="CR",
+        )

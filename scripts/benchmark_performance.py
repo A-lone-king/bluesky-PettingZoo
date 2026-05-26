@@ -30,7 +30,7 @@ from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config, write_rewards_yaml
 
 
@@ -54,7 +54,7 @@ def _try_get_memory_mb() -> float | None:
 
 
 def make_env(num_aircraft: int, max_steps: int) -> BlueSkyMARLEnv:
-    """Create a BlueSkyMARLEnv with FakeBlueSkyWrapper."""
+    """Create a BlueSkyMARLEnv with BlueSkyWrapper."""
     config = make_config(initial_count=num_aircraft, max_steps=max_steps)
     with tempfile.TemporaryDirectory() as tmp:
         rewards_path = write_rewards_yaml(Path(tmp))
@@ -63,7 +63,7 @@ def make_env(num_aircraft: int, max_steps: int) -> BlueSkyMARLEnv:
             rewards_cfg = yaml.safe_load(f)
     merged = {**config, **rewards_cfg}
 
-    wrapper = FakeBlueSkyWrapper(config)
+    wrapper = BlueSkyWrapper(config)
     obs_manager = ObservationManager(config)
     action_translator = ActionTranslator(config)
     calc = RewardCalculator()

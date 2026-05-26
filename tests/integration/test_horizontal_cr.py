@@ -25,7 +25,7 @@ from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 
@@ -48,7 +48,7 @@ def _make_env_with_scenario(
     scenario: HorizontalCRScenario,
 ) -> BlueSkyMARLEnv:
     """Create a BlueSkyMARLEnv with a HorizontalCRScenario."""
-    wrapper = FakeBlueSkyWrapper(env_config)
+    wrapper = BlueSkyWrapper(env_config)
     obs_manager = ObservationManager(env_config)
     action_translator = ActionTranslator(env_config)
 
@@ -116,8 +116,8 @@ class TestHorizontalCRConflictDetected:
         wrapper = env._wrapper
         agents = list(env.agents)
         # Place them 8 NM apart, same altitude, heading toward each other
-        wrapper._aircraft[agents[0]].update({"lat": 39.25, "lon": 116.2, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": 39.25, "lon": 116.35, "alt": 35000, "hdg": 270.0})
+        wrapper.set_aircraft_state(agents[0], lat=39.25, lon=116.2, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=39.25, lon=116.35, alt=35000, hdg=270.0)
 
         dist = haversine_distance(39.25, 116.2, 39.25, 116.35)
         assert dist < 10.0  # Within warning distance
@@ -146,8 +146,8 @@ class TestHorizontalCRNoConflictSafe:
         # Position aircraft far apart, parallel flight
         wrapper = env._wrapper
         agents = list(env.agents)
-        wrapper._aircraft[agents[0]].update({"lat": 39.1, "lon": 116.1, "alt": 35000, "hdg": 90.0})
-        wrapper._aircraft[agents[1]].update({"lat": 39.4, "lon": 116.4, "alt": 33000, "hdg": 90.0})
+        wrapper.set_aircraft_state(agents[0], lat=39.1, lon=116.1, alt=35000, hdg=90.0)
+        wrapper.set_aircraft_state(agents[1], lat=39.4, lon=116.4, alt=33000, hdg=90.0)
 
         dist = haversine_distance(39.1, 116.1, 39.4, 116.4)
         assert dist > 10.0  # Beyond warning distance
@@ -177,21 +177,11 @@ class TestHorizontalCRArrivalTermination:
 
         # Place first aircraft very close to its waypoint (within 2 NM)
         wp = scenario.get_waypoint(agents[0])
-        wrapper._aircraft[agents[0]].update({
-            "lat": wp["lat"],
-            "lon": wp["lon"],
-            "alt": wp["alt"],
-            "hdg": 90.0,
-        })
+        wrapper.set_aircraft_state(agents[0], lat=wp["lat"], lon=wp["lon"], alt=wp["alt"], hdg=90.0)
 
         # Place second aircraft far from its waypoint
         wp2 = scenario.get_waypoint(agents[1])
-        wrapper._aircraft[agents[1]].update({
-            "lat": 39.1,
-            "lon": 116.1,
-            "alt": 33000,
-            "hdg": 90.0,
-        })
+        wrapper.set_aircraft_state(agents[1], lat=39.1, lon=116.1, alt=33000, hdg=90.0)
 
         initial_agents = set(env.agents)
         actions = {a: [2, 2, 2] for a in env.agents}

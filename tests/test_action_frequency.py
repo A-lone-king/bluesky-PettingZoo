@@ -9,11 +9,11 @@ import pytest
 
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
-from tests.helpers.fake_wrapper import FakeBlueSkyWrapper
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
 
 # ---------------------------------------------------------------------------
-# FakeBlueSkyWrapper for testing step_n without real BlueSky
+# BlueSkyWrapper for testing step_n without real BlueSky
 # ---------------------------------------------------------------------------
 
 
@@ -22,7 +22,7 @@ class TestStepNExecutesNTimes:
 
     def test_step_n_executes_n_times(self) -> None:
         config = {"simulation": {"dt": 5.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.step_n(5)
@@ -33,7 +33,7 @@ class TestStepNExecutesNTimes:
 
     def test_step_n_zero(self) -> None:
         config = {"simulation": {"dt": 5.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.step_n(0)
@@ -46,7 +46,7 @@ class TestActionFrequencyConfigurable:
 
     def test_action_frequency_configurable(self) -> None:
         config = {"simulation": {"dt": 5.0, "action_frequency": 10}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         freq = config["simulation"].get("action_frequency", 1)
@@ -60,7 +60,7 @@ class TestStateAfterMultipleSteps:
 
     def test_state_after_multiple_steps(self) -> None:
         config = {"simulation": {"dt": 5.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.create_aircraft("AC000", "B737", 39.0, 116.0, 35000, 90.0, 450.0)
@@ -78,7 +78,7 @@ class TestStateAfterMultipleSteps:
 
     def test_heading_north_increases_lat(self) -> None:
         config = {"simulation": {"dt": 5.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.create_aircraft("AC000", "B737", 39.0, 116.0, 35000, 0.0, 450.0)
@@ -88,7 +88,7 @@ class TestStateAfterMultipleSteps:
 
     def test_heading_south_decreases_lat(self) -> None:
         config = {"simulation": {"dt": 5.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.create_aircraft("AC000", "B737", 39.0, 116.0, 35000, 180.0, 450.0)
@@ -102,7 +102,7 @@ class TestDefaultFrequencyIs1:
 
     def test_default_frequency_is_1(self) -> None:
         config = {"simulation": {"dt": 5.0}}  # No action_frequency key
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         # Without action_frequency, step() should be equivalent to step_n(1)
@@ -131,7 +131,7 @@ class TestTimeAdvancesCorrectly:
 
     def test_time_advances_correctly(self) -> None:
         config = {"simulation": {"dt": 10.0}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.step_n(3)
@@ -142,7 +142,7 @@ class TestTimeAdvancesCorrectly:
 
     def test_time_with_different_dt(self) -> None:
         config = {"simulation": {"dt": 2.5}}
-        wrapper = FakeBlueSkyWrapper(config)
+        wrapper = BlueSkyWrapper(config)
         wrapper.init_simulation()
 
         wrapper.step_n(4)

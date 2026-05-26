@@ -9,11 +9,13 @@ Observable neighbors limited to 5.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.utils.geometry import point_at_distance
-from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
+from bluesky_pettingzoo.utils.types import ConflictConfig, SpawnConfig
 
 # Approach constants
 APPROACH_ALT_MIN_FT = 3000.0
@@ -44,6 +46,21 @@ class MergeScenario(BaseScenario):
         self._background: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
         self._bounds: dict[str, float] = {}
+
+    @property
+    def control_mode(self) -> str:
+        """Merge uses SINGLE_RL: only the first aircraft is agent-controlled."""
+        return "SINGLE_RL"
+
+    @property
+    def ego_agent(self) -> str | None:
+        """The controllable aircraft."""
+        return self._controllable[0] if self._controllable else None
+
+    @property
+    def background_agents(self) -> list[str]:
+        """Background traffic (uncontrollable)."""
+        return list(self._background)
 
     @property
     def action_dimensions(self) -> list[int]:
@@ -127,3 +144,27 @@ class MergeScenario(BaseScenario):
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
         """Return the assigned FAF waypoint for an agent."""
         return self._waypoints[agent_id]
+
+    def configure_npc_navigation(self, wrapper: Any) -> list[str]:
+        """Send NAV commands for background aircraft and disable conflict resolution.
+
+        Background aircraft use BlueSky LNAV to fly to the FAF point.
+        Conflict resolution is disabled so the RL agent must handle separation.
+        """
+        commands: list[str] = []
+        # Disable conflict resolution for all aircraft
+        wrapper.send_command("reso off")
+        commands.append("reso off")
+
+        # Send NAV waypoints for background aircraft
+        for acid in self._background:
+            wp = self._waypoints.get(acid)
+            if wp is None:
+                continue
+            # Use HDG command to point toward FAF
+            hdg = wp.get("hdg", 0.0)
+            cmd = f"HDG {acid} {hdg:.0f}"
+            wrapper.send_command(cmd)
+            commands.append(cmd)
+
+        return commands
