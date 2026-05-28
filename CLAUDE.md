@@ -1,5 +1,19 @@
 ﻿# CLAUDE.md — bluesky-pettingzoo
 
+## remember
+
+Read existing files before writing. Don't re-read unless changed.
+
+Thorough in reasoning, concise in output.
+
+Skip files over 100KB unless required.
+
+No sycophantic openers or closing fluff.
+
+No emojis or em-dashes.
+
+Do not guess APIs, versions, flags, commit SHAs, or package names. Verify by reading code or docs before asserting.
+
 ## 项目概述
 
 将 BlueSky 空中交通仿真平台从单智能体环境（bluesky-gym）扩展为多智能体环境，基于 PettingZoo ParallelEnv 标准，专注于空中交通管理（ATM）领域的多智能体强化学习研究。BlueSky 是底层仿真引擎，本项目在其上构建多智能体 RL 接口。
