@@ -33,6 +33,7 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
+from bluesky_pettingzoo.training.progress import ProgressCallback
 
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config, write_rewards_yaml
@@ -116,7 +117,7 @@ def main() -> int:
 
         # Train
         print("Training for 10,000 timesteps...")
-        model.learn(total_timesteps=10_000)
+        model.learn(total_timesteps=10_000, callback=[ProgressCallback()])
 
         # Evaluate after training
         final_reward = _evaluate(model, env, n_episodes=5)

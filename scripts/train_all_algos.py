@@ -39,15 +39,24 @@ def run_training(scenario: str, algorithm: str, timesteps: int, save_dir: str) -
     start = time.time()
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+        # Stream output in real-time instead of capturing
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        # Print subprocess output line by line
+        for line in process.stdout:
+            print(f"  {line}", end="")
+        process.wait(timeout=1800)
         elapsed = time.time() - start
-        if result.returncode == 0:
+        if process.returncode == 0:
             print(f"  OK {algorithm}/{scenario} done in {elapsed:.0f}s")
             return True
         else:
             print(f"  FAIL {algorithm}/{scenario} FAILED ({elapsed:.0f}s)")
-            if result.stderr:
-                print(f"  stderr: {result.stderr[-300:]}")
             return False
     except subprocess.TimeoutExpired:
         elapsed = time.time() - start
@@ -68,16 +77,20 @@ def main() -> None:
     failed_jobs: list[str] = []
 
     print(f"Starting batch training: {len(args.algos)} algorithms × {len(args.scenarios)} scenarios = {total} jobs")
+    print(f"{'='*60}")
 
+    job_idx = 0
     for algo in args.algos:
         for scenario in args.scenarios:
+            job_idx += 1
             # Check if model already exists
             model_path = Path(args.save_dir) / scenario / algo / "checkpoint_final.zip"
             if model_path.exists():
-                print(f"\n  Skipping {algo}/{scenario} — model already exists")
+                print(f"\n  [{job_idx}/{total}] Skipping {algo}/{scenario} — model already exists")
                 success += 1
                 continue
 
+            print(f"\n  [{job_idx}/{total}] Starting {algo}/{scenario}...")
             ok = run_training(scenario, algo, args.timesteps, args.save_dir)
             if ok:
                 success += 1

@@ -34,6 +34,7 @@ from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleInt
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.training.checkpoint import CheckpointManager
 from bluesky_pettingzoo.training.logger import CSVLoggerCallback
+from bluesky_pettingzoo.training.progress import ProgressCallback
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
 from stable_baselines3.common.callbacks import BaseCallback
 
@@ -248,9 +249,10 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
             model = _make_model(algo_cls, env, args)
 
         # Train
+        print(f"\nTraining {args.algorithm} on {args.scenario} ({args.timesteps:,} timesteps)...")
         model.learn(
             total_timesteps=args.timesteps,
-            callback=[csv_callback, _CheckpointCallback(ckpt_mgr)],
+            callback=[csv_callback, _CheckpointCallback(ckpt_mgr), ProgressCallback()],
         )
 
         # Save final
