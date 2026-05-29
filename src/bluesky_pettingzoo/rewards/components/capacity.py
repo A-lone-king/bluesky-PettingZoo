@@ -38,12 +38,18 @@ class CapacityPenalty(RewardComponent):
       ``penalty_per_excess``)
     """
 
+    component_name = "capacity"
+    config_keys = {
+        "max_aircraft": ("_max_aircraft", 5),
+        "penalty_per_excess": ("_penalty_per_excess", -10.0),
+        "sectors": ("_sectors", []),
+        "warning_threshold": ("_warning_threshold", 0.8),
+    }
+
     def __init__(self, config: dict[str, Any]) -> None:
+        super().__init__(config)
+        # Warning penalty depends on penalty_per_excess, so compute after base init
         comp = config.get("components", {}).get("capacity", {})
-        self._max_aircraft: int = comp.get("max_aircraft", 5)
-        self._penalty_per_excess: float = comp.get("penalty_per_excess", -10.0)
-        self._sectors: list[dict[str, Any]] = comp.get("sectors", [])
-        self._warning_threshold: float = comp.get("warning_threshold", 0.8)
         self._warning_penalty: float = comp.get(
             "warning_penalty", self._penalty_per_excess / 2
         )
@@ -104,7 +110,3 @@ class CapacityPenalty(RewardComponent):
             return self._warning_penalty
 
         return 0.0
-
-    def reset(self) -> None:
-        """No internal state to reset."""
-        pass

@@ -13,10 +13,12 @@ try:
 except ImportError:
     bs = None  # type: ignore[assignment]
 
+from bluesky_pettingzoo.wrappers.base import EnvWrapperMixin
+
 MAX_WIND = 50.0
 
 
-class WindFieldWrapper:
+class WindFieldWrapper(EnvWrapperMixin):
     """Wraps a ParallelEnv and injects a uniform wind field into BlueSky.
 
     Optionally augments each agent's observation with body-frame wind
@@ -45,7 +47,6 @@ class WindFieldWrapper:
         augment_obs: bool = False,
         seed: int | None = None,
     ) -> None:
-        self.env = env
         self.lat = lat
         self.lon = lon
         self.vnorth = vnorth
@@ -53,6 +54,9 @@ class WindFieldWrapper:
         self.alt = alt
         self.augment_obs = augment_obs
         self._rng = np.random.RandomState(seed)
+
+        # Call EnvWrapperMixin.__init__ which sets self.env
+        super().__init__(env)
 
         if self.augment_obs:
             base_space = self.env.observation_space(self.env.agents[0])
@@ -65,31 +69,14 @@ class WindFieldWrapper:
             self._extended_space = None
 
     # ------------------------------------------------------------------
-    # Delegated properties
-    # ------------------------------------------------------------------
-
-    @property
-    def agents(self) -> list[str]:
-        return self.env.agents
-
-    @property
-    def possible_agents(self) -> list[str]:
-        return self.env.possible_agents
-
-    # ------------------------------------------------------------------
-    # Delegated / extended methods
+    # Overridden methods
     # ------------------------------------------------------------------
 
     def observation_space(self, agent: str) -> spaces.Space:
+        """Get observation space, with wind components if augmented."""
         if self._extended_space is not None:
             return self._extended_space
         return self.env.observation_space(agent)
-
-    def action_space(self, agent: str) -> spaces.Space:
-        return self.env.action_space(agent)
-
-    def close(self) -> None:
-        self.env.close()
 
     # ------------------------------------------------------------------
     # Core interface

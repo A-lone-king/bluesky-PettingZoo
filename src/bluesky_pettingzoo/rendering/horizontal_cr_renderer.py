@@ -5,17 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
-from bluesky_pettingzoo.rendering.common import (
-    draw_aircraft,
-    draw_nmac_circle,
-    draw_waypoint,
-    latlon_to_pixel,
-)
-
-try:
-    import pygame
-except ImportError:
-    pygame = None  # type: ignore[assignment]
+from bluesky_pettingzoo.rendering.common import draw_nmac_circle, latlon_to_pixel
 
 
 class HorizontalCRRenderer(BaseRenderer):
@@ -27,11 +17,6 @@ class HorizontalCRRenderer(BaseRenderer):
 
     def __init__(self, width: int = 800, height: int = 600) -> None:
         super().__init__(width=width, height=height, caption="HorizontalCR")
-        self._bounds: dict[str, float] = {}
-
-    def set_bounds(self, bounds: dict[str, float]) -> None:
-        """Set the lat/lon bounds for coordinate conversion."""
-        self._bounds = bounds
 
     def render_frame(
         self,
@@ -51,27 +36,14 @@ class HorizontalCRRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        self._screen.fill((0, 0, 0))
-        bounds = self._bounds or {
-            "lat_min": 39.0,
-            "lat_max": 41.0,
-            "lon_min": 116.0,
-            "lon_max": 118.0,
-        }
+        # Call base renderer to draw aircraft and waypoints
+        super().render_frame(states, waypoints, step, info)
 
+        # Add NMAC circles on top
         for acid, state in states.items():
             x, y = latlon_to_pixel(
-                state.lat, state.lon, bounds, self._width, self._height
+                state.lat, state.lon, self._bounds, self._width, self._height
             )
-            draw_aircraft(self._screen, x, y, state.hdg)
             draw_nmac_circle(self._screen, x, y)
 
-        if waypoints:
-            for acid, wp in waypoints.items():
-                wx, wy = latlon_to_pixel(
-                    wp["lat"], wp["lon"], bounds, self._width, self._height
-                )
-                draw_waypoint(self._screen, wx, wy)
-
-        self._draw_hud(step=step, info=info)
         self.flip()

@@ -634,6 +634,13 @@ class BlueSkyMARLEnv(ParallelEnv):
                 return comp
         return None
 
+    def _find_conflict_component(self) -> Any:
+        """Find the ConflictPenalty component in the reward calculator."""
+        for comp, _ in self._reward_calculator.components:
+            if hasattr(comp, "get_conflict_status"):
+                return comp
+        return None
+
     def _find_delay_component(self) -> Any:
         for comp, _ in self._reward_calculator.components:
             if hasattr(comp, "set_goal") and hasattr(comp, "_expected_steps"):
@@ -670,6 +677,16 @@ class BlueSkyMARLEnv(ParallelEnv):
         own: AircraftState,
         others: list[AircraftState],
     ) -> str:
+        """Compute conflict status for an aircraft.
+
+        Uses ConflictPenalty component if available, otherwise falls back
+        to local implementation.
+        """
+        conflict_comp = self._find_conflict_component()
+        if conflict_comp is not None:
+            return conflict_comp.get_conflict_status(own, others)
+
+        # Fallback: local implementation
         for other in others:
             h_dist = haversine_distance(own.lat, own.lon, other.lat, other.lon)
             v_dist = abs(own.alt - other.alt)

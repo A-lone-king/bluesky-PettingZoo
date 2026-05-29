@@ -5,25 +5,7 @@ from __future__ import annotations
 import pytest
 
 from bluesky_pettingzoo.rewards.components.capacity import CapacityPenalty
-from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
-
-
-def make_state(
-    acid: str,
-    lat: float = 39.25,
-    lon: float = 116.25,
-    alt: float = 35000.0,
-    hdg: float = 90.0,
-    tas: float = 450.0,
-    vs: float = 0.0,
-) -> AircraftState:
-    return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
-    )
-
-
-def make_action() -> DiscreteAction:
-    return DiscreteAction(heading_idx=2, altitude_idx=2, speed_idx=2)
+from tests.helpers.state_factory import make_action, make_state
 
 
 # Shared sector definitions for per-sector tests

@@ -1,0 +1,4751 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "bluesky-pettingzoo",
+    "languages": [
+      "python",
+      "yaml",
+      "markdown"
+    ],
+    "frameworks": [
+      "PettingZoo",
+      "Gymnasium",
+      "NumPy",
+      "PyYAML",
+      "pytest"
+    ],
+    "description": "将 BlueSky 空中交通仿真平台从单智能体环境扩展为多智能体环境，基于 PettingZoo ParallelEnv 标准，专注于空中交通管理（ATM）领域的多智能体强化学习研究。",
+    "analyzedAt": "2026-05-29T16:38:45.800356",
+    "gitCommitHash": "968ff18135e2058a3b89e69bff696eed48321d47"
+  },
+  "nodes": [
+    {
+      "id": "file:scripts/benchmark_performance.py",
+      "type": "file",
+      "name": "benchmark_performance.py",
+      "filePath": "scripts/benchmark_performance.py",
+      "summary": "性能基准测试脚本，测量不同飞机数量下单步执行时间、完整回合执行时间及内存使用情况。",
+      "tags": [
+        "entry-point",
+        "benchmark",
+        "performance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/benchmark_performance.py:make_env",
+      "type": "function",
+      "name": "make_env",
+      "filePath": "scripts/benchmark_performance.py",
+      "lineRange": [
+        56,
+        83
+      ],
+      "summary": "创建用于基准测试的 BlueSkyMARLEnv 环境实例。",
+      "tags": [
+        "factory",
+        "environment-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/benchmark_performance.py:benchmark_step_time",
+      "type": "function",
+      "name": "benchmark_step_time",
+      "filePath": "scripts/benchmark_performance.py",
+      "lineRange": [
+        86,
+        104
+      ],
+      "summary": "测量单步 env.step() 的平均执行时间。",
+      "tags": [
+        "benchmark",
+        "timing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/benchmark_performance.py:benchmark_episode_time",
+      "type": "function",
+      "name": "benchmark_episode_time",
+      "filePath": "scripts/benchmark_performance.py",
+      "lineRange": [
+        107,
+        129
+      ],
+      "summary": "测量完整回合的执行时间和内存使用峰值。",
+      "tags": [
+        "benchmark",
+        "memory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/benchmark_performance.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/benchmark_performance.py",
+      "lineRange": [
+        132,
+        174
+      ],
+      "summary": "基准测试主函数。",
+      "tags": [
+        "entry-point",
+        "orchestration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/evaluate_all.py",
+      "type": "file",
+      "name": "evaluate_all.py",
+      "filePath": "scripts/evaluate_all.py",
+      "summary": "全场景评估脚本，对所有场景运行 Random、RuleBased 和 PPO 算法并输出对比结果。",
+      "tags": [
+        "entry-point",
+        "evaluation",
+        "comparison"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/evaluate_all.py:_make_env_factory",
+      "type": "function",
+      "name": "_make_env_factory",
+      "filePath": "scripts/evaluate_all.py",
+      "lineRange": [
+        35,
+        76
+      ],
+      "summary": "创建环境工厂函数。",
+      "tags": [
+        "factory",
+        "environment-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/evaluate_all.py:evaluate_all_scenarios",
+      "type": "function",
+      "name": "evaluate_all_scenarios",
+      "filePath": "scripts/evaluate_all.py",
+      "lineRange": [
+        79,
+        137
+      ],
+      "summary": "对指定场景执行全算法评估流程。",
+      "tags": [
+        "evaluation",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/evaluate_baselines.py",
+      "type": "file",
+      "name": "evaluate_baselines.py",
+      "filePath": "scripts/evaluate_baselines.py",
+      "summary": "基线评估脚本，定义 EpisodeResult/BaselineMetrics 数据类，运行基线并收集统计指标。",
+      "tags": [
+        "entry-point",
+        "evaluation",
+        "data-model"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/evaluate_baselines.py:run_episode",
+      "type": "function",
+      "name": "run_episode",
+      "filePath": "scripts/evaluate_baselines.py",
+      "lineRange": [
+        74,
+        114
+      ],
+      "summary": "执行单个评估回合。",
+      "tags": [
+        "evaluation",
+        "episode-runner"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/evaluate_baselines.py:make_env_factory",
+      "type": "function",
+      "name": "make_env_factory",
+      "filePath": "scripts/evaluate_baselines.py",
+      "lineRange": [
+        134,
+        177
+      ],
+      "summary": "创建场景环境工厂。",
+      "tags": [
+        "factory",
+        "environment-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/evaluate_baselines.py:run_evaluation",
+      "type": "function",
+      "name": "run_evaluation",
+      "filePath": "scripts/evaluate_baselines.py",
+      "lineRange": [
+        198,
+        244
+      ],
+      "summary": "执行完整评估流程并输出对比表格。",
+      "tags": [
+        "evaluation",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/train_ppo_scenarios.py",
+      "type": "file",
+      "name": "train_ppo_scenarios.py",
+      "filePath": "scripts/train_ppo_scenarios.py",
+      "summary": "PPO 多场景训练脚本，支持场景选择、断点续训、检查点管理和 CSV 日志记录。",
+      "tags": [
+        "entry-point",
+        "training",
+        "cli"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/train_ppo_scenarios.py:make_scenario_env_factory",
+      "type": "function",
+      "name": "make_scenario_env_factory",
+      "filePath": "scripts/train_ppo_scenarios.py",
+      "lineRange": [
+        83,
+        136
+      ],
+      "summary": "创建场景环境工厂。",
+      "tags": [
+        "factory",
+        "environment-setup",
+        "training"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:scripts/train_ppo_scenarios.py:parse_args",
+      "type": "function",
+      "name": "parse_args",
+      "filePath": "scripts/train_ppo_scenarios.py",
+      "lineRange": [
+        139,
+        165
+      ],
+      "summary": "解析训练命令行参数。",
+      "tags": [
+        "cli",
+        "argument-parsing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/train_ppo_scenarios.py:train_scenario",
+      "type": "function",
+      "name": "train_scenario",
+      "filePath": "scripts/train_ppo_scenarios.py",
+      "lineRange": [
+        203,
+        261
+      ],
+      "summary": "执行单场景 PPO 训练流程。",
+      "tags": [
+        "training",
+        "orchestration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:scripts/train_smoke_test.py",
+      "type": "file",
+      "name": "train_smoke_test.py",
+      "filePath": "scripts/train_smoke_test.py",
+      "summary": "PPO 训练冒烟测试脚本，验证 10k 步训练后奖励信号存在。",
+      "tags": [
+        "entry-point",
+        "smoke-test",
+        "training"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/train_smoke_test.py:_make_env",
+      "type": "function",
+      "name": "_make_env",
+      "filePath": "scripts/train_smoke_test.py",
+      "lineRange": [
+        41,
+        68
+      ],
+      "summary": "创建单智能体训练环境。",
+      "tags": [
+        "factory",
+        "environment-setup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:scripts/train_smoke_test.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/train_smoke_test.py",
+      "lineRange": [
+        87,
+        137
+      ],
+      "summary": "冒烟测试主函数。",
+      "tags": [
+        "entry-point",
+        "smoke-test"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/helpers/env_factory.py",
+      "type": "file",
+      "name": "env_factory.py",
+      "filePath": "tests/helpers/env_factory.py",
+      "summary": "测试环境工厂模块，提供 make_config/write_rewards_yaml/make_env 工具函数。",
+      "tags": [
+        "utility",
+        "test-helper",
+        "factory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/helpers/env_factory.py:make_config",
+      "type": "function",
+      "name": "make_config",
+      "filePath": "tests/helpers/env_factory.py",
+      "lineRange": [
+        85,
+        111
+      ],
+      "summary": "生成默认测试配置字典。",
+      "tags": [
+        "utility",
+        "config-factory"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/helpers/env_factory.py:make_env",
+      "type": "function",
+      "name": "make_env",
+      "filePath": "tests/helpers/env_factory.py",
+      "lineRange": [
+        121,
+        181
+      ],
+      "summary": "创建完整的 BlueSkyMARLEnv 测试环境。",
+      "tags": [
+        "factory",
+        "environment-setup",
+        "test-helper"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_backward_compat.py",
+      "type": "file",
+      "name": "test_backward_compat.py",
+      "filePath": "tests/integration/test_backward_compat.py",
+      "summary": "V1 向后兼容性测试。",
+      "tags": [
+        "test",
+        "backward-compatibility",
+        "integration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/test_descent.py",
+      "type": "file",
+      "name": "test_descent.py",
+      "filePath": "tests/integration/test_descent.py",
+      "summary": "下降场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "descent-scenario"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_horizontal_cr.py",
+      "type": "file",
+      "name": "test_horizontal_cr.py",
+      "filePath": "tests/integration/test_horizontal_cr.py",
+      "summary": "水平冲突解脱场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "horizontal-cr"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_merge.py",
+      "type": "file",
+      "name": "test_merge.py",
+      "filePath": "tests/integration/test_merge.py",
+      "summary": "汇合场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "merge-scenario"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_multi_conflict.py",
+      "type": "file",
+      "name": "test_multi_conflict.py",
+      "filePath": "tests/integration/test_multi_conflict.py",
+      "summary": "多冲突场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "multi-conflict"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_no_conflict.py",
+      "type": "file",
+      "name": "test_no_conflict.py",
+      "filePath": "tests/integration/test_no_conflict.py",
+      "summary": "无冲突场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "no-conflict"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/test_performance.py",
+      "type": "file",
+      "name": "test_performance.py",
+      "filePath": "tests/integration/test_performance.py",
+      "summary": "性能集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "performance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/test_scenario_e2e.py",
+      "type": "file",
+      "name": "test_scenario_e2e.py",
+      "filePath": "tests/integration/test_scenario_e2e.py",
+      "summary": "全场景端到端集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "e2e",
+        "smoke-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:tests/integration/test_scenario_e2e.py:_run_episode",
+      "type": "function",
+      "name": "_run_episode",
+      "filePath": "tests/integration/test_scenario_e2e.py",
+      "lineRange": [
+        57,
+        132
+      ],
+      "summary": "端到端回合执行辅助函数。",
+      "tags": [
+        "test-helper",
+        "episode-runner"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_sector_cr.py",
+      "type": "file",
+      "name": "test_sector_cr.py",
+      "filePath": "tests/integration/test_sector_cr.py",
+      "summary": "扇区冲突解脱场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "sector-cr"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_single_conflict.py",
+      "type": "file",
+      "name": "test_single_conflict.py",
+      "filePath": "tests/integration/test_single_conflict.py",
+      "summary": "单冲突场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "single-conflict"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_static_obstacle.py",
+      "type": "file",
+      "name": "test_static_obstacle.py",
+      "filePath": "tests/integration/test_static_obstacle.py",
+      "summary": "静态障碍物场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "static-obstacle"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/test_vertical_cr.py",
+      "type": "file",
+      "name": "test_vertical_cr.py",
+      "filePath": "tests/integration/test_vertical_cr.py",
+      "summary": "垂直冲突解脱场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "vertical-cr"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_waypoint_nav.py",
+      "type": "file",
+      "name": "test_waypoint_nav.py",
+      "filePath": "tests/integration/test_waypoint_nav.py",
+      "summary": "航路点导航场景集成测试。",
+      "tags": [
+        "test",
+        "integration",
+        "waypoint-nav"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_api_compliance.py",
+      "type": "file",
+      "name": "test_api_compliance.py",
+      "filePath": "tests/test_api_compliance.py",
+      "summary": "PettingZoo Parallel API 合规性测试。",
+      "tags": [
+        "test",
+        "api-compliance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_arrival_termination.py",
+      "type": "file",
+      "name": "test_arrival_termination.py",
+      "filePath": "tests/test_arrival_termination.py",
+      "summary": "到达终止逻辑测试。",
+      "tags": [
+        "test",
+        "termination",
+        "arrival"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_baseline_evaluation.py",
+      "type": "file",
+      "name": "test_baseline_evaluation.py",
+      "filePath": "tests/test_baseline_evaluation.py",
+      "summary": "基线评估模块单元测试。",
+      "tags": [
+        "test",
+        "evaluation",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_dynamic_entry.py",
+      "type": "file",
+      "name": "test_dynamic_entry.py",
+      "filePath": "tests/test_dynamic_entry.py",
+      "summary": "动态入口测试。",
+      "tags": [
+        "test",
+        "dynamic-entry",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_env.py",
+      "type": "file",
+      "name": "test_env.py",
+      "filePath": "tests/test_env.py",
+      "summary": "BlueSkyMARLEnv 核心环境单元测试，覆盖全部接口。",
+      "tags": [
+        "test",
+        "unit",
+        "environment",
+        "comprehensive"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_env_action_dispatch.py",
+      "type": "file",
+      "name": "test_env_action_dispatch.py",
+      "filePath": "tests/test_env_action_dispatch.py",
+      "summary": "环境动作分发测试。",
+      "tags": [
+        "test",
+        "action-dispatch",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_fake_wrapper_creconfs.py",
+      "type": "file",
+      "name": "test_fake_wrapper_creconfs.py",
+      "filePath": "tests/test_fake_wrapper_creconfs.py",
+      "summary": "FakeWrapper create_conflict_aircraft 测试。",
+      "tags": [
+        "test",
+        "wrapper",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_horizontal_cr_creconfs.py",
+      "type": "file",
+      "name": "test_horizontal_cr_creconfs.py",
+      "filePath": "tests/test_horizontal_cr_creconfs.py",
+      "summary": "水平冲突场景 create_intruders 测试。",
+      "tags": [
+        "test",
+        "scenario",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_parallel_env_reset.py",
+      "type": "file",
+      "name": "test_parallel_env_reset.py",
+      "filePath": "tests/test_parallel_env_reset.py",
+      "summary": "ParallelEnv reset 与 DelayPenalty 兼容性测试。",
+      "tags": [
+        "test",
+        "reset",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_plan_waypoint_obs.py",
+      "type": "file",
+      "name": "test_plan_waypoint_obs.py",
+      "filePath": "tests/test_plan_waypoint_obs.py",
+      "summary": "航路点规划观测空间测试。",
+      "tags": [
+        "test",
+        "observation",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_sector_cr_creconfs.py",
+      "type": "file",
+      "name": "test_sector_cr_creconfs.py",
+      "filePath": "tests/test_sector_cr_creconfs.py",
+      "summary": "扇区冲突场景 create_intruders 测试。",
+      "tags": [
+        "test",
+        "scenario",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_train_cli.py",
+      "type": "file",
+      "name": "test_train_cli.py",
+      "filePath": "tests/test_train_cli.py",
+      "summary": "训练 CLI 参数解析测试。",
+      "tags": [
+        "test",
+        "cli",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_train_ppo_scenarios.py",
+      "type": "file",
+      "name": "test_train_ppo_scenarios.py",
+      "filePath": "tests/test_train_ppo_scenarios.py",
+      "summary": "PPO 训练场景配置和 Trainer 接口测试。",
+      "tags": [
+        "test",
+        "training",
+        "unit"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_train_script.py",
+      "type": "file",
+      "name": "test_train_script.py",
+      "filePath": "tests/test_train_script.py",
+      "summary": "训练脚本 parse_args 参数解析测试。",
+      "tags": [
+        "test",
+        "cli",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_vertical_cr_creconfs.py",
+      "type": "file",
+      "name": "test_vertical_cr_creconfs.py",
+      "filePath": "tests/test_vertical_cr_creconfs.py",
+      "summary": "垂直冲突场景 create_intruders 测试。",
+      "tags": [
+        "test",
+        "scenario",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_wrapper_switch.py",
+      "type": "file",
+      "name": "test_wrapper_switch.py",
+      "filePath": "tests/test_wrapper_switch.py",
+      "summary": "Wrapper 切换测试。",
+      "tags": [
+        "test",
+        "wrapper",
+        "unit"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/__init__.py",
+      "summary": "rewards package entry, re-exports RewardComponent and RewardCalculator.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "reward-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "file",
+      "name": "base.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/base.py",
+      "summary": "Defines RewardComponent abstract base class with compute and reset methods.",
+      "tags": [
+        "type-definition",
+        "abstract-base",
+        "reward-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "type": "file",
+      "name": "calculator.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/calculator.py",
+      "summary": "Reward calculator managing registered components with weights for weighted sum.",
+      "tags": [
+        "service",
+        "reward-system",
+        "config-merge"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "summary": "Components sub-package entry, imports and re-exports all 10 reward component classes.",
+      "tags": [
+        "entry-point",
+        "barrel",
+        "reward-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "type": "file",
+      "name": "altitude_reward.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "summary": "Altitude reward component rewarding aircraft for reaching target altitude.",
+      "tags": [
+        "reward-component",
+        "altitude",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "type": "file",
+      "name": "capacity.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "summary": "Sector capacity penalty component supporting global and per-sector modes.",
+      "tags": [
+        "reward-component",
+        "sector-capacity",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "type": "file",
+      "name": "conflict.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "summary": "Conflict penalty with horizontal/vertical detection, predictive conflict, and BFS chain detection.",
+      "tags": [
+        "reward-component",
+        "conflict-detection",
+        "reward-system"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "type": "file",
+      "name": "delay.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/delay.py",
+      "summary": "Delay penalty component penalizing aircraft exceeding expected steps to target.",
+      "tags": [
+        "reward-component",
+        "delay",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "type": "file",
+      "name": "drift.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/drift.py",
+      "summary": "Heading drift penalty penalizing deviation from target bearing angle.",
+      "tags": [
+        "reward-component",
+        "heading-deviation",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "type": "file",
+      "name": "efficiency.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "summary": "Efficiency reward rewarding shorter paths based on remaining distance ratio.",
+      "tags": [
+        "reward-component",
+        "path-efficiency",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "type": "file",
+      "name": "fairness.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "summary": "Fairness reward measuring resource allocation equity via delay standard deviation.",
+      "tags": [
+        "reward-component",
+        "fairness",
+        "reward-system",
+        "tested"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "type": "file",
+      "name": "flow_efficiency.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "summary": "Flow efficiency reward tracking sector entry events for airspace flow evaluation.",
+      "tags": [
+        "reward-component",
+        "flow-management",
+        "reward-system",
+        "tested"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "type": "file",
+      "name": "obstacle_intrusion.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "summary": "Obstacle intrusion penalty using point-in-polygon detection for no-fly zones.",
+      "tags": [
+        "reward-component",
+        "obstacle-avoidance",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "type": "file",
+      "name": "smoothness.py",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "summary": "Smoothness penalty penalizing action vector elements exceeding thresholds.",
+      "tags": [
+        "reward-component",
+        "smoothness",
+        "reward-system"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "file",
+      "name": "types.py",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "summary": "Core type definitions module with 17 dataclasses for aircraft state, actions, observations, and scenario config.",
+      "tags": [
+        "type-definition",
+        "data-model",
+        "core-module"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/base.py:RewardComponent",
+      "type": "class",
+      "name": "RewardComponent",
+      "filePath": "src/bluesky_pettingzoo/rewards/base.py",
+      "lineRange": [
+        13,
+        49
+      ],
+      "summary": "Abstract base class defining compute and reset methods for all reward components.",
+      "tags": [
+        "abstract-base",
+        "interface",
+        "reward-system"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/calculator.py:RewardCalculator",
+      "type": "class",
+      "name": "RewardCalculator",
+      "filePath": "src/bluesky_pettingzoo/rewards/calculator.py",
+      "lineRange": [
+        14,
+        70
+      ],
+      "summary": "Manages (component, weight) pairs, computes weighted sum of all component rewards.",
+      "tags": [
+        "calculator",
+        "weighted-sum",
+        "config-merge"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/altitude_reward.py:AltitudeReward",
+      "type": "class",
+      "name": "AltitudeReward",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "lineRange": [
+        20,
+        73
+      ],
+      "summary": "Rewards aircraft for reaching target altitude based on horizontal distance.",
+      "tags": [
+        "reward-component",
+        "altitude"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/capacity.py:CapacityPenalty",
+      "type": "class",
+      "name": "CapacityPenalty",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "lineRange": [
+        13,
+        110
+      ],
+      "summary": "Sector capacity penalty supporting global and per-sector modes.",
+      "tags": [
+        "reward-component",
+        "sector-capacity"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/conflict.py:ConflictPenalty",
+      "type": "class",
+      "name": "ConflictPenalty",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "lineRange": [
+        12,
+        186
+      ],
+      "summary": "Conflict detection with horizontal/vertical, predictive, and BFS chain detection.",
+      "tags": [
+        "reward-component",
+        "conflict-detection",
+        "graph-algorithm"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/delay.py:DelayPenalty",
+      "type": "class",
+      "name": "DelayPenalty",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/delay.py",
+      "lineRange": [
+        11,
+        69
+      ],
+      "summary": "Tracks expected steps per aircraft, penalizes timeout without reaching target.",
+      "tags": [
+        "reward-component",
+        "delay"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/drift.py:DriftPenalty",
+      "type": "class",
+      "name": "DriftPenalty",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/drift.py",
+      "lineRange": [
+        26,
+        67
+      ],
+      "summary": "Computes heading-to-bearing deviation with radian-based Gaussian penalty.",
+      "tags": [
+        "reward-component",
+        "heading-deviation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/efficiency.py:EfficiencyReward",
+      "type": "class",
+      "name": "EfficiencyReward",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "lineRange": [
+        12,
+        63
+      ],
+      "summary": "Rewards shorter paths based on remaining distance ratio.",
+      "tags": [
+        "reward-component",
+        "path-efficiency"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/fairness.py:FairnessReward",
+      "type": "class",
+      "name": "FairnessReward",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "lineRange": [
+        12,
+        61
+      ],
+      "summary": "Measures resource allocation equity using delay standard deviation.",
+      "tags": [
+        "reward-component",
+        "fairness"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py:FlowEfficiencyReward",
+      "type": "class",
+      "name": "FlowEfficiencyReward",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "lineRange": [
+        11,
+        50
+      ],
+      "summary": "Tracks sector entry events for flow evaluation.",
+      "tags": [
+        "reward-component",
+        "flow-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py:ObstacleIntrusion",
+      "type": "class",
+      "name": "ObstacleIntrusion",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "lineRange": [
+        17,
+        80
+      ],
+      "summary": "Point-in-polygon detection for no-fly zone intrusion.",
+      "tags": [
+        "reward-component",
+        "obstacle-avoidance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rewards/components/smoothness.py:SmoothnessPenalty",
+      "type": "class",
+      "name": "SmoothnessPenalty",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "lineRange": [
+        16,
+        53
+      ],
+      "summary": "Penalizes action vector elements exceeding smoothness thresholds.",
+      "tags": [
+        "reward-component",
+        "smoothness"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/utils/types.py:AircraftState",
+      "type": "class",
+      "name": "AircraftState",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "lineRange": [
+        15,
+        52
+      ],
+      "summary": "Aircraft state dataclass with id/lat/lon/alt/hdg/tas/vs supporting dict-style access.",
+      "tags": [
+        "data-model",
+        "state",
+        "core-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/utils/types.py:Route",
+      "type": "class",
+      "name": "Route",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "lineRange": [
+        85,
+        122
+      ],
+      "summary": "Route dataclass wrapping waypoint sequence with distance and segment queries.",
+      "tags": [
+        "data-model",
+        "route",
+        "core-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/utils/types.py:SimulationConfig",
+      "type": "class",
+      "name": "SimulationConfig",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "lineRange": [
+        149,
+        171
+      ],
+      "summary": "Simulation config class with dt, max steps, headless, and action frequency.",
+      "tags": [
+        "config-class",
+        "simulation",
+        "core-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/utils/types.py:ScenarioConfig",
+      "type": "class",
+      "name": "ScenarioConfig",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "lineRange": [
+        326,
+        418
+      ],
+      "summary": "Top-level scenario config aggregating sub-configs with from_dict factory method.",
+      "tags": [
+        "config-class",
+        "factory",
+        "core-type"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/utils/types.py:ConflictLevel",
+      "type": "class",
+      "name": "ConflictLevel",
+      "filePath": "src/bluesky_pettingzoo/utils/types.py",
+      "lineRange": [
+        141,
+        146
+      ],
+      "summary": "Conflict level enum with safe/warning/nmac severity grades.",
+      "tags": [
+        "enum",
+        "conflict-level",
+        "core-type"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rewards/components/drift.py:_bound_angle_180",
+      "type": "function",
+      "name": "_bound_angle_180",
+      "filePath": "src/bluesky_pettingzoo/rewards/components/drift.py",
+      "lineRange": [
+        17,
+        23
+      ],
+      "summary": "Normalizes angle to [-180, 180) range for heading deviation calculation.",
+      "tags": [
+        "utility",
+        "angle-normalization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "type": "file",
+      "name": "merge.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "summary": "Approach merge: 1 controllable aircraft merges with 19 background traffic.",
+      "tags": [
+        "scenario",
+        "scenario",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/merge.py:MergeScenario",
+      "type": "class",
+      "name": "MergeScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "lineRange": [
+        29,
+        170
+      ],
+      "summary": "Merge scenario class inheriting BaseScenario, manages background traffic and merge conflict with 4 NM sep.",
+      "tags": [
+        "scenario",
+        "scenario"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "type": "file",
+      "name": "plan_waypoint.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "summary": "Sequential waypoint navigation: single aircraft visits 5 waypoints using heading-only control.",
+      "tags": [
+        "scenario",
+        "waypoint-navigation",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py:PlanWaypointScenario",
+      "type": "class",
+      "name": "PlanWaypointScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "lineRange": [
+        23,
+        157
+      ],
+      "summary": "Sequential waypoint scenario, manages waypoint list, arrival detection, index tracking.",
+      "tags": [
+        "scenario",
+        "waypoint-navigation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "type": "file",
+      "name": "route_nav.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "summary": "Route navigation: multiple aircraft follow predefined routes, some crossing creating conflicts.",
+      "tags": [
+        "scenario",
+        "conflict-resolution",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/route_nav.py:RouteNavScenario",
+      "type": "class",
+      "name": "RouteNavScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "lineRange": [
+        21,
+        118
+      ],
+      "summary": "Route navigation scenario, defines 5-7 waypoint network, each aircraft assigned 2-4 waypoints.",
+      "tags": [
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "type": "file",
+      "name": "sector_capacity.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "summary": "Sector capacity management: aircraft navigate sectors with capacity constraints.",
+      "tags": [
+        "scenario",
+        "scenario",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py:SectorCapacityScenario",
+      "type": "class",
+      "name": "SectorCapacityScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "lineRange": [
+        23,
+        144
+      ],
+      "summary": "Sector capacity scenario, manages sector definitions, capacity constraint detection and truncation.",
+      "tags": [
+        "scenario",
+        "scenario"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "type": "file",
+      "name": "sector_cr.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "summary": "Sector conflict resolution: aircraft in polygon sector use heading+speed maneuvers.",
+      "tags": [
+        "scenario",
+        "conflict-resolution",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py:SectorCRScenario",
+      "type": "class",
+      "name": "SectorCRScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "lineRange": [
+        25,
+        188
+      ],
+      "summary": "Sector CR scenario, manages random polygon sector generation, intruder creation and priority.",
+      "tags": [
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "type": "file",
+      "name": "static_obstacle.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "summary": "Static obstacle avoidance: aircraft avoid randomly generated no-fly zones.",
+      "tags": [
+        "scenario",
+        "obstacle-avoidance",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:StaticObstacleScenario",
+      "type": "class",
+      "name": "StaticObstacleScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "lineRange": [
+        129,
+        300
+      ],
+      "summary": "Static obstacle scenario, manages no-fly zone polygon generation and truncation logic.",
+      "tags": [
+        "scenario",
+        "obstacle-avoidance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "type": "file",
+      "name": "vertical_cr.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "summary": "Vertical conflict resolution: aircraft at similar positions but different altitudes.",
+      "tags": [
+        "scenario",
+        "conflict-resolution",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py:VerticalCRScenario",
+      "type": "class",
+      "name": "VerticalCRScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "lineRange": [
+        23,
+        139
+      ],
+      "summary": "Vertical CR scenario, manages altitude layer assignment and priority ranking.",
+      "tags": [
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "type": "file",
+      "name": "waypoint_nav.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "summary": "Waypoint navigation (no conflicts): baseline scenario for testing guidance logic.",
+      "tags": [
+        "scenario",
+        "conflict-resolution",
+        "air-traffic-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py:WaypointNavScenario",
+      "type": "class",
+      "name": "WaypointNavScenario",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "lineRange": [
+        22,
+        113
+      ],
+      "summary": "Waypoint navigation scenario, aircraft placed far apart with haversine distance arrival detection.",
+      "tags": [
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_nm_to_deg_lon",
+      "type": "function",
+      "name": "_nm_to_deg_lon",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "lineRange": [
+        36,
+        38
+      ],
+      "summary": "Converts nautical miles to degrees longitude at a given latitude.",
+      "tags": [
+        "geometry",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_generate_obstacle_polygon",
+      "type": "function",
+      "name": "_generate_obstacle_polygon",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "lineRange": [
+        41,
+        87
+      ],
+      "summary": "Randomly generates irregular polygon no-fly zones near a given center point.",
+      "tags": [
+        "geometry",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_polygon_area_nm2",
+      "type": "function",
+      "name": "_polygon_area_nm2",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "lineRange": [
+        90,
+        115
+      ],
+      "summary": "Calculates polygon area in square nautical miles using Shoelace formula.",
+      "tags": [
+        "geometry",
+        "utility"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_sort_vertices_clockwise",
+      "type": "function",
+      "name": "_sort_vertices_clockwise",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "lineRange": [
+        118,
+        126
+      ],
+      "summary": "Sorts polygon vertices in clockwise order based on atan2 angle calculation.",
+      "tags": [
+        "geometry",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/flow/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/bluesky_pettingzoo/flow/__init__.py",
+      "summary": "Flow module package init file, empty.",
+      "tags": [
+        "package-init",
+        "barrel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/flow/scheduler.py",
+      "type": "file",
+      "name": "scheduler.py",
+      "filePath": "src/bluesky_pettingzoo/flow/scheduler.py",
+      "summary": "Flow scheduler: manages departure/arrival intervals and sector handoff tracking.",
+      "tags": [
+        "flow-management",
+        "scheduling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/flow/scheduler.py:FlowScheduler",
+      "type": "class",
+      "name": "FlowScheduler",
+      "filePath": "src/bluesky_pettingzoo/flow/scheduler.py",
+      "lineRange": [
+        8,
+        81
+      ],
+      "summary": "Flow scheduler class, checks departure/arrival based on configured intervals.",
+      "tags": [
+        "flow-management",
+        "scheduler"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/observations/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/bluesky_pettingzoo/observations/__init__.py",
+      "summary": "Observations module package init file, empty.",
+      "tags": [
+        "package-init",
+        "barrel"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "type": "file",
+      "name": "filters.py",
+      "filePath": "src/bluesky_pettingzoo/observations/filters.py",
+      "summary": "Perception range filter: filters aircraft based on horizontal radius and vertical range.",
+      "tags": [
+        "observation-filter",
+        "partial-observability"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/observations/filters.py:PerceptionFilter",
+      "type": "class",
+      "name": "PerceptionFilter",
+      "filePath": "src/bluesky_pettingzoo/observations/filters.py",
+      "lineRange": [
+        11,
+        65
+      ],
+      "summary": "Perception filter class, filters nearby aircraft based on perception radius and altitude difference.",
+      "tags": [
+        "observation-filter",
+        "perception-range"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "type": "file",
+      "name": "manager.py",
+      "filePath": "src/bluesky_pettingzoo/observations/manager.py",
+      "summary": "Observation manager integrating perception filtering and value normalization for RL agents.",
+      "tags": [
+        "observation",
+        "normalization",
+        "data-pipeline",
+        "service"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/observations/manager.py:ObservationManager",
+      "type": "class",
+      "name": "ObservationManager",
+      "filePath": "src/bluesky_pettingzoo/observations/manager.py",
+      "lineRange": [
+        17,
+        280
+      ],
+      "summary": "Combines perception filtering and value normalization to produce complete observation packages.",
+      "tags": [
+        "observation",
+        "normalization",
+        "data-pipeline"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/observations/normalizer.py",
+      "type": "file",
+      "name": "normalizer.py",
+      "filePath": "src/bluesky_pettingzoo/observations/normalizer.py",
+      "summary": "Observation value normalizer converting raw values to [-1,1] range.",
+      "tags": [
+        "normalization",
+        "utility",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/observations/normalizer.py:Normalizer",
+      "type": "class",
+      "name": "Normalizer",
+      "filePath": "src/bluesky_pettingzoo/observations/normalizer.py",
+      "lineRange": [
+        11,
+        218
+      ],
+      "summary": "Provides normalization methods for heading, altitude, speed, lat/lon, vertical speed, distance, and bearing.",
+      "tags": [
+        "normalization",
+        "utility",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rendering/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/bluesky_pettingzoo/rendering/__init__.py",
+      "summary": "Rendering package initializer declaring Pygame-based visualization module.",
+      "tags": [
+        "barrel",
+        "entry-point",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "type": "file",
+      "name": "base_renderer.py",
+      "filePath": "src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "summary": "Base renderer managing Pygame initialization, screen creation, HUD overlay, and resource cleanup.",
+      "tags": [
+        "base-class",
+        "visualization",
+        "pygame"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rendering/base_renderer.py:BaseRenderer",
+      "type": "class",
+      "name": "BaseRenderer",
+      "filePath": "src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "lineRange": [
+        13,
+        109
+      ],
+      "summary": "Pygame rendering base class providing display, render_frame, _draw_hud, flip, close methods.",
+      "tags": [
+        "base-class",
+        "visualization",
+        "pygame"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "type": "file",
+      "name": "common.py",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "summary": "Shared rendering utilities providing lat/lon-to-pixel coordinate conversion and drawing primitives.",
+      "tags": [
+        "utility",
+        "visualization",
+        "coordinate-conversion"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rendering/common.py:latlon_to_pixel",
+      "type": "function",
+      "name": "latlon_to_pixel",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "lineRange": [
+        14,
+        43
+      ],
+      "summary": "Converts lat/lon coordinates to screen pixel position within defined bounds.",
+      "tags": [
+        "coordinate-conversion",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rendering/common.py:draw_aircraft",
+      "type": "function",
+      "name": "draw_aircraft",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "lineRange": [
+        46,
+        80
+      ],
+      "summary": "Draws an aircraft as a rotated triangle on the Pygame screen.",
+      "tags": [
+        "drawing",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rendering/common.py:draw_waypoint",
+      "type": "function",
+      "name": "draw_waypoint",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "lineRange": [
+        83,
+        101
+      ],
+      "summary": "Draws a waypoint as a small circle on the Pygame screen.",
+      "tags": [
+        "drawing",
+        "visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rendering/common.py:draw_nmac_circle",
+      "type": "function",
+      "name": "draw_nmac_circle",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "lineRange": [
+        104,
+        127
+      ],
+      "summary": "Draws a NMAC conflict circle around an aircraft for conflict visualization.",
+      "tags": [
+        "drawing",
+        "conflict-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/bluesky_pettingzoo/rendering/common.py:draw_sector_polygon",
+      "type": "function",
+      "name": "draw_sector_polygon",
+      "filePath": "src/bluesky_pettingzoo/rendering/common.py",
+      "lineRange": [
+        130,
+        156
+      ],
+      "summary": "Draws a sector polygon outline from lat/lon vertex list for airspace sector visualization.",
+      "tags": [
+        "drawing",
+        "airspace-visualization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "type": "file",
+      "name": "descent_renderer.py",
+      "filePath": "src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "summary": "Descent scenario renderer drawing aircraft with altitude labels and runway markers.",
+      "tags": [
+        "visualization",
+        "scenario-renderer",
+        "inheritance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rendering/descent_renderer.py:DescentRenderer",
+      "type": "class",
+      "name": "DescentRenderer",
+      "filePath": "src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "lineRange": [
+        21,
+        88
+      ],
+      "summary": "Extends BaseRenderer for descent scenario with runway markers and altitude labels.",
+      "tags": [
+        "visualization",
+        "scenario-renderer"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "type": "file",
+      "name": "horizontal_cr_renderer.py",
+      "filePath": "src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "summary": "Horizontal conflict resolution scenario renderer with aircraft, waypoints, and NMAC circles.",
+      "tags": [
+        "visualization",
+        "scenario-renderer",
+        "inheritance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py:HorizontalCRRenderer",
+      "type": "class",
+      "name": "HorizontalCRRenderer",
+      "filePath": "src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "lineRange": [
+        21,
+        77
+      ],
+      "summary": "Extends BaseRenderer for horizontal conflict resolution with aircraft and NMAC circles.",
+      "tags": [
+        "visualization",
+        "scenario-renderer"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "tests/integration/__init__.py",
+      "summary": "integration 测试包的初始化文件",
+      "tags": [
+        "test",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/integration/test_component_integration.py",
+      "type": "file",
+      "name": "test_component_integration.py",
+      "filePath": "tests/integration/test_component_integration.py",
+      "summary": "组件级集成测试，验证 ObservationManager、ActionTranslator、RewardCalculator 三者之间的数据流转",
+      "tags": [
+        "test",
+        "integration",
+        "component-test"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/integration/test_env_integration.py",
+      "type": "file",
+      "name": "test_env_integration.py",
+      "filePath": "tests/integration/test_env_integration.py",
+      "summary": "环境级集成测试，验证多智能体环境在无冲突、单冲突、多冲突场景下的行为",
+      "tags": [
+        "test",
+        "integration",
+        "e2e"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_action_frequency.py",
+      "type": "file",
+      "name": "test_action_frequency.py",
+      "filePath": "tests/test_action_frequency.py",
+      "summary": "测试 BlueSkyWrapper 的 step_n 方法，验证多次步进执行和时间推进",
+      "tags": [
+        "test",
+        "simulation",
+        "wrapper"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_action_translator.py",
+      "type": "file",
+      "name": "test_action_translator.py",
+      "filePath": "tests/test_action_translator.py",
+      "summary": "测试 ActionTranslator 的离散和连续动作翻译功能",
+      "tags": [
+        "test",
+        "action",
+        "translator"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_actions.py",
+      "type": "file",
+      "name": "test_actions.py",
+      "filePath": "tests/test_actions.py",
+      "summary": "测试 ActionTranslator 的各类动作调整逻辑",
+      "tags": [
+        "test",
+        "action",
+        "translation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_algorithm_config.py",
+      "type": "file",
+      "name": "test_algorithm_config.py",
+      "filePath": "tests/test_algorithm_config.py",
+      "summary": "测试算法配置加载，验证四种算法的 YAML 配置正确解析",
+      "tags": [
+        "test",
+        "configuration",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_algorithm_factory.py",
+      "type": "file",
+      "name": "test_algorithm_factory.py",
+      "filePath": "tests/test_algorithm_factory.py",
+      "summary": "测试 AlgorithmFactory 的算法创建和 YAML 加载功能",
+      "tags": [
+        "test",
+        "factory",
+        "algorithm"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_altitude_reward.py",
+      "type": "file",
+      "name": "test_altitude_reward.py",
+      "filePath": "tests/test_altitude_reward.py",
+      "summary": "测试 AltitudeReward 奖励组件，验证高度误差惩罚和撞击惩罚",
+      "tags": [
+        "test",
+        "reward",
+        "altitude"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_capacity_reward.py",
+      "type": "file",
+      "name": "test_capacity_reward.py",
+      "filePath": "tests/test_capacity_reward.py",
+      "summary": "测试 CapacityPenalty 容量惩罚组件",
+      "tags": [
+        "test",
+        "reward",
+        "capacity"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_efficiency_reward.py",
+      "type": "file",
+      "name": "test_efficiency_reward.py",
+      "filePath": "tests/test_efficiency_reward.py",
+      "summary": "Efficiency reward component test file verifying FlowEfficiencyReward creation, sector entry notification, efficiency computation, and reset. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "reward",
+        "flow-efficiency"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_env_close.py",
+      "type": "file",
+      "name": "test_env_close.py",
+      "filePath": "tests/test_env_close.py",
+      "summary": "Environment close functionality test file verifying BlueSkyMARLEnv close() method correctly releases resources. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "env",
+        "lifecycle"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_env_config.py",
+      "type": "file",
+      "name": "test_env_config.py",
+      "filePath": "tests/test_env_config.py",
+      "summary": "Environment configuration test file verifying BlueSkyMARLEnv config loading and parameter passing. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "env",
+        "configuration"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_env_observation.py",
+      "type": "file",
+      "name": "test_env_observation.py",
+      "filePath": "tests/test_env_observation.py",
+      "summary": "Environment observation space test file verifying BlueSkyMARLEnv observation generation and space definition. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "env",
+        "observation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_env_step.py",
+      "type": "file",
+      "name": "test_env_step.py",
+      "filePath": "tests/test_env_step.py",
+      "summary": "Environment step function test file verifying BlueSkyMARLEnv step() return structure and action execution. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "env",
+        "step"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_env_types.py",
+      "type": "file",
+      "name": "test_env_types.py",
+      "filePath": "tests/test_env_types.py",
+      "summary": "Environment type definition test file verifying BlueSkyMARLEnv type annotations and data structures. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "env",
+        "type-definition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_fairness_reward.py",
+      "type": "file",
+      "name": "test_fairness_reward.py",
+      "filePath": "tests/test_fairness_reward.py",
+      "summary": "Fairness reward component test file verifying FairnessReward creation, delay setting, fairness computation, and reset. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "reward",
+        "fairness"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_flow_efficiency.py",
+      "type": "file",
+      "name": "test_flow_efficiency.py",
+      "filePath": "tests/test_flow_efficiency.py",
+      "summary": "Flow efficiency reward component test file verifying FlowEfficiencyReward creation, sector entry notification, efficiency computation, and reset. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "reward",
+        "flow-efficiency"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_flow_scheduler.py",
+      "type": "file",
+      "name": "test_flow_scheduler.py",
+      "filePath": "tests/test_flow_scheduler.py",
+      "summary": "Flow scheduler test file comprehensively verifying FlowScheduler departure/arrival interval control, sector handoff tracking, and state reset with 5 test classes and 18 test cases.",
+      "tags": [
+        "test",
+        "flow-scheduler",
+        "departure-spacing",
+        "arrival-spacing",
+        "sector-handoff"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/test_geometry.py",
+      "type": "file",
+      "name": "test_geometry.py",
+      "filePath": "tests/test_geometry.py",
+      "summary": "Geometry computation test file verifying haversine distance, bearing, relative position, polygon point-in-polygon checks for ATM geometry functions. This file does not exist in the current codebase.",
+      "tags": [
+        "test",
+        "geometry",
+        "haversine",
+        "spatial"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:tests/test_flow_scheduler.py:TestFlowSchedulerCreation",
+      "type": "class",
+      "name": "TestFlowSchedulerCreation",
+      "filePath": "tests/test_flow_scheduler.py",
+      "lineRange": [
+        10,
+        17
+      ],
+      "summary": "Tests FlowScheduler creation logic, verifying correct initialization under default and custom configurations.",
+      "tags": [
+        "test",
+        "creation",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/test_flow_scheduler.py:TestDepartureSpacing",
+      "type": "class",
+      "name": "TestDepartureSpacing",
+      "filePath": "tests/test_flow_scheduler.py",
+      "lineRange": [
+        23,
+        50
+      ],
+      "summary": "Tests departure interval control logic covering first departure allowed, too-soon rejection, post-interval approval, interval-1 per-step, and default interval scenarios.",
+      "tags": [
+        "test",
+        "departure-spacing",
+        "timing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/test_flow_scheduler.py:TestArrivalSpacing",
+      "type": "class",
+      "name": "TestArrivalSpacing",
+      "filePath": "tests/test_flow_scheduler.py",
+      "lineRange": [
+        53,
+        73
+      ],
+      "summary": "Tests arrival interval control logic covering first arrival allowed, too-soon rejection, post-interval approval, and default interval scenarios.",
+      "tags": [
+        "test",
+        "arrival-spacing",
+        "timing"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/test_flow_scheduler.py:TestSectorHandoff",
+      "type": "class",
+      "name": "TestSectorHandoff",
+      "filePath": "tests/test_flow_scheduler.py",
+      "lineRange": [
+        76,
+        104
+      ],
+      "summary": "Tests sector handoff tracking functionality including notification recording, multi-handoff counting, and multi-aircraft statistics.",
+      "tags": [
+        "test",
+        "sector-handoff",
+        "tracking"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:tests/test_flow_scheduler.py:TestReset",
+      "type": "class",
+      "name": "TestReset",
+      "filePath": "tests/test_flow_scheduler.py",
+      "lineRange": [
+        107,
+        127
+      ],
+      "summary": "Tests reset functionality verifying reset() clears departure state, arrival state, and handoff records.",
+      "tags": [
+        "test",
+        "reset",
+        "state-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_random_agent.py",
+      "type": "file",
+      "name": "test_random_agent.py",
+      "filePath": "tests/test_random_agent.py",
+      "summary": "RandomAgent unit tests verifying act returns dict, actions in space, different obs yield different actions, and reset works.",
+      "tags": [
+        "test",
+        "agent",
+        "validation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_reward_calculator.py",
+      "type": "file",
+      "name": "test_reward_calculator.py",
+      "filePath": "tests/test_reward_calculator.py",
+      "summary": "RewardCalculator unit tests covering component registration, weighted sum, zero/negative weights, reset delegation, and arg passing.",
+      "tags": [
+        "test",
+        "reward",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:config/default.yaml",
+      "type": "config",
+      "name": "default.yaml",
+      "filePath": "config/default.yaml",
+      "summary": "Main config defining sim params (dt, max steps, headless), airspace sectors, aircraft spawn ranges, observation/action spaces, normalization.",
+      "tags": [
+        "configuration",
+        "simulation",
+        "airspace"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:config/rewards.yaml",
+      "type": "config",
+      "name": "rewards.yaml",
+      "filePath": "config/rewards.yaml",
+      "summary": "Reward component config defining 10 pluggable components (conflict, drift, smoothness, efficiency, obstacle, capacity, delay, flow, fairness, altitude) with weights and params.",
+      "tags": [
+        "configuration",
+        "reward",
+        "components"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:config/scenarios/horizontal_cr.yaml",
+      "type": "config",
+      "name": "horizontal_cr.yaml",
+      "filePath": "config/scenarios/horizontal_cr.yaml",
+      "summary": "Horizontal conflict resolution scenario: 5 aircraft, discrete, MULTI_RL, creconfs, conflict 0.7 + efficiency 0.3.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/vertical_cr.yaml",
+      "type": "config",
+      "name": "vertical_cr.yaml",
+      "filePath": "config/scenarios/vertical_cr.yaml",
+      "summary": "Vertical conflict resolution scenario: 5 aircraft, discrete, MULTI_RL, creconfs, conflict 0.6 + efficiency 0.4.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/sector_cr.yaml",
+      "type": "config",
+      "name": "sector_cr.yaml",
+      "filePath": "config/scenarios/sector_cr.yaml",
+      "summary": "Sector conflict resolution scenario: 5 aircraft, discrete, MULTI_RL, creconfs, conflict 0.8 + efficiency 0.2.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "conflict-resolution"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/waypoint_nav.yaml",
+      "type": "config",
+      "name": "waypoint_nav.yaml",
+      "filePath": "config/scenarios/waypoint_nav.yaml",
+      "summary": "Waypoint navigation scenario: 3 aircraft, discrete, MULTI_RL, no conflict gen, efficiency 0.8 + drift 0.2.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/merge.yaml",
+      "type": "config",
+      "name": "merge.yaml",
+      "filePath": "config/scenarios/merge.yaml",
+      "summary": "Merge scenario: 20 aircraft, discrete, SINGLE_RL, no conflict gen, conflict 0.7 + efficiency 0.3.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "merge"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/descent.yaml",
+      "type": "config",
+      "name": "descent.yaml",
+      "filePath": "config/scenarios/descent.yaml",
+      "summary": "Descent scenario: 3 aircraft, discrete, SINGLE_RL, no conflict gen, altitude 1.0 + conflict 0.5 + smoothness 0.2.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "descent"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/static_obstacle.yaml",
+      "type": "config",
+      "name": "static_obstacle.yaml",
+      "filePath": "config/scenarios/static_obstacle.yaml",
+      "summary": "Static obstacle avoidance scenario: 1 aircraft, 3 obstacles, discrete, MULTI_RL, efficiency 0.7 + obstacle 0.3.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "obstacle-avoidance"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/sector_capacity.yaml",
+      "type": "config",
+      "name": "sector_capacity.yaml",
+      "filePath": "config/scenarios/sector_capacity.yaml",
+      "summary": "Sector capacity scenario: 6 aircraft, 2 sectors, capacity 4, discrete, MULTI_RL, conflict 0.5 + capacity 0.3 + efficiency 0.2.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "capacity-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:config/scenarios/route_nav.yaml",
+      "type": "config",
+      "name": "route_nav.yaml",
+      "filePath": "config/scenarios/route_nav.yaml",
+      "summary": "Route navigation scenario: 3 aircraft, discrete, MULTI_RL, no conflict gen, conflict 0.6 + efficiency 0.4 + drift 0.2.",
+      "tags": [
+        "configuration",
+        "scenario",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:architecture.md",
+      "type": "document",
+      "name": "architecture.md",
+      "filePath": "architecture.md",
+      "summary": "Project architecture doc describing 11 core modules (env, bluesky, scenarios, rewards, observations, actions, wrappers, training, rendering, utils, flow), config system, training flow, and test hierarchy.",
+      "tags": [
+        "documentation",
+        "architecture",
+        "overview"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:tests/test_rendering.py",
+      "type": "file",
+      "name": "test_rendering.py",
+      "filePath": "tests/test_rendering.py",
+      "summary": "Rendering system test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "rendering"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_reward_weights.py",
+      "type": "file",
+      "name": "test_reward_weights.py",
+      "filePath": "tests/test_reward_weights.py",
+      "summary": "Reward weights config test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "reward",
+        "configuration"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_scenario_setup.py",
+      "type": "file",
+      "name": "test_scenario_setup.py",
+      "filePath": "tests/test_scenario_setup.py",
+      "summary": "Scenario setup test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "scenario",
+        "setup"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_sector_cr_components.py",
+      "type": "file",
+      "name": "test_sector_cr_components.py",
+      "filePath": "tests/test_sector_cr_components.py",
+      "summary": "Sector CR components test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "sector",
+        "conflict-resolution"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_single_agent.py",
+      "type": "file",
+      "name": "test_single_agent.py",
+      "filePath": "tests/test_single_agent.py",
+      "summary": "Single agent wrapper test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "single-agent",
+        "wrapper"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_static_obstacle_components.py",
+      "type": "file",
+      "name": "test_static_obstacle_components.py",
+      "filePath": "tests/test_static_obstacle_components.py",
+      "summary": "Static obstacle components test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "obstacle",
+        "components"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_training.py",
+      "type": "file",
+      "name": "test_training.py",
+      "filePath": "tests/test_training.py",
+      "summary": "Training test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "training"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_types_extended.py",
+      "type": "file",
+      "name": "test_types_extended.py",
+      "filePath": "tests/test_types_extended.py",
+      "summary": "Extended types test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "types",
+        "data-model"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/test_waypoint_nav_components.py",
+      "type": "file",
+      "name": "test_waypoint_nav_components.py",
+      "filePath": "tests/test_waypoint_nav_components.py",
+      "summary": "Waypoint nav components test file (not present in current codebase, removed or never created).",
+      "tags": [
+        "test",
+        "waypoint",
+        "navigation"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "file",
+      "name": "base.py",
+      "filePath": "src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "summary": "Base scenario abstract class defining the interface for all scenario implementations.",
+      "tags": [
+        "abstract-base",
+        "scenario",
+        "core-module"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "file",
+      "name": "geometry.py",
+      "filePath": "src/bluesky_pettingzoo/utils/geometry.py",
+      "summary": "Geometry utility functions for haversine distance, bearing, relative position, and polygon operations.",
+      "tags": [
+        "utility",
+        "geometry",
+        "spatial-computation",
+        "core-module"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:make_env",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:benchmark_step_time",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:benchmark_episode_time",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:make_env",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:benchmark_step_time",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:benchmark_episode_time",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "function:scripts/benchmark_performance.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/evaluate_all.py",
+      "target": "function:scripts/evaluate_all.py:_make_env_factory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/evaluate_all.py",
+      "target": "function:scripts/evaluate_all.py:evaluate_all_scenarios",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/evaluate_all.py",
+      "target": "function:scripts/evaluate_all.py:_make_env_factory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/evaluate_all.py",
+      "target": "function:scripts/evaluate_all.py:evaluate_all_scenarios",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:run_episode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:make_env_factory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:run_evaluation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:run_episode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:make_env_factory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "function:scripts/evaluate_baselines.py:run_evaluation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:make_scenario_env_factory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:parse_args",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:train_scenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:make_scenario_env_factory",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:parse_args",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "function:scripts/train_ppo_scenarios.py:train_scenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/train_smoke_test.py",
+      "target": "function:scripts/train_smoke_test.py:_make_env",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_smoke_test.py",
+      "target": "function:scripts/train_smoke_test.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:scripts/train_smoke_test.py",
+      "target": "function:scripts/train_smoke_test.py:_make_env",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/train_smoke_test.py",
+      "target": "function:scripts/train_smoke_test.py:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/helpers/env_factory.py",
+      "target": "function:tests/helpers/env_factory.py:make_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/helpers/env_factory.py",
+      "target": "function:tests/helpers/env_factory.py:make_env",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/helpers/env_factory.py",
+      "target": "function:tests/helpers/env_factory.py:make_config",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/helpers/env_factory.py",
+      "target": "function:tests/helpers/env_factory.py:make_env",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/integration/test_scenario_e2e.py",
+      "target": "function:tests/integration/test_scenario_e2e.py:_run_episode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/integration/test_scenario_e2e.py",
+      "target": "function:tests/integration/test_scenario_e2e.py:_run_episode",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:scripts/benchmark_performance.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/evaluate_all.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/evaluate_baselines.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train_ppo_scenarios.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:scripts/train_smoke_test.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_descent.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_horizontal_cr.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_multi_conflict.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_no_conflict.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_performance.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_sector_cr.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_single_conflict.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_static_obstacle.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_vertical_cr.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/integration/test_waypoint_nav.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_api_compliance.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_arrival_termination.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_baseline_evaluation.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_dynamic_entry.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_env.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_env_action_dispatch.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_fake_wrapper_creconfs.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_horizontal_cr_creconfs.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_parallel_env_reset.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_plan_waypoint_obs.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_sector_cr_creconfs.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_train_ppo_scenarios.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_vertical_cr_creconfs.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_wrapper_switch.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_train_cli.py",
+      "target": "file:scripts/train_ppo_scenarios.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_train_script.py",
+      "target": "file:scripts/train_ppo_scenarios.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_train_ppo_scenarios.py",
+      "target": "file:scripts/train_ppo_scenarios.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_wrapper_switch.py",
+      "target": "file:scripts/train_ppo_scenarios.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_baseline_evaluation.py",
+      "target": "file:scripts/evaluate_baselines.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "target": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/base.py:RewardComponent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/calculator.py:RewardCalculator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/base.py:RewardComponent",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/base.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/base.py:RewardComponent",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/calculator.py:RewardCalculator",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/calculator.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/calculator.py:RewardCalculator",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/altitude_reward.py:AltitudeReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/capacity.py:CapacityPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/conflict.py:ConflictPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/delay.py:DelayPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/drift.py:DriftPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/efficiency.py:EfficiencyReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/fairness.py:FairnessReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py:FlowEfficiencyReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py:ObstacleIntrusion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/__init__.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/smoothness.py:SmoothnessPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/altitude_reward.py:AltitudeReward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/altitude_reward.py:AltitudeReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/capacity.py:CapacityPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/capacity.py:CapacityPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/conflict.py:ConflictPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/conflict.py:ConflictPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/delay.py:DelayPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/delay.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/delay.py:DelayPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/drift.py:DriftPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/drift.py:DriftPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "function:src/bluesky_pettingzoo/rewards/components/drift.py:_bound_angle_180",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "function:src/bluesky_pettingzoo/rewards/components/drift.py:_bound_angle_180",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/efficiency.py:EfficiencyReward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/efficiency.py:EfficiencyReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/fairness.py:FairnessReward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/fairness.py:FairnessReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py:FlowEfficiencyReward",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py:FlowEfficiencyReward",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py:ObstacleIntrusion",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py:ObstacleIntrusion",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/smoothness.py:SmoothnessPenalty",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+      "target": "class:src/bluesky_pettingzoo/rewards/components/smoothness.py:SmoothnessPenalty",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:AircraftState",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:AircraftState",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:Route",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:Route",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:SimulationConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:SimulationConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:ScenarioConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:ScenarioConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:ConflictLevel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/utils/types.py",
+      "target": "class:src/bluesky_pettingzoo/utils/types.py:ConflictLevel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/merge.py:MergeScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/merge.py:MergeScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py:PlanWaypointScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py:PlanWaypointScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/route_nav.py:RouteNavScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/route_nav.py:RouteNavScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py:SectorCapacityScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py:SectorCapacityScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py:SectorCRScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py:SectorCRScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:StaticObstacleScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:StaticObstacleScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py:VerticalCRScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py:VerticalCRScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py:WaypointNavScenario",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "target": "class:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py:WaypointNavScenario",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_nm_to_deg_lon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_nm_to_deg_lon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_generate_obstacle_polygon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_generate_obstacle_polygon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_polygon_area_nm2",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_polygon_area_nm2",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_sort_vertices_clockwise",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "function:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py:_sort_vertices_clockwise",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/flow/scheduler.py",
+      "target": "class:src/bluesky_pettingzoo/flow/scheduler.py:FlowScheduler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/flow/scheduler.py",
+      "target": "class:src/bluesky_pettingzoo/flow/scheduler.py:FlowScheduler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "target": "class:src/bluesky_pettingzoo/observations/filters.py:PerceptionFilter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "target": "class:src/bluesky_pettingzoo/observations/filters.py:PerceptionFilter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "file:src/bluesky_pettingzoo/observations/normalizer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "class:src/bluesky_pettingzoo/observations/manager.py:ObservationManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "class:src/bluesky_pettingzoo/observations/manager.py:ObservationManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/normalizer.py",
+      "target": "class:src/bluesky_pettingzoo/observations/normalizer.py:Normalizer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/normalizer.py",
+      "target": "class:src/bluesky_pettingzoo/observations/normalizer.py:Normalizer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/base_renderer.py:BaseRenderer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/base_renderer.py:BaseRenderer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:latlon_to_pixel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:latlon_to_pixel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_aircraft",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_aircraft",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_waypoint",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_waypoint",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_nmac_circle",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_nmac_circle",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_sector_polygon",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "target": "function:src/bluesky_pettingzoo/rendering/common.py:draw_sector_polygon",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "target": "file:src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "target": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/descent_renderer.py:DescentRenderer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/descent_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/descent_renderer.py:DescentRenderer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/bluesky_pettingzoo/rendering/descent_renderer.py:DescentRenderer",
+      "target": "class:src/bluesky_pettingzoo/rendering/base_renderer.py:BaseRenderer",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "target": "file:src/bluesky_pettingzoo/rendering/base_renderer.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "target": "file:src/bluesky_pettingzoo/rendering/common.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py:HorizontalCRRenderer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py",
+      "target": "class:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py:HorizontalCRRenderer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:src/bluesky_pettingzoo/rendering/horizontal_cr_renderer.py:HorizontalCRRenderer",
+      "target": "class:src/bluesky_pettingzoo/rendering/base_renderer.py:BaseRenderer",
+      "type": "inherits",
+      "direction": "forward",
+      "weight": 0.9
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "file:src/bluesky_pettingzoo/flow/scheduler.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestFlowSchedulerCreation",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestDepartureSpacing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestArrivalSpacing",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestSectorHandoff",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestReset",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestFlowSchedulerCreation",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestDepartureSpacing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestArrivalSpacing",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestSectorHandoff",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:tests/test_flow_scheduler.py",
+      "target": "class:tests/test_flow_scheduler.py:TestReset",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "target": "file:tests/test_efficiency_reward.py",
+      "direction": "forward",
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "type": "tested_by",
+      "weight": 0.5
+    },
+    {
+      "target": "file:tests/test_fairness_reward.py",
+      "direction": "forward",
+      "source": "file:src/bluesky_pettingzoo/rewards/components/fairness.py",
+      "type": "tested_by",
+      "weight": 0.5
+    },
+    {
+      "target": "file:tests/test_flow_efficiency.py",
+      "direction": "forward",
+      "source": "file:src/bluesky_pettingzoo/rewards/components/flow_efficiency.py",
+      "type": "tested_by",
+      "weight": 0.5
+    },
+    {
+      "source": "file:architecture.md",
+      "target": "file:config/default.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:architecture.md",
+      "target": "file:config/rewards.yaml",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/horizontal_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/vertical_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/sector_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/waypoint_nav.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/merge.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/descent.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/static_obstacle.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/sector_capacity.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/default.yaml",
+      "target": "file:config/scenarios/route_nav.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/horizontal_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/vertical_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/sector_cr.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/waypoint_nav.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/merge.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/descent.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/static_obstacle.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/sector_capacity.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:config/rewards.yaml",
+      "target": "file:config/scenarios/route_nav.yaml",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:tests/test_reward_calculator.py",
+      "target": "file:tests/test_reward_weights.py",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_sector_cr_components.py",
+      "target": "file:config/scenarios/sector_cr.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_static_obstacle_components.py",
+      "target": "file:config/scenarios/static_obstacle.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_waypoint_nav_components.py",
+      "target": "file:config/scenarios/waypoint_nav.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_single_agent.py",
+      "target": "file:config/default.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/test_training.py",
+      "target": "file:config/default.yaml",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:tests/integration/test_backward_compat.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:tests/integration/test_merge.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:tests/integration/test_scenario_e2e.py",
+      "target": "file:tests/helpers/env_factory.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "target": "file:src/bluesky_pettingzoo/utils/types.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "target": "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/filters.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/observations/manager.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/altitude_reward.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/capacity.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/drift.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    },
+    {
+      "source": "file:src/bluesky_pettingzoo/rewards/components/obstacle_intrusion.py",
+      "target": "file:src/bluesky_pettingzoo/utils/geometry.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7,
+      "recoveredFromImportMap": true
+    }
+  ],
+  "layers": [
+    {
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/envs/parallel_env.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/horizontal_cr.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/vertical_cr.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/sector_cr.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/waypoint_nav.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/merge.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/descent.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/sector_capacity.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/route_nav.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/plan_waypoint.py"
+      ],
+      "description": "PettingZoo ParallelEnv 核心实现及 10 个空中交通管理场景定义，是整个多智能体环境的编排中枢",
+      "name": "环境核心层",
+      "id": "layer:environment-core"
+    },
+    {
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/actions/translator.py",
+        "file:src/bluesky_pettingzoo/observations/manager.py",
+        "file:src/bluesky_pettingzoo/observations/normalizer.py",
+        "file:src/bluesky_pettingzoo/observations/filters.py",
+        "file:src/bluesky_pettingzoo/rewards/calculator.py",
+        "file:src/bluesky_pettingzoo/rewards/base.py",
+        "file:src/bluesky_pettingzoo/rewards/components/conflict.py",
+        "file:src/bluesky_pettingzoo/rewards/components/efficiency.py",
+        "file:src/bluesky_pettingzoo/rewards/components/smoothness.py",
+        "file:src/bluesky_pettingzoo/bluesky/wrapper.py",
+        "file:src/bluesky_pettingzoo/flow/scheduler.py"
+      ],
+      "description": "环境核心编排的功能模块：动作翻译、观测管理、奖励计算、BlueSky 仿真器封装和流量调度",
+      "name": "环境子系统层",
+      "id": "layer:environment-subsystems"
+    },
+    {
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/agents/base.py",
+        "file:src/bluesky_pettingzoo/agents/random_agent.py",
+        "file:src/bluesky_pettingzoo/agents/rule_based_agent.py",
+        "file:src/bluesky_pettingzoo/wrappers/single_agent.py",
+        "file:src/bluesky_pettingzoo/wrappers/noisy_observation.py",
+        "file:src/bluesky_pettingzoo/wrappers/wind_field.py"
+      ],
+      "description": "基线智能体实现（随机、规则）和环境包装器（单智能体、噪声观测、风场），提供不同使用场景的接口适配",
+      "name": "智能体与适配层",
+      "id": "layer:agents-adapters"
+    },
+    {
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/training/algorithm_factory.py",
+        "file:src/bluesky_pettingzoo/training/checkpoint.py",
+        "file:src/bluesky_pettingzoo/training/evaluator.py",
+        "file:src/bluesky_pettingzoo/training/logger.py",
+        "file:scripts/train_ppo_scenarios.py",
+        "file:scripts/evaluate_baselines.py"
+      ],
+      "description": "RL 算法工厂、模型检查点管理、评估器、日志回调及训练/评估入口脚本",
+      "name": "训练与执行层",
+      "id": "layer:training-execution"
+    },
+    {
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/utils/geometry.py",
+        "file:src/bluesky_pettingzoo/utils/types.py",
+        "file:src/bluesky_pettingzoo/__init__.py"
+      ],
+      "description": "几何计算工具函数、通用类型定义和包初始化入口",
+      "name": "工具与类型层",
+      "id": "layer:utility-types"
+    },
+    {
+      "nodeIds": [
+        "config:config/default.yaml",
+        "config:config/rewards.yaml"
+      ],
+      "description": "YAML 格式的环境参数配置和奖励函数配置，与代码彻底解耦",
+      "name": "配置层",
+      "id": "layer:configuration"
+    },
+    {
+      "nodeIds": [
+        "document:README.md"
+      ],
+      "description": "项目说明文档，包含架构设计、使用指南和开发规范",
+      "name": "文档层",
+      "id": "layer:documentation"
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "项目概览",
+      "description": "从 README 开始，了解项目的目的和架构。bluesky-pettingzoo 将 BlueSky 空中交通仿真平台从单智能体扩展为多智能体环境。",
+      "nodeIds": [
+        "document:README.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "核心环境实现",
+      "description": "BlueSkyMARLEnv 是 PettingZoo ParallelEnv 的核心实现，协调所有组件：BlueSky 仿真器、观测管理器、动作翻译器和奖励计算器。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/envs/parallel_env.py"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "BlueSky 仿真器封装",
+      "description": "BlueSkyWrapper 封装了 BlueSky 仿真引擎，提供飞机创建、状态获取、命令发送和仿真推进等接口。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/bluesky/wrapper.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "动作翻译系统",
+      "description": "ActionTranslator 将 RL 代理的离散或连续动作转换为 BlueSky 命令（航向、高度、速度调整）。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/actions/translator.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "观测管理系统",
+      "description": "ObservationManager 生成每个代理的观测空间，包括自身状态、其他飞机信息和目标航路点，支持感知过滤和归一化。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/observations/manager.py"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "模块化奖励系统",
+      "description": "RewardCalculator 支持动态注册多个奖励组件（冲突惩罚、效率奖励、平滑惩罚等），通过权重配置计算综合奖励。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/rewards/calculator.py",
+        "file:src/bluesky_pettingzoo/rewards/base.py"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "场景系统",
+      "description": "BaseScenario 定义了场景接口，10 个具体场景（水平冲突、垂直冲突、扇区冲突等）继承自它，提供不同的 ATM 训练任务。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/envs/scenarios/base.py",
+        "file:src/bluesky_pettingzoo/envs/scenarios/horizontal_cr.py"
+      ]
+    },
+    {
+      "order": 8,
+      "title": "基线代理",
+      "description": "RandomAgent 和 RuleBasedAgent 提供基线性能对比，RuleBasedAgent 使用 BlueSky 内置的 LNAV/VNAV 导航。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/agents/base.py",
+        "file:src/bluesky_pettingzoo/agents/rule_based_agent.py"
+      ]
+    },
+    {
+      "order": 9,
+      "title": "SB3 集成",
+      "description": "SingleAgentGymWrapper 将 ParallelEnv 包装为单智能体 gymnasium.Env，无缝对接 Stable-Baselines3 的 PPO 等算法。",
+      "nodeIds": [
+        "file:src/bluesky_pettingzoo/wrappers/single_agent.py"
+      ]
+    },
+    {
+      "order": 10,
+      "title": "配置系统",
+      "description": "YAML 配置文件管理仿真参数、飞机配置、奖励权重等，支持场景级别的自定义配置。",
+      "nodeIds": [
+        "config:config/default.yaml",
+        "config:config/rewards.yaml"
+      ]
+    },
+    {
+      "order": 11,
+      "title": "训练脚本",
+      "description": "train_ppo_scenarios.py 是核心训练脚本，支持多场景训练、检查点保存和日志记录。",
+      "nodeIds": [
+        "file:scripts/train_ppo_scenarios.py"
+      ]
+    }
+  ]
+}

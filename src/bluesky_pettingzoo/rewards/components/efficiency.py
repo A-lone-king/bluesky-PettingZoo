@@ -18,14 +18,19 @@ class EfficiencyReward(RewardComponent):
     - arrival_reward: bonus when within arrival_threshold of goal
     """
 
+    component_name = "efficiency"
+    config_keys = {
+        "max_deviation_nm": ("_max_deviation", 50.0),
+        "deviation_penalty_scale": ("_deviation_scale", 0.0),
+        "arrival_reward": ("_arrival_reward", 1.0),
+        "step_penalty": ("_step_penalty", 0.0),
+        "arrival_threshold_nm": ("_arrival_threshold", 2.0),
+    }
+    _stateful_attrs = ["_goals"]
+
     def __init__(self, config: dict[str, Any]) -> None:
-        comp = config.get("components", {}).get("efficiency", {})
-        self._max_deviation: float = comp.get("max_deviation_nm", 50)
-        self._deviation_scale: float = comp.get("deviation_penalty_scale", 0.0)
-        self._arrival_reward: float = comp.get("arrival_reward", 1.0)
-        self._step_penalty: float = comp.get("step_penalty", 0.0)
-        self._arrival_threshold: float = comp.get("arrival_threshold_nm", 2)
         self._goals: dict[str, tuple[float, float]] = {}
+        super().__init__(config)
 
     def set_goal(self, agent_id: str, lat: float, lon: float) -> None:
         """Set the goal waypoint for an agent."""
@@ -58,6 +63,3 @@ class EfficiencyReward(RewardComponent):
             reward += self._arrival_reward
 
         return reward
-
-    def reset(self) -> None:
-        self._goals.clear()

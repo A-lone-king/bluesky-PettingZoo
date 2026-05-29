@@ -8,11 +8,13 @@ from typing import Any, NamedTuple, TypeAlias, TypedDict
 import numpy as np
 from numpy.typing import NDArray
 
+from bluesky_pettingzoo.utils.mixin import DictBackedMixin
+
 # Agent identifier
 AgentID: TypeAlias = str
 
 
-class AircraftState:
+class AircraftState(DictBackedMixin):
     """BlueSky aircraft state.
 
     Supports both attribute access (state.id) and dict access (state["id"]).
@@ -38,12 +40,6 @@ class AircraftState:
         self.hdg = hdg
         self.tas = tas
         self.vs = vs
-
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
-
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
 
     def __repr__(self) -> str:
         return (
@@ -146,7 +142,7 @@ class ConflictLevel(IntEnum):
     NMAC = 2
 
 
-class SimulationConfig:
+class SimulationConfig(DictBackedMixin):
     """Simulation parameters."""
 
     __slots__ = ("dt", "max_episode_steps", "headless", "action_frequency")
@@ -164,14 +160,8 @@ class SimulationConfig:
         self.headless = headless
         self.action_frequency = action_frequency
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class SectorConfig:
+class SectorConfig(DictBackedMixin):
     """Sector definition."""
 
     __slots__ = ("id", "bounds")
@@ -180,14 +170,8 @@ class SectorConfig:
         self.id = id
         self.bounds = bounds
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class WaypointConfig:
+class WaypointConfig(DictBackedMixin):
     """Waypoint definition."""
 
     __slots__ = ("id", "lat", "lon", "alt")
@@ -198,14 +182,8 @@ class WaypointConfig:
         self.lon = lon
         self.alt = alt
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class AirspaceConfig:
+class AirspaceConfig(DictBackedMixin):
     """Airspace definition with sectors and optional waypoints."""
 
     __slots__ = ("name", "sectors", "waypoints")
@@ -221,14 +199,8 @@ class AirspaceConfig:
         self.sectors = sectors
         self.waypoints = waypoints or []
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class SpawnConfig:
+class SpawnConfig(DictBackedMixin):
     """Aircraft spawn parameters."""
 
     __slots__ = ("altitude_range", "speed_range", "heading_range")
@@ -244,12 +216,6 @@ class SpawnConfig:
         self.speed_range = speed_range
         self.heading_range = heading_range
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
-
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SpawnConfig):
             return NotImplemented
@@ -260,7 +226,7 @@ class SpawnConfig:
         )
 
 
-class DynamicEntryConfig:
+class DynamicEntryConfig(DictBackedMixin):
     """Dynamic aircraft entry parameters."""
 
     __slots__ = ("enabled", "interval", "max_total")
@@ -270,14 +236,8 @@ class DynamicEntryConfig:
         self.interval = interval
         self.max_total = max_total
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class ConflictConfig:
+class ConflictConfig(DictBackedMixin):
     """Conflict detection thresholds."""
 
     __slots__ = (
@@ -300,14 +260,8 @@ class ConflictConfig:
         self.warning_horizontal_nm = warning_horizontal_nm
         self.warning_vertical_ft = warning_vertical_ft
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class AircraftConfig:
+class AircraftConfig(DictBackedMixin):
     """Aircraft configuration with spawn parameters."""
 
     __slots__ = ("initial_count", "spawn")
@@ -316,14 +270,8 @@ class AircraftConfig:
         self.initial_count = initial_count
         self.spawn = spawn
 
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
 
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
-
-
-class ScenarioConfig:
+class ScenarioConfig(DictBackedMixin):
     """Top-level scenario configuration."""
 
     __slots__ = ("name", "simulation", "airspace", "aircraft", "dynamic_entry", "conflict")
@@ -344,12 +292,6 @@ class ScenarioConfig:
         self.aircraft = aircraft
         self.dynamic_entry = dynamic_entry
         self.conflict = conflict
-
-    def __getitem__(self, key: str) -> Any:
-        return getattr(self, key)
-
-    def __contains__(self, key: str) -> bool:
-        return hasattr(self, key)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ScenarioConfig:

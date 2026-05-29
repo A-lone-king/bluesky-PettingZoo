@@ -1,0 +1,79 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+# --- From .gitignore (uncomment to exclude) ---
+
+# /bluesky/
+# /bluesky.wiki/
+# /bluesky-gym/
+# /PettingZoo/
+# *.py[cod]
+# *$py.class
+# *.so
+# *.egg-info/
+# *.egg
+# eggs/
+# *.whl
+# *.manifest
+# *.spec
+# pip-log.txt
+# pip-delete-this-directory.txt
+# ENV/
+# .python-version
+# *.swp
+# *.swo
+# *~
+# .pytest_cache/
+# htmlcov/
+# .coverage
+# .coverage.*
+# coverage.xml
+# .mypy_cache/
+# .ruff_cache/
+# .env
+# .env.*
+# !.env.example
+# .ipynb_checkpoints/
+# wandb/
+# runs/
+# tensorboard/
+# mlruns/
+# mlartifacts/
+# checkpoints/
+# models/
+# *.pt
+# *.pth
+# *.onnx
+# logs/
+# *.csv
+# *.h5
+# *.hdf5
+# *.pkl
+# *.pickle
+# *.npy
+# *.npz
+# .DS_Store
+# Thumbs.db
+# desktop.ini
+# .claude/
+# .rtk/
+# spec3/
+# spec4/
+# models_test/
+
+# --- Detected directories (uncomment to exclude) ---
+
+# tests/
+# docs/
+# scripts/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# *.test.*
+# *.spec.*
+# *.snap

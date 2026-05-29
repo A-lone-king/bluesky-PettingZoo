@@ -184,3 +184,39 @@ class ConflictPenalty(RewardComponent):
 
     def reset(self) -> None:
         pass
+
+    def get_conflict_status(
+        self,
+        own: AircraftState,
+        others: list[AircraftState],
+    ) -> str:
+        """Get conflict status string for a pair of aircraft.
+
+        Args:
+            own: Ownship state.
+            others: List of other aircraft states.
+
+        Returns:
+            "nmac", "warning", or "safe"
+        """
+        for other in others:
+            h_dist = haversine_distance(own.lat, own.lon, other.lat, other.lon)
+            v_dist = abs(own.alt - other.alt)
+            if h_dist < self._nmac_h and v_dist < self._nmac_v:
+                return "nmac"
+            if h_dist < self._warn_h and v_dist < self._warn_v:
+                return "warning"
+        return "safe"
+
+    def get_thresholds(self) -> dict[str, float]:
+        """Get conflict thresholds.
+
+        Returns:
+            Dictionary with nmac_h, nmac_v, warn_h, warn_v
+        """
+        return {
+            "nmac_h": self._nmac_h,
+            "nmac_v": self._nmac_v,
+            "warn_h": self._warn_h,
+            "warn_v": self._warn_v,
+        }

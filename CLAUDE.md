@@ -53,6 +53,14 @@ BlueSky 仿真引擎通过 `pip install "bluesky-simulator[full]"` 安装，无�
 
 5. **奖励函数模块化**：独立 `RewardCalculator` 类，支持动态注册不同惩罚项。
 
+### 重构后的模块化设计
+
+- **RewardComponent 基类**：提供 `get_config()` 辅助方法和自动 `reset()` 机制
+- **EnvWrapperMixin**：统一包装器委托实现，减少重复代码
+- **BaseScenario**：提供默认冲突配置和工具方法（`generate_agent_ids()`, `get_center_point()`）
+- **DictBackedMixin**：统一字典兼容接口，消除配置类中的重复模式
+- **BaseRenderer**：提供通用渲染逻辑和 bounds 管理
+
 ### BlueSky 关键接口
 
 - 初始化：`bs.init(mode='sim', detached=True)`

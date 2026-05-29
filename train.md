@@ -374,3 +374,73 @@ models/
 2. 在 `scripts/train_ppo_scenarios.py` 的 `SCENARIO_MAP` 中注册场景名
 3. 在 `scripts/train_ppo_scenarios.py` 的 `_resolve_scenario()` 中添加导入映射
 4. （可选）在 `config/scenarios/` 下创建 YAML 配置
+
+---
+
+## 架构说明
+
+### 重构后的模块化设计
+
+项目采用模块化架构，通过 Mixin 和基类消除重复代码：
+
+#### RewardComponent 基类
+
+所有奖励组件继承自 `RewardComponent`，提供：
+- `get_config(key, default)` — 统一的配置访问方法
+- `_stateful_attrs` — 自动 reset 机制
+- `component_name` — 组件名称，用于配置查找
+
+```python
+class MyReward(RewardComponent):
+    component_name = "my_reward"
+    config_keys = {
+        "param1": ("_param1", 1.0),
+        "param2": ("_param2", 0.5),
+    }
+    _stateful_attrs = ["_cache"]
+
+    def __init__(self, config):
+        self._cache = {}
+        super().__init__(config)  # 自动解析配置
+```
+
+#### EnvWrapperMixin
+
+所有环境包装器继承自 `EnvWrapperMixin`，自动获得：
+- `agents` / `possible_agents` 属性委托
+- `observation_space()` / `action_space()` 方法委托
+- `close()` 方法委托
+
+```python
+class MyWrapper(EnvWrapperMixin):
+    def __init__(self, env, **kwargs):
+        super().__init__(env, **kwargs)
+        # 只需实现特有逻辑
+```
+
+#### BaseScenario 工具方法
+
+场景类可使用基类提供的工具方法：
+- `generate_agent_ids(count, prefix)` — 生成代理 ID
+- `get_center_point(bounds)` — 计算空域中心点
+- `get_conflict_config()` — 默认冲突配置（可覆盖）
+
+#### DictBackedMixin
+
+所有配置类继承自 `DictBackedMixin`，自动获得字典兼容接口：
+- `obj["key"]` 等同于 `obj.key`
+- `"key" in obj` 等同于 `hasattr(obj, "key")`
+
+### 添加新奖励组件
+
+1. 在 `src/bluesky_pettingzoo/rewards/components/` 下创建新组件
+2. 继承 `RewardComponent`，设置 `component_name` 和 `config_keys`
+3. 实现 `compute()` 方法
+4. （可选）设置 `_stateful_attrs` 实现自动 reset
+
+### 添加新包装器
+
+1. 在 `src/bluesky_pettingzoo/wrappers/` 下创建新包装器
+2. 继承 `EnvWrapperMixin`
+3. 在 `__init__` 中调用 `super().__init__(env)`
+4. 实现 `reset()` 和 `step()` 方法

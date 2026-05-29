@@ -9,19 +9,34 @@ try:
 except ImportError:
     pygame = None  # type: ignore[assignment]
 
+from bluesky_pettingzoo.rendering.common import (
+    draw_aircraft,
+    draw_waypoint,
+    latlon_to_pixel,
+)
+
 
 class BaseRenderer:
     """Base class for scenario-specific renderers.
 
     Manages Pygame initialization, screen creation, HUD overlay,
-    and resource cleanup. Subclasses implement ``render_frame()``.
+    and resource cleanup. Provides default render_frame implementation
+    that subclasses can extend.
 
     Args:
         width: Window width in pixels.
         height: Window height in pixels.
         caption: Window title.
         fps: Target frames per second.
+        bounds: Geographic bounds for rendering.
     """
+
+    _DEFAULT_BOUNDS = {
+        "lat_min": 39.0,
+        "lat_max": 41.0,
+        "lon_min": 116.0,
+        "lon_max": 118.0,
+    }
 
     def __init__(
         self,
@@ -29,6 +44,7 @@ class BaseRenderer:
         height: int = 600,
         caption: str = "BlueSky MARL",
         fps: int = 30,
+        bounds: dict[str, float] | None = None,
     ) -> None:
         self._width = width
         self._height = height
@@ -38,6 +54,15 @@ class BaseRenderer:
         self._clock: Any = None
         self._font: Any = None
         self._initialized = False
+        self._bounds = bounds or self._DEFAULT_BOUNDS.copy()
+
+    def set_bounds(self, bounds: dict[str, float]) -> None:
+        """Set geographic bounds for rendering.
+
+        Args:
+            bounds: Dictionary with lat_min, lat_max, lon_min, lon_max
+        """
+        self._bounds = bounds
 
     def display(self) -> None:
         """Initialize Pygame and create the display window.
@@ -64,7 +89,10 @@ class BaseRenderer:
         step: int = 0,
         info: dict[str, Any] | None = None,
     ) -> None:
-        """Render a single frame. Override in subclasses.
+        """Render a single frame with aircraft and waypoints.
+
+        Subclasses can override to add custom rendering before/after
+        calling super().render_frame().
 
         Args:
             states: Aircraft states keyed by agent ID.
@@ -74,6 +102,34 @@ class BaseRenderer:
         """
         if not self._initialized:
             return
+
+        # Clear screen
+        self._screen.fill((0, 0, 0))
+
+        # Draw aircraft
+        for agent_id, state in states.items():
+            draw_aircraft(
+                self._screen,
+                state.lat,
+                state.lon,
+                self._bounds,
+                (self._width, self._height),
+                state.hdg,
+            )
+
+        # Draw waypoints
+        if waypoints:
+            for agent_id, wp in waypoints.items():
+                draw_waypoint(
+                    self._screen,
+                    wp["lat"],
+                    wp["lon"],
+                    self._bounds,
+                    (self._width, self._height),
+                )
+
+        # Draw HUD
+        self._draw_hud(step, info)
 
     def _draw_hud(self, step: int = 0, info: dict[str, Any] | None = None) -> None:
         """Draw HUD overlay with step counter and info text.

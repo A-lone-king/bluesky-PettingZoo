@@ -5,14 +5,8 @@ from __future__ import annotations
 import pytest
 
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
-
-
-def make_state() -> AircraftState:
-    return AircraftState(
-        id="AC001", lat=39.25, lon=116.25, alt=35000.0,
-        hdg=90.0, tas=450.0, vs=0.0,
-    )
+from bluesky_pettingzoo.utils.types import DiscreteAction
+from tests.helpers.state_factory import make_action, make_state
 
 
 class TestNoActionPenalty:

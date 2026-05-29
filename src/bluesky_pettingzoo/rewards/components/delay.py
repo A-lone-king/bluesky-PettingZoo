@@ -20,10 +20,15 @@ class DelayPenalty(RewardComponent):
     - ``delay_penalty_per_step``: penalty per step overdue (default -0.05)
     """
 
+    component_name = "delay"
+    config_keys = {
+        "delay_penalty_per_step": ("_penalty_per_step", -0.05),
+    }
+    _stateful_attrs = ["_expected_steps"]
+
     def __init__(self, config: dict[str, Any]) -> None:
-        comp = config.get("components", {}).get("delay", {})
-        self._penalty_per_step: float = comp.get("delay_penalty_per_step", -0.05)
         self._expected_steps: dict[str, int] = {}
+        super().__init__(config)
 
     def set_goal(
         self,
@@ -63,7 +68,3 @@ class DelayPenalty(RewardComponent):
         if overdue <= 0:
             return 0.0
         return overdue * self._penalty_per_step
-
-    def reset(self) -> None:
-        """Clear all goals."""
-        self._expected_steps.clear()

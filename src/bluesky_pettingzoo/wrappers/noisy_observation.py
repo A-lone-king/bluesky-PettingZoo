@@ -6,8 +6,10 @@ from typing import Any
 
 import numpy as np
 
+from bluesky_pettingzoo.wrappers.base import EnvWrapperMixin
 
-class NoisyObservationWrapper:
+
+class NoisyObservationWrapper(EnvWrapperMixin):
     """Wraps a ParallelEnv and adds Gaussian noise to observations.
 
     Noise is added independently to each agent's observation on every
@@ -26,34 +28,9 @@ class NoisyObservationWrapper:
         noise_level: float = 0.1,
         seed: int | None = None,
     ) -> None:
-        self.env = env
         self.noise_level = noise_level
         self._rng = np.random.RandomState(seed)
-
-    # ------------------------------------------------------------------
-    # Delegated properties
-    # ------------------------------------------------------------------
-
-    @property
-    def agents(self) -> list[str]:
-        return self.env.agents
-
-    @property
-    def possible_agents(self) -> list[str]:
-        return self.env.possible_agents
-
-    # ------------------------------------------------------------------
-    # Delegated methods
-    # ------------------------------------------------------------------
-
-    def observation_space(self, agent: str) -> Any:
-        return self.env.observation_space(agent)
-
-    def action_space(self, agent: str) -> Any:
-        return self.env.action_space(agent)
-
-    def close(self) -> None:
-        self.env.close()
+        super().__init__(env)
 
     # ------------------------------------------------------------------
     # Core interface

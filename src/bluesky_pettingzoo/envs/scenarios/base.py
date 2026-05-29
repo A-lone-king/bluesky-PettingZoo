@@ -28,12 +28,23 @@ _SCENARIO_REGISTRY: dict[str, str] = {
     "WaypointNav": "WaypointNavScenario",
 }
 
+# Default conflict thresholds used by most scenarios
+_DEFAULT_CONFLICT_CONFIG = ConflictConfig(
+    nmac_horizontal_nm=5.0,
+    nmac_vertical_ft=1000.0,
+    warning_horizontal_nm=10.0,
+    warning_vertical_ft=2000.0,
+)
+
 
 class BaseScenario(ABC):
     """Abstract base class for all scenarios.
 
     Subclasses must implement the 5 abstract methods.
     The 2 optional methods (update, reset) have default no-op implementations.
+
+    Provides utility methods for common operations like agent ID generation
+    and center point calculation.
     """
 
     @property
@@ -92,6 +103,33 @@ class BaseScenario(ABC):
         """
         return 3
 
+    @staticmethod
+    def generate_agent_ids(count: int, prefix: str = "AC") -> list[str]:
+        """Generate agent IDs with sequential numbering.
+
+        Args:
+            count: Number of agents to generate.
+            prefix: Agent ID prefix (default: "AC").
+
+        Returns:
+            List of agent ID strings like ["AC000", "AC001", ...].
+        """
+        return [f"{prefix}{i:03d}" for i in range(count)]
+
+    @staticmethod
+    def get_center_point(bounds: dict[str, float]) -> tuple[float, float]:
+        """Calculate the center point of airspace bounds.
+
+        Args:
+            bounds: Dictionary with lat_min, lat_max, lon_min, lon_max.
+
+        Returns:
+            Tuple of (center_lat, center_lon).
+        """
+        center_lat = (bounds["lat_min"] + bounds["lat_max"]) / 2
+        center_lon = (bounds["lon_min"] + bounds["lon_max"]) / 2
+        return center_lat, center_lon
+
     @abstractmethod
     def setup(
         self,
@@ -112,9 +150,16 @@ class BaseScenario(ABC):
     def get_spawn_config(self) -> SpawnConfig:
         """Return spawn parameters for aircraft."""
 
-    @abstractmethod
     def get_conflict_config(self) -> ConflictConfig:
-        """Return conflict detection thresholds."""
+        """Return conflict detection thresholds.
+
+        Default implementation returns standard thresholds.
+        Override in scenarios that need different values (e.g., MergeScenario).
+
+        Returns:
+            ConflictConfig with standard thresholds.
+        """
+        return _DEFAULT_CONFLICT_CONFIG
 
     def should_truncate(
         self,

@@ -5,25 +5,8 @@ from __future__ import annotations
 import pytest
 
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.utils.types import AircraftState, ConflictLevel, DiscreteAction
-
-
-def make_state(
-    acid: str,
-    lat: float,
-    lon: float,
-    alt: float,
-    hdg: float = 90.0,
-    tas: float = 450.0,
-    vs: float = 0.0,
-) -> AircraftState:
-    return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
-    )
-
-
-def make_action() -> DiscreteAction:
-    return DiscreteAction(heading_idx=2, altitude_idx=2, speed_idx=2)
+from bluesky_pettingzoo.utils.types import ConflictLevel
+from tests.helpers.state_factory import make_action, make_state
 
 
 class TestNoConflict:

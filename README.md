@@ -13,6 +13,7 @@ BlueSky 是底层仿真引擎，负责飞行动力学、冲突检测和空域管
 - **配置驱动** — YAML 管理环境参数、奖励函数、观测空间
 - **1026 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
 - **真实 BlueSky 集成** — 支持 headless 模式运行真实仿真器
+- **模块化架构** — 通过 Mixin 和基类消除重复代码，提供统一的扩展接口
 
 ## 安装
 
@@ -124,22 +125,31 @@ bluesky-PettingZoo/
 │   ├── bluesky/          # BlueSky wrapper
 │   ├── envs/
 │   │   ├── parallel_env.py    # PettingZoo ParallelEnv 核心
-│   │   └── scenarios/         # 10 个场景实现
+│   │   └── scenarios/         # 10 个场景实现（继承 BaseScenario）
 │   ├── observations/     # 观测管理器
 │   ├── rewards/
+│   │   ├── base.py            # RewardComponent 基类（get_config, 自动 reset）
 │   │   ├── calculator.py      # 模块化奖励计算器
 │   │   └── components/        # 冲突/效率/平滑/障碍物奖励组件
 │   ├── flow/             # 流量管理（扇区容量调度）
 │   ├── training/         # 训练框架（PPO、检查点、评估）
-│   ├── rendering/        # 场景渲染器
-│   ├── utils/            # 类型定义、几何工具
+│   ├── rendering/
+│   │   ├── base_renderer.py   # BaseRenderer（通用渲染逻辑）
+│   │   └── ...                # 场景渲染器
+│   ├── utils/
+│   │   ├── types.py           # 类型定义（DictBackedMixin）
+│   │   ├── mixin.py           # DictBackedMixin 基类
+│   │   └── geometry.py        # 几何工具
 │   └── wrappers/
+│       ├── base.py            # EnvWrapperMixin（统一委托）
 │       ├── single_agent.py    # SB3 单智能体包装
 │       ├── noisy_observation.py
 │       └── wind_field.py
 ├── config/               # YAML 配置文件
 ├── scripts/              # 训练和评估脚本
 └── tests/                # 1026 个测试用例
+    └── helpers/
+        └── state_factory.py   # 共享测试工厂函数
 ```
 
 ## 配置
