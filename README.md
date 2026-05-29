@@ -76,21 +76,31 @@ model.learn(total_timesteps=50_000)
 ### 运行训练脚本
 
 ```bash
-# PPO 多场景训练与基线对比（默认 HorizontalCR，50k timesteps）
-python scripts/train_ppo_scenarios.py
+# PPO 训练（默认 HorizontalCR，50k timesteps）
+rtk python scripts/train_ppo_scenarios.py
 
 # 指定场景和训练步数
-python scripts/train_ppo_scenarios.py --scenario WaypointNav --timesteps 100000
+rtk python scripts/train_ppo_scenarios.py --scenario WaypointNav --timesteps 100000
+
+# 可视化训练（启用 Pygame 渲染）
+rtk python scripts/train_ppo_scenarios.py --scenario HorizontalCR --render
 
 # 基线评估（Random + RuleBased）
-python scripts/evaluate_baselines.py --scenario HorizontalCR --episodes 20
+rtk python scripts/evaluate_baselines.py --scenario HorizontalCR --episodes 20
+
+# 训练模型评估
+rtk python scripts/evaluate_baselines.py --scenario HorizontalCR --model models/ppo_HorizontalCR.zip
 
 # 训练 smoke test（快速验证，约 1 分钟）
-python scripts/train_smoke_test.py
+rtk python scripts/train_smoke_test.py
 
 # 性能基准
-python scripts/benchmark_performance.py
+rtk python scripts/benchmark_performance.py
 ```
+
+**可用场景**：HorizontalCR, VerticalCR, SectorCR, WaypointNav, Merge, Descent, StaticObstacle, SectorCapacity, RouteNav, PlanWaypoint
+
+**可用算法**：PPO, SAC, TD3, DDPG
 
 **注意**：首次运行 BlueSky 仿真器需要加载导航数据库，可能需要 1-2 分钟。训练模型会保存到 `models/` 目录。
 
