@@ -48,6 +48,16 @@ class BaseScenario(ABC):
     """
 
     @property
+    def name(self) -> str:
+        """Return scenario name for renderer selection.
+
+        Derived from class name by stripping 'Scenario' suffix.
+        e.g. 'HorizontalCRScenario' -> 'HorizontalCR'.
+        """
+        cls_name = type(self).__name__
+        return cls_name.removesuffix("Scenario")
+
+    @property
     def control_mode(self) -> str:
         """Return control mode: 'MULTI_RL' or 'SINGLE_RL'.
 

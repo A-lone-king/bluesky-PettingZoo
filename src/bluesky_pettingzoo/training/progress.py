@@ -23,6 +23,7 @@ class ProgressCallback(BaseCallback):
 
     def _init_callback(self) -> None:
         self._start_time = time.time()
+        self._total_timesteps = getattr(self.model, "total_timesteps", None) or getattr(self.model, "_total_timesteps", 0)
 
     def _on_step(self) -> bool:
         # Track episode rewards
@@ -40,14 +41,14 @@ class ProgressCallback(BaseCallback):
                 self._episode_lengths.append(int(ep_info.get("l", 0)))
 
         # Print progress every 1000 steps
-        if self.num_timesteps % 1000 == 0 or self.num_timesteps >= self.model.total_timesteps:
+        if self.num_timesteps % 1000 == 0 or self.num_timesteps >= self._total_timesteps:
             self._print_progress()
 
         return True
 
     def _print_progress(self) -> None:
         """Print progress bar to stderr."""
-        total = self.model.total_timesteps
+        total = self._total_timesteps
         current = self.num_timesteps
         pct = current / total * 100
 

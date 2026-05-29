@@ -63,6 +63,10 @@ def draw_aircraft(
     """
     if pygame is None:
         return
+    # Defensive: handle dict or non-numeric heading gracefully
+    if isinstance(heading, dict):
+        heading = heading.get("hdg", 0.0)
+    heading = float(heading)
     hdg_rad = math.radians(heading)
     # Triangle points: nose, left wing, right wing
     nose = (
