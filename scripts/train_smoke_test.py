@@ -88,8 +88,18 @@ def _evaluate(model, env, n_episodes: int = 5) -> float:
 def main() -> int:
     from stable_baselines3 import PPO
 
+    # Auto-detect device
+    device = "cpu"
+    try:
+        import torch
+        if torch.cuda.is_available():
+            device = "cuda"
+    except ImportError:
+        pass
+
     print("=" * 60)
     print("PPO Smoke Test — BlueSkyMARLEnv + WaypointNav")
+    print(f"Device: {device}")
     print("=" * 60)
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -107,7 +117,7 @@ def main() -> int:
             n_epochs=4,
             learning_rate=3e-4,
             verbose=0,
-            device="cpu",
+            device=device,
             seed=42,
         )
 

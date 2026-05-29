@@ -163,6 +163,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Number of aircraft in scenario")
     parser.add_argument("--render", action="store_true", default=False,
                         help="Enable Pygame rendering during training")
+    parser.add_argument("--device", type=str, default="auto",
+                        help="Device: auto, cpu, cuda, cuda:0, etc.")
     return parser.parse_args(argv)
 
 
@@ -184,14 +186,29 @@ def _get_algo_class(algorithm: str):
         raise ValueError(f"Unknown algorithm: {algorithm}")
 
 
+def _resolve_device(device_str: str) -> str:
+    """Resolve device string, auto-detect GPU if not specified."""
+    if device_str != "auto":
+        return device_str
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except ImportError:
+        pass
+    return "cpu"
+
+
 def _make_model(algo_cls, env, args):
     """Create a new model instance for the given algorithm."""
+    device = _resolve_device(args.device)
+    print(f"  Using device: {device}")
     common_kwargs = dict(
         policy="MultiInputPolicy",
         env=env,
         learning_rate=3e-4,
         verbose=0,
-        device="cpu",
+        device=device,
         seed=args.seed,
     )
     if args.algorithm == "PPO":
