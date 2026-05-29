@@ -18,7 +18,7 @@ BlueSky 是底层仿真引擎，负责飞行动力学、冲突检测和空域管
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/bluesky-pettingzoo.git
+git clone https://github.com/A-lone-king/bluesky-PettingZoo.git
 cd bluesky-pettingzoo
 
 # 创建虚拟环境
@@ -227,7 +227,7 @@ PPO（50k timesteps）在所有场景上显著优于基线：
   title={bluesky-pettingzoo: Multi-Agent RL Environment for Air Traffic Management},
   author={Your Name},
   year={2025},
-  url={https://github.com/YOUR_USERNAME/bluesky-pettingzoo}
+  url={https://github.com/A-lone-king/bluesky-PettingZoo}
 }
 ```
 
