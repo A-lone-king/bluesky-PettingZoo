@@ -134,11 +134,20 @@ class ModelEvaluator:
                         else:
                             break
                     else:
-                        action = env.action_space.sample()
-                        obs, reward, terminated, truncated, info = env.step(action)
-                        total_reward += sum(reward.values()) if isinstance(reward, dict) else float(reward)
-                        terminated = any(terminated.values()) if isinstance(terminated, dict) else bool(terminated)
-                        truncated = any(truncated.values()) if isinstance(truncated, dict) else bool(truncated)
+                        # Random action for multi-agent environment
+                        if hasattr(env, "agents") and env.agents:
+                            actions = {aid: env.action_space(aid).sample() for aid in env.agents}
+                            obs, step_rewards, terminations, truncations, infos = env.step(actions)
+                            total_reward += sum(step_rewards.values()) if isinstance(step_rewards, dict) else float(step_rewards)
+                            terminated = any(terminations.values()) if isinstance(terminations, dict) else bool(terminations)
+                            truncated = any(truncations.values()) if isinstance(truncations, dict) else bool(truncations)
+                        else:
+                            action = env.action_space(env.agents[0]).sample() if env.agents else None
+                            if action is not None:
+                                obs, reward, terminated, truncated, info = env.step({env.agents[0]: action})
+                                total_reward += sum(reward.values()) if isinstance(reward, dict) else float(reward)
+                                terminated = any(terminated.values()) if isinstance(terminated, dict) else bool(terminated)
+                                truncated = any(truncated.values()) if isinstance(truncated, dict) else bool(truncated)
 
                     episode_steps = step + 1
 

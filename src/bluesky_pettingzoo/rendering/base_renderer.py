@@ -108,25 +108,18 @@ class BaseRenderer:
 
         # Draw aircraft
         for agent_id, state in states.items():
-            draw_aircraft(
-                self._screen,
-                state.lat,
-                state.lon,
-                self._bounds,
-                (self._width, self._height),
-                state.hdg,
+            x, y = latlon_to_pixel(
+                state.lat, state.lon, self._bounds, self._width, self._height
             )
+            draw_aircraft(self._screen, x, y, state.hdg)
 
         # Draw waypoints
         if waypoints:
             for agent_id, wp in waypoints.items():
-                draw_waypoint(
-                    self._screen,
-                    wp["lat"],
-                    wp["lon"],
-                    self._bounds,
-                    (self._width, self._height),
+                wx, wy = latlon_to_pixel(
+                    wp["lat"], wp["lon"], self._bounds, self._width, self._height
                 )
+                draw_waypoint(self._screen, wx, wy)
 
         # Draw HUD
         self._draw_hud(step, info)
