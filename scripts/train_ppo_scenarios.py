@@ -161,6 +161,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Max steps per episode")
     parser.add_argument("--num-aircraft", type=int, default=3,
                         help="Number of aircraft in scenario")
+    parser.add_argument("--num-envs", type=int, default=1,
+                        help="Number of parallel environments (1=single env)")
     parser.add_argument("--render", action="store_true", default=False,
                         help="Enable Pygame rendering during training")
     parser.add_argument("--device", type=str, default="auto",
@@ -203,6 +205,10 @@ def _make_model(algo_cls, env, args):
     """Create a new model instance for the given algorithm."""
     device = _resolve_device(args.device)
     print(f"  Using device: {device}")
+
+    # Determine number of environments for batch size scaling
+    num_envs = getattr(args, "num_envs", 1)
+
     common_kwargs = dict(
         policy="MultiInputPolicy",
         env=env,
@@ -211,8 +217,18 @@ def _make_model(algo_cls, env, args):
         device=device,
         seed=args.seed,
     )
+
     if args.algorithm == "PPO":
-        return algo_cls(n_steps=2048, batch_size=64, n_epochs=4, **common_kwargs)
+        # Scale n_steps with num_envs to maintain same collection ratio
+        # For CPU: larger batch_size reduces overhead per update
+        n_steps = max(2048 // num_envs, 128)  # Per-env steps
+        batch_size = min(256, n_steps * num_envs)  # Total batch for update
+        return algo_cls(
+            n_steps=n_steps,
+            batch_size=batch_size,
+            n_epochs=4,
+            **common_kwargs,
+        )
     else:
         # SAC/TD3/DDPG use batch_size and buffer_size
         return algo_cls(batch_size=256, buffer_size=100_000, **common_kwargs)
@@ -234,11 +250,36 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
-        factory = make_scenario_env_factory(
-            tmp_path, scenario, args.num_aircraft, args.max_steps,
-            render_mode="human" if getattr(args, "render", False) else None,
-        )
-        env = factory()
+
+        # Create environments
+        num_envs = getattr(args, "num_envs", 1)
+        render_mode = "human" if getattr(args, "render", False) else None
+
+        if num_envs == 1:
+            # Single environment (original behavior)
+            factory = make_scenario_env_factory(
+                tmp_path, scenario, args.num_aircraft, args.max_steps,
+                render_mode=render_mode,
+            )
+            env = factory()
+        else:
+            # Multiple environments using DummyVecEnv (same process, sequential)
+            # Note: BlueSky is a global singleton, so we cannot use SubprocVecEnv
+            from stable_baselines3.common.vec_env import DummyVecEnv
+
+            def make_env_fn(idx: int):
+                def _init():
+                    # Each env needs its own tmp_path to avoid YAML conflicts
+                    env_tmp = Path(tempfile.mkdtemp())
+                    env_factory = make_scenario_env_factory(
+                        env_tmp, scenario, args.num_aircraft, args.max_steps,
+                        render_mode=render_mode if idx == 0 else None,  # Only render first env
+                    )
+                    return env_factory()
+                return _init
+
+            env = DummyVecEnv([make_env_fn(i) for i in range(num_envs)])
+            print(f"  Using {num_envs} parallel environments (DummyVecEnv)")
 
         # Setup checkpoint manager (saves to save_dir/{scenario}/{algorithm}/)
         ckpt_mgr = CheckpointManager(

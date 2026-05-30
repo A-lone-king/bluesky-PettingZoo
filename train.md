@@ -108,11 +108,13 @@ python scripts/train_ppo_scenarios.py --scenario <场景名> --algorithm <算法
 | `--action-space` | `discrete` | 动作空间：discrete / continuous |
 | `--timesteps` | `500000` | 总训练步数 |
 | `--num-aircraft` | `3` | 飞机数量 |
+| `--num-envs` | `1` | 并行环境数量（DummyVecEnv） |
 | `--max-steps` | `50` | 每回合最大步数 |
 | `--seed` | `42` | 随机种子 |
 | `--save-dir` | `models` | 模型保存目录 |
 | `--resume` | `None` | 从检查点恢复（路径） |
 | `--render` | `False` | 启用 Pygame 渲染 |
+| `--device` | `auto` | 训练设备：auto / cpu / cuda / cuda:0 |
 
 ### 训练示例
 
@@ -348,9 +350,48 @@ models/
 
 ### 训练速度慢
 
-- 减少 `--num-aircraft` 和 `--max-steps` 可加速单回合
-- 减少 `--timesteps` 进行快速验证
-- BlueSky 仿真引擎有初始化开销，首次运行较慢
+**瓶颈分析**：训练速度主要受两个因素影响：
+1. **BlueSky 仿真**（CPU 密集型）：每个 RL step 需要调用 BlueSky 推进仿真
+2. **神经网络训练**（GPU 密集型）：PPO 的前向/反向传播
+
+**优化方案**：
+
+| 方案 | 预期提速 | 说明 |
+|------|----------|------|
+| 使用 GPU | 2-5x | 安装 CUDA 版 PyTorch（见下方） |
+| 增加 `--num-envs` | 1.5-3x | 同进程多环境并行 |
+| 减少 `--timesteps` | 按比例 | 功能验证用 100 万步即可 |
+| 减少 `--max-steps` | 按比例 | 从 200 降到 100 |
+
+**GPU 环境配置**：
+
+默认安装的是 CPU 版 PyTorch，需要手动安装 CUDA 版本：
+
+```bash
+# 检查当前版本
+python -c "import torch; print(torch.__version__)"
+# 如果显示 +cpu，需要重新安装
+
+# 卸载 CPU 版本
+pip uninstall torch torchvision torchaudio -y
+
+# 安装 CUDA 版本（根据显卡选择）
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128  # RTX 50 系列
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126  # RTX 40/30 系列
+
+# 验证
+python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
+```
+
+**典型训练时间参考**（VerticalCR, 3 架飞机, 200 步/回合）：
+
+| 步数 | CPU 单环境 | CPU 4 环境 | GPU + 4 环境 |
+|------|-----------|-----------|-------------|
+| 100 万 | ~10 小时 | ~3 小时 | ~30 分钟 |
+| 1000 万 | ~100 小时 | ~30 小时 | ~5 小时 |
+| 1 亿 | ~1000 小时 | ~300 小时 | ~50 小时 |
+
+> 以上为估算值，实际速度取决于 CPU/GPU 性能和 BlueSky 仿真复杂度。
 
 ### SAC/TD3/DDPG 报错 action space 相关
 

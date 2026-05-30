@@ -231,6 +231,48 @@ PPO（50k timesteps）在所有场景上显著优于基线：
 | SectorCapacity | **-246** | -2032 | -1572 |
 | RouteNav | **-48** | -216 | -202 |
 
+## 训练性能
+
+### GPU 加速配置
+
+默认安装的是 CPU 版 PyTorch，训练时 GPU 使用率极低。需要手动安装 CUDA 版本：
+
+```bash
+# 检查当前版本
+python -c "import torch; print(torch.__version__)"
+# 如果显示 +cpu，需要重新安装
+
+# 安装 CUDA 版本
+pip uninstall torch torchvision torchaudio -y
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128  # CUDA 12.8 (RTX 50 系列)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126  # CUDA 12.6 (RTX 40/30 系列)
+
+# 验证
+python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
+```
+
+### 多环境并行
+
+使用 `--num-envs` 参数启用多环境并行训练：
+
+```bash
+# 4 个环境并行（CPU）
+python scripts/train_ppo_scenarios.py --scenario VerticalCR --timesteps 1000000 --num-envs 4
+
+# GPU + 8 环境并行
+python scripts/train_ppo_scenarios.py --scenario VerticalCR --timesteps 1000000 --device cuda --num-envs 8
+```
+
+### 训练时间参考
+
+| 步数 | CPU 单环境 | CPU 4 环境 | GPU + 4 环境 |
+|------|-----------|-----------|-------------|
+| 100 万 | ~10 小时 | ~3 小时 | ~30 分钟 |
+| 1000 万 | ~100 小时 | ~30 小时 | ~5 小时 |
+| 1 亿 | ~1000 小时 | ~300 小时 | ~50 小时 |
+
+> 以上为 VerticalCR 场景（3 架飞机, 200 步/回合）的估算值，实际速度取决于硬件配置。
+
 ## 依赖
 
 - Python >= 3.11
