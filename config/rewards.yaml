@@ -2,9 +2,9 @@ components:
   conflict:
     enabled: true
     weight: 1.0
-    nmac_penalty: -100.0
-    warning_penalty: -10.0
-    separation_penalty: -5.0
+    nmac_penalty: -500.0
+    warning_penalty: -50.0
+    separation_penalty: -20.0
     thresholds:
       nmac_horizontal_nm: 5
       nmac_vertical_ft: 1000

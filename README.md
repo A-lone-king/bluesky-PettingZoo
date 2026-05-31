@@ -251,27 +251,29 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 python -c "import torch; print(f'CUDA: {torch.cuda.is_available()}, GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"N/A\"}')"
 ```
 
-### 多环境并行
-
-使用 `--num-envs` 参数启用多环境并行训练：
+### GPU 训练推荐参数
 
 ```bash
-# 4 个环境并行（CPU）
-python scripts/train_ppo_scenarios.py --scenario VerticalCR --timesteps 1000000 --num-envs 4
-
-# GPU + 8 环境并行
-python scripts/train_ppo_scenarios.py --scenario VerticalCR --timesteps 1000000 --device cuda --num-envs 8
+python scripts/train_ppo_scenarios.py \
+    --scenario VerticalCR \
+    --timesteps 10000000 \
+    --num-aircraft 3 \
+    --device cuda \
+    --n-steps 8192 \      # 增加 rollout 长度
+    --batch-size 512 \    # 增大 mini-batch
+    --n-epochs 10 \       # 增加 epoch 数
+    --norm-reward         # 启用奖励归一化
 ```
 
 ### 训练时间参考
 
-| 步数 | CPU 单环境 | CPU 4 环境 | GPU + 4 环境 |
-|------|-----------|-----------|-------------|
-| 100 万 | ~10 小时 | ~3 小时 | ~30 分钟 |
-| 1000 万 | ~100 小时 | ~30 小时 | ~5 小时 |
-| 1 亿 | ~1000 小时 | ~300 小时 | ~50 小时 |
+| 步数 | CPU 单环境 | CPU + 优化参数 | GPU + 优化参数 |
+|------|-----------|---------------|---------------|
+| 100 万 | ~10 小时 | ~3 小时 | ~15 分钟 |
+| 1000 万 | ~100 小时 | ~30 小时 | ~2.5 小时 |
+| 1 亿 | ~1000 小时 | ~300 小时 | ~25 小时 |
 
-> 以上为 VerticalCR 场景（3 架飞机, 200 步/回合）的估算值，实际速度取决于硬件配置。
+> 以上为 VerticalCR 场景（3 架飞机, 200 步/回合）的估算值。优化参数包括：去掉 `--render`、增大 `n_steps/batch_size`、启用 `--norm-reward`。
 
 ## 依赖
 

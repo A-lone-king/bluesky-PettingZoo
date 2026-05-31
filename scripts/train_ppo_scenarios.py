@@ -140,6 +140,7 @@ def make_scenario_env_factory(
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="PPO training on BlueSky scenarios")
+    # Scenario and algorithm
     parser.add_argument("--scenario", type=str, default="HorizontalCR",
                         choices=list(SCENARIO_MAP.keys()),
                         help="Scenario to train on")
@@ -149,24 +150,44 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--action-space", type=str, default="discrete",
                         choices=["discrete", "continuous"],
                         help="Action space type")
+    # Training scale
     parser.add_argument("--timesteps", type=int, default=500_000,
                         help="Total training timesteps")
+    parser.add_argument("--num-aircraft", type=int, default=3,
+                        help="Number of aircraft in scenario")
+    parser.add_argument("--max-steps", type=int, default=50,
+                        help="Max steps per episode")
+    parser.add_argument("--num-envs", type=int, default=1,
+                        help="Number of parallel environments (1=single env)")
+    # PPO hyperparameters
+    parser.add_argument("--lr", type=float, default=3e-4,
+                        help="Learning rate")
+    parser.add_argument("--n-steps", type=int, default=2048,
+                        help="Number of steps per rollout (per env)")
+    parser.add_argument("--batch-size", type=int, default=256,
+                        help="Mini-batch size for PPO updates")
+    parser.add_argument("--n-epochs", type=int, default=4,
+                        help="Number of PPO epochs per update")
+    parser.add_argument("--gamma", type=float, default=0.99,
+                        help="Discount factor")
+    parser.add_argument("--gae-lambda", type=float, default=0.95,
+                        help="GAE lambda")
+    # Normalization
+    parser.add_argument("--norm-reward", action="store_true", default=False,
+                        help="Enable VecNormalize reward normalization")
+    # Infrastructure
     parser.add_argument("--resume", type=str, default=None,
                         help="Path to checkpoint to resume from")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed")
     parser.add_argument("--save-dir", type=str, default="models",
                         help="Directory to save models and logs")
-    parser.add_argument("--max-steps", type=int, default=50,
-                        help="Max steps per episode")
-    parser.add_argument("--num-aircraft", type=int, default=3,
-                        help="Number of aircraft in scenario")
-    parser.add_argument("--num-envs", type=int, default=1,
-                        help="Number of parallel environments (1=single env)")
     parser.add_argument("--render", action="store_true", default=False,
-                        help="Enable Pygame rendering during training")
+                        help="Enable Pygame rendering during training (slow!)")
     parser.add_argument("--device", type=str, default="auto",
                         help="Device: auto, cpu, cuda, cuda:0, etc.")
+    parser.add_argument("--verbose", type=int, default=0,
+                        help="Verbosity level (0=silent, 1=info, 2=debug)")
     return parser.parse_args(argv)
 
 
@@ -212,21 +233,28 @@ def _make_model(algo_cls, env, args):
     common_kwargs = dict(
         policy="MultiInputPolicy",
         env=env,
-        learning_rate=3e-4,
-        verbose=0,
+        learning_rate=getattr(args, "lr", 3e-4),
+        verbose=getattr(args, "verbose", 0),
         device=device,
         seed=args.seed,
     )
 
     if args.algorithm == "PPO":
         # Scale n_steps with num_envs to maintain same collection ratio
-        # For CPU: larger batch_size reduces overhead per update
-        n_steps = max(2048 // num_envs, 128)  # Per-env steps
-        batch_size = min(256, n_steps * num_envs)  # Total batch for update
+        n_steps = getattr(args, "n_steps", 2048)
+        batch_size = getattr(args, "batch_size", 256)
+        n_epochs = getattr(args, "n_epochs", 4)
+
+        # Auto-scale for multi-env
+        if num_envs > 1:
+            n_steps = max(n_steps // num_envs, 128)
+
         return algo_cls(
             n_steps=n_steps,
             batch_size=batch_size,
-            n_epochs=4,
+            n_epochs=n_epochs,
+            gamma=getattr(args, "gamma", 0.99),
+            gae_lambda=getattr(args, "gae_lambda", 0.95),
             **common_kwargs,
         )
     else:
@@ -281,6 +309,17 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
             env = DummyVecEnv([make_env_fn(i) for i in range(num_envs)])
             print(f"  Using {num_envs} parallel environments (DummyVecEnv)")
 
+        # Wrap with VecNormalize for reward normalization if requested
+        # VecNormalize requires a VecEnv, so wrap single env in DummyVecEnv first
+        norm_reward = getattr(args, "norm_reward", False)
+        if norm_reward:
+            from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+            if num_envs == 1:
+                # Wrap single env in DummyVecEnv for VecNormalize compatibility
+                env = DummyVecEnv([lambda: env])
+            env = VecNormalize(env, norm_obs=False, norm_reward=True, clip_reward=10.0)
+            print("  VecNormalize: reward normalization enabled")
+
         # Setup checkpoint manager (saves to save_dir/{scenario}/{algorithm}/)
         ckpt_mgr = CheckpointManager(
             save_dir=save_dir,
@@ -316,6 +355,13 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
         # Save final
         ckpt_mgr.save_final(model, timestep=model.num_timesteps, episode=csv_callback._episode)
         csv_callback._on_training_end()
+
+        # Save VecNormalize stats if used
+        if norm_reward and hasattr(env, "save"):
+            vec_norm_path = save_dir / args.scenario / args.algorithm / "vec_normalize.pkl"
+            env.save(str(vec_norm_path))
+            print(f"  VecNormalize stats saved to {vec_norm_path}")
+
         env.close()
 
     return {"timesteps": model.num_timesteps, "algorithm": args.algorithm}

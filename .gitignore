@@ -85,6 +85,8 @@ desktop.ini
 # ========== 工具目录 ==========
 .claude/
 .rtk/
+.understand-anything/intermediate/
+.understand-anything/tmp/
 
 # ========== 临时规划/实验 ==========
 spec3/

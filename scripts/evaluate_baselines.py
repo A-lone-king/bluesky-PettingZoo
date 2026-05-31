@@ -195,47 +195,95 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def load_vec_normalize_if_exists(model_path: Path):
+    """Load VecNormalize stats if they exist alongside the model.
+
+    Checks for vec_normalize.pkl in the same directory as the model.
+    Returns a VecNormalize wrapper function, or None if stats don't exist.
+    """
+    vec_norm_path = model_path.parent / "vec_normalize.pkl"
+    if not vec_norm_path.exists():
+        return None
+
+    from stable_baselines3.common.vec_env import VecNormalize
+    print(f"  Loading VecNormalize stats from {vec_norm_path}")
+
+    def wrap_env(env):
+        """Wrap environment with VecNormalize using saved statistics."""
+        # Wrap in DummyVecEnv first (VecNormalize requires VecEnv)
+        from stable_baselines3.common.vec_env import DummyVecEnv
+        vec_env = DummyVecEnv([lambda: env])
+        vec_env = VecNormalize.load(str(vec_norm_path), vec_env)
+        # Set to evaluation mode (don't update stats) but keep reward normalization
+        vec_env.training = False
+        vec_env.norm_reward = True  # Keep reward normalization to match training
+        return vec_env
+
+    return wrap_env
+
+
 def run_evaluation(args: argparse.Namespace) -> list[EvalResult]:
     """Run evaluation and print comparison table."""
     from scripts.train_ppo_scenarios import _resolve_scenario, make_scenario_env_factory
 
     scenario = _resolve_scenario(args.scenario, args.num_aircraft, args.seed)
 
+    # Check for VecNormalize stats if model is provided
+    vec_norm_wrapper = None
+    if args.model:
+        model_path = Path(args.model)
+        vec_norm_wrapper = load_vec_normalize_if_exists(model_path)
+
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
 
-        def env_factory():
+        # Factory for baselines (no VecNormalize)
+        def baseline_env_factory():
             return make_scenario_env_factory(
                 tmp_path, scenario, args.num_aircraft, args.max_steps,
             )()
 
-        evaluator = ModelEvaluator(
-            env_factory=env_factory,
-            num_episodes=args.episodes,
-            max_steps=args.max_steps,
-            seed=args.seed,
-        )
+        # Factory for PPO (with VecNormalize if available)
+        def ppo_env_factory():
+            env = make_scenario_env_factory(
+                tmp_path, scenario, args.num_aircraft, args.max_steps,
+            )()
+            if vec_norm_wrapper is not None:
+                return vec_norm_wrapper(env)
+            return env
 
         from bluesky_pettingzoo.agents.random_agent import RandomAgent
         from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
 
         results: list[EvalResult] = []
 
-        # Random baseline
-        random_result = evaluator._run_episodes("Random", agent=RandomAgent())
+        # Random baseline (without VecNormalize)
+        random_evaluator = ModelEvaluator(
+            env_factory=baseline_env_factory,
+            num_episodes=args.episodes,
+            max_steps=args.max_steps,
+            seed=args.seed,
+        )
+        random_result = random_evaluator._run_episodes("Random", agent=RandomAgent())
         random_result.scenario = args.scenario
         results.append(random_result)
 
-        # RuleBased baseline
-        rule_result = evaluator._run_episodes("RuleBased", agent=RuleBasedAgent())
+        # RuleBased baseline (without VecNormalize)
+        rule_result = random_evaluator._run_episodes("RuleBased", agent=RuleBasedAgent())
         rule_result.scenario = args.scenario
         results.append(rule_result)
 
-        # PPO (trained or untrained)
+        # PPO (with VecNormalize if available)
+        ppo_evaluator = ModelEvaluator(
+            env_factory=ppo_env_factory,
+            num_episodes=args.episodes,
+            max_steps=args.max_steps,
+            seed=args.seed,
+        )
         if args.model:
-            ppo_result = evaluator.evaluate_ppo(Path(args.model))
+            ppo_result = ppo_evaluator.evaluate_ppo(Path(args.model))
         else:
-            ppo_result = evaluator._run_episodes("PPO", agent=None)
+            ppo_result = ppo_evaluator._run_episodes("PPO", agent=None)
         ppo_result.scenario = args.scenario
         results.append(ppo_result)
 

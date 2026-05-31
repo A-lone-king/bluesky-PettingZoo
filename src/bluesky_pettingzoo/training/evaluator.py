@@ -103,7 +103,12 @@ class ModelEvaluator:
         for _ in range(self._num_episodes):
             env = self._env_factory()
             try:
-                obs, _ = env.reset(seed=rng.randint(0, 2**31))
+                # Handle VecNormalize-wrapped environments (no seed argument)
+                if hasattr(env, "training") and hasattr(env, "norm_reward"):
+                    # VecNormalize wrapper - returns OrderedDict directly
+                    obs = env.reset()
+                else:
+                    obs, _ = env.reset(seed=rng.randint(0, 2**31))
                 total_reward = 0.0
                 episode_steps = 0
                 arrived = False
@@ -112,7 +117,17 @@ class ModelEvaluator:
                 for step in range(self._max_steps):
                     if model is not None:
                         action, _ = model.predict(obs, deterministic=True)
-                        obs, reward, terminated, truncated, info = env.step(action)
+                        # Handle VecNormalize-wrapped environments (4 return values: obs, reward, done, info)
+                        if hasattr(env, "training") and hasattr(env, "norm_reward"):
+                            step_result = env.step(action)
+                            obs = step_result[0]
+                            reward = step_result[1]
+                            done = step_result[2]
+                            terminated = done
+                            truncated = False
+                            info = step_result[3] if len(step_result) > 3 else {}
+                        else:
+                            obs, reward, terminated, truncated, info = env.step(action)
                         total_reward += float(reward)
                     elif agent is not None:
                         # Multi-agent path: obs is {agent_id: obs_dict}
