@@ -329,7 +329,7 @@
         "ruff check + mypy 通过",
         "940 个单元测试全量通过"
       ],
-      "notes": "BADA 数据文件需要 EUROCONTROL 许可证，当前不可用。OpenAP 开源免费，功能类似。"
+      "notes": "BADA 数据文件需要 EUROCONTROL 许可证，当前不可用。OpenAP 开源免费，功能类似。已实现运行时检测：PERF 命令后检查 bs.settings.performance_model，失败时 warnings.warn()。"
     }
   ]
 }

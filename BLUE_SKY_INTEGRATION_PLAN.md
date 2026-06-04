@@ -194,10 +194,47 @@ def reset(self, rng: np.random.RandomState) -> None:
 
 **BlueSky 命令**:
 ```
-SPECIFY BADA        # 激活 BADA 性能模型
+PERF OpenAP         # 激活 OpenAP 性能模型（默认，开源免费）
+PERF BADA           # 激活 BADA 性能模型（需要 EUROCONTROL 许可证）
+PERF OFF            # 关闭性能模型
 ```
 
 **约束效果**: 爬升/下降率受限、速度受限、燃油消耗
+
+**已知问题**: BADA 模式在无数据文件时静默失败
+
+当前 `init_simulation()` 发送 `PERF BADA` 后，BlueSky 内部 `coeff_bada.check()` 检测到文件缺失时，错误被 `try/except` 吞掉（只 print 警告），性能模型实际未激活但 wrapper 无法感知。
+
+**修复方案**:
+
+```python
+# wrapper.py init_simulation() 中
+def init_simulation(self) -> None:
+    # ... 现有初始化代码 ...
+
+    # Activate performance model
+    perf_model = self.config.get("simulation", {}).get("performance_model", "openap")
+    if perf_model and perf_model.lower() != "off":
+        bs.stack.stack(f"PERF {perf_model}")
+        bs.sim.step()  # 执行命令
+
+        # 验证性能模型是否真正激活
+        active_model = getattr(bs.traf, 'perfmodel', None)
+        if active_model is None and perf_model.lower() != "off":
+            import warnings
+            warnings.warn(
+                f"Performance model '{perf_model}' failed to activate. "
+                f"Check if data files are available. Falling back to no performance model.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+    # ... 后续代码 ...
+```
+
+**修复优先级**: 中（默认 OpenAP 不会触发，仅 BADA 模式需要）
+
+**修复时机**: 下次修改 wrapper.py 时顺便添加
 
 ---
 

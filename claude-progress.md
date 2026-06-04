@@ -168,3 +168,37 @@
 - 更新过的文件或工件：geometry.py, test_distance_matrix.py, test_lnav_integration.py, default.yaml, wrapper.py, test_performance_model.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：BADA 数据文件需 EUROCONTROL 许可证，当前使用 OpenAP 作为替代
 - 下一步最佳动作：N-nearest neighbors 观测优化或其他未完成功能
+
+### Session 008
+
+- 日期：2026-06-04
+- 本轮目标：评审打分 + 制定 BADA 运行时检测修复计划
+- 已完成：
+  - 完成 evaluator-rubric.md 评审打分（11.5/12，Accept）
+  - 更新 BLUE_SKY_INTEGRATION_PLAN.md Phase 3.1 添加 BADA 运行时检测修复方案
+  - 更新 feature_list.json perf-bada-001 notes 添加已知问题说明
+- 运行过的验证：复用 Session 007 结果（940 passed）
+- 已记录证据：评审报告在对话中，修复计划在 BLUE_SKY_INTEGRATION_PLAN.md
+- 提交记录：待提交
+- 更新过的文件或工件：BLUE_SKY_INTEGRATION_PLAN.md, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：BADA 运行时检测修复待实施
+- 下一步最佳动作：实施 BADA 运行时检测修复或开始 N-nearest neighbors 观测优化
+
+### Session 009
+
+- 日期：2026-06-04
+- 本轮目标：实施 BADA 运行时检测修复
+- 已完成：
+  - wrapper.py init_simulation() 添加性能模型激活验证（检查 bs.settings.performance_model）
+  - 添加 3 个运行时检测测试（warnings.warn 触发/不触发/off 模式）
+  - 修复因 bs.sim.step() 导致的 7 个测试回归（改为检查 settings 变量）
+- 运行过的验证：
+  - ruff check: All checks passed
+  - ruff format: All files formatted correctly
+  - mypy: Success, no issues found
+  - pytest: 943 passed, 0 failed
+- 已记录证据：BADA 运行时检测修复完成
+- 提交记录：待提交
+- 更新过的文件或工件：wrapper.py, test_performance_model.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：N-nearest neighbors 观测优化或其他未完成功能

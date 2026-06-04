@@ -125,3 +125,40 @@ class TestSetPerformanceModel:
         wrapper.init_simulation()
         with pytest.raises(ValueError, match="Invalid performance model"):
             wrapper.set_performance_model("turbofan")
+
+
+class TestPerformanceModelActivationWarning:
+    """Test warning when performance model fails to activate."""
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_warns_when_settings_none(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """init_simulation() warns when settings.performance_model is None after PERF command."""
+        mock_bs.settings.performance_model = None
+        with pytest.warns(UserWarning, match="failed to activate"):
+            wrapper = BlueSkyWrapper(default_config)
+            wrapper.init_simulation()
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_no_warning_when_settings_matches(
+        self, mock_bs: MagicMock, default_config: dict
+    ) -> None:
+        """init_simulation() does not warn when settings.performance_model matches config."""
+        mock_bs.settings.performance_model = "openap"
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            wrapper = BlueSkyWrapper(default_config)
+            wrapper.init_simulation()
+
+    @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
+    def test_no_warning_when_off(self, mock_bs: MagicMock, default_config: dict) -> None:
+        """init_simulation() does not warn when performance_model is off."""
+        default_config["simulation"]["performance_model"] = "off"
+        mock_bs.settings.performance_model = None
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            wrapper = BlueSkyWrapper(default_config)
+            wrapper.init_simulation()

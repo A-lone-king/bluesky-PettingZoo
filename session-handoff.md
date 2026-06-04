@@ -38,7 +38,8 @@
 
 ### Phase 3
 
-1. **性能模型集成** ✅ — OpenAP 激活（PERF OpenAP），set_performance_model() 运行时切换，10 个测试通过
+1. **性能模型集成** ✅ — OpenAP 激活（PERF OpenAP），set_performance_model() 运行时切换，13 个测试通过
+2. **BADA 运行时检测** ✅ — 验证 bs.settings.performance_model，失败时 warnings.warn()，3 个测试通过
 
 ### Phase 3-4（后续）
 

@@ -99,7 +99,19 @@ class BlueSkyWrapper:
         # Activate performance model (openap, bada, or off)
         perf_model = self.config.get("simulation", {}).get("performance_model", "openap")
         if perf_model and perf_model.lower() != "off":
+            import warnings
+
             bs.stack.stack(f"PERF {perf_model}")
+            # Verify activation: check settings variable exists and matches
+            settings_model = getattr(bs.settings, "performance_model", None)
+            if settings_model is None:
+                warnings.warn(
+                    f"Performance model '{perf_model}' failed to activate. "
+                    f"Check if data files are available. "
+                    f"Falling back to no performance model.",
+                    UserWarning,
+                    stacklevel=2,
+                )
 
         self._initialized = True
         self._step_count = 0
