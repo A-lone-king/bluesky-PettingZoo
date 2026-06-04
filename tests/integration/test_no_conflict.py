@@ -9,38 +9,17 @@ All aircraft fly straight with no conflicts. Validates:
 
 from __future__ import annotations
 
-import math
-from typing import Any
-
-import numpy as np
-import pytest
-
-from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-from bluesky_pettingzoo.observations.manager import ObservationManager
-from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
-from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-from tests.helpers.env_factory import make_config as _make_config
-from tests.helpers.env_factory import _DEFAULT_REWARDS as _make_rewards_config
 from tests.helpers.env_factory import make_env as _make_env
-
 
 # ---------------------------------------------------------------------------
 # Fake BlueSkyWrapper — in-memory, no real BlueSky dependency
 # ---------------------------------------------------------------------------
 
 
-
 # ---------------------------------------------------------------------------
 # Config & env factory
 # ---------------------------------------------------------------------------
-
-
-
 
 
 def _place_aircraft(
@@ -71,11 +50,14 @@ class TestRuleBasedAgentFullEpisode:
         env.reset(seed=42)
 
         # Place aircraft far apart on parallel tracks — no conflict
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         agent = RuleBasedAgent()
         step_count = 0
@@ -101,11 +83,14 @@ class TestRandomAgentRuns100Steps:
         env.reset(seed=42)
 
         # Place aircraft far apart to avoid conflicts
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 45, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 135, "tas": 450},
-            "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 225, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 45, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 135, "tas": 450},
+                "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 225, "tas": 450},
+            },
+        )
 
         agent = RandomAgent()
         for i in range(100):
@@ -128,11 +113,14 @@ class TestNoNMACInSafeScenario:
         env.reset(seed=42)
 
         # Place aircraft very far apart — well beyond conflict range
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.05, "lon": 116.05, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.45, "lon": 116.45, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.05, "lon": 116.05, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.45, "lon": 116.45, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         nmac_penalty = -100.0
         for _ in range(10):
@@ -165,11 +153,14 @@ class TestRewardsBounded:
         env.reset(seed=42)
 
         # Aircraft far apart, parallel tracks
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         total_rewards: dict[str, float] = {a: 0.0 for a in env.agents}
         for _ in range(20):

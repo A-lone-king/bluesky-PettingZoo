@@ -6,13 +6,12 @@ BlueSky LNAV waypoints and conflict resolution should be disabled.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
+from bluesky_pettingzoo.utils.types import ConflictConfig, SpawnConfig
 
 
 class TestBaseScenarioNpcDefault:
@@ -22,10 +21,27 @@ class TestBaseScenarioNpcDefault:
         class _MinimalScenario(BaseScenario):
             name = "Minimal"
             _action_space_type = "discrete"
-            def setup(self, rng, airspace_bounds): return ["AC000"]
-            def get_spawn_config(self): return SpawnConfig(altitude_range=(30000, 40000), speed_range=(400, 500), heading_range=(0, 360))
-            def get_conflict_config(self): return ConflictConfig(nmac_horizontal_nm=5.0, nmac_vertical_ft=1000.0, warning_horizontal_nm=10.0, warning_vertical_ft=2000.0)
-            def get_waypoint(self, agent_id): return {"lat": 40.5, "lon": 117.5}
+
+            def setup(self, rng, airspace_bounds):
+                return ["AC000"]
+
+            def get_spawn_config(self):
+                return SpawnConfig(
+                    altitude_range=(30000, 40000),
+                    speed_range=(400, 500),
+                    heading_range=(0, 360),
+                )
+
+            def get_conflict_config(self):
+                return ConflictConfig(
+                    nmac_horizontal_nm=5.0,
+                    nmac_vertical_ft=1000.0,
+                    warning_horizontal_nm=10.0,
+                    warning_vertical_ft=2000.0,
+                )
+
+            def get_waypoint(self, agent_id):
+                return {"lat": 40.5, "lon": 117.5}
 
         scenario = _MinimalScenario()
         wrapper = MagicMock()

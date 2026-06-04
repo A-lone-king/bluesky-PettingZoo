@@ -45,8 +45,10 @@ class DescentRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         # Draw runway marker at center
@@ -54,12 +56,18 @@ class DescentRenderer(BaseRenderer):
             center_x = self._width // 2
             center_y = self._height // 2
             pygame.draw.line(
-                self._screen, (255, 255, 255),
-                (center_x - 20, center_y), (center_x + 20, center_y), 3,
+                self._screen,
+                (255, 255, 255),
+                (center_x - 20, center_y),
+                (center_x + 20, center_y),
+                3,
             )
             pygame.draw.line(
-                self._screen, (255, 255, 255),
-                (center_x, center_y - 5), (center_x, center_y + 5), 2,
+                self._screen,
+                (255, 255, 255),
+                (center_x, center_y - 5),
+                (center_x, center_y + 5),
+                2,
             )
             if self._font is not None:
                 rwy_text = self._font.render("RWY", True, (255, 255, 255))
@@ -77,7 +85,13 @@ class DescentRenderer(BaseRenderer):
         if waypoints and isinstance(waypoints, dict):
             for acid, wp in waypoints.items():
                 if isinstance(wp, dict) and "lat" in wp:
-                    wx, wy = latlon_to_pixel(wp["lat"], wp["lon"], bounds, self._width, self._height)
+                    wx, wy = latlon_to_pixel(
+                        wp["lat"],
+                        wp["lon"],
+                        bounds,
+                        self._width,
+                        self._height,
+                    )
                     draw_waypoint(self._screen, wx, wy)
                     # Draw target altitude at waypoint
                     if self._font is not None and "alt" in wp:

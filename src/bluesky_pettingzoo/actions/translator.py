@@ -19,13 +19,16 @@ class ActionTranslator:
     def __init__(self, config: dict[str, Any]) -> None:
         action_cfg = config.get("action", {})
         self._heading_adj: list[int] = action_cfg.get(
-            "heading_adjustments", [-20, -10, 0, 10, 20],
+            "heading_adjustments",
+            [-20, -10, 0, 10, 20],
         )
         self._altitude_adj: list[int] = action_cfg.get(
-            "altitude_adjustments", [-2000, -1000, 0, 1000, 2000],
+            "altitude_adjustments",
+            [-2000, -1000, 0, 1000, 2000],
         )
         self._speed_adj: list[int] = action_cfg.get(
-            "speed_adjustments", [-20, -10, 0, 10, 20],
+            "speed_adjustments",
+            [-20, -10, 0, 10, 20],
         )
 
         # Continuous action scales
@@ -147,3 +150,57 @@ class ActionTranslator:
             state = states[agent_id]
             commands.extend(self.translate_continuous(agent_id, state, action))
         return commands
+
+    def translate_vertical(
+        self,
+        agent_id: str,
+        state: AircraftState,
+        action: DiscreteAction,
+    ) -> tuple[float, float | None]:
+        """Translate altitude action to vertical control parameters.
+
+        Returns ``(vs_ft_min, target_alt_ft)`` for use with
+        ``BlueSkyWrapper.set_vertical_control`` instead of ALT commands.
+
+        Args:
+            agent_id: Aircraft identifier.
+            state: Current aircraft state.
+            action: Discrete action indices.
+
+        Returns:
+            Tuple of (vertical_speed_ft_min, target_alt_ft).
+            ``target_alt_ft`` is ``None`` when no altitude adjustment.
+        """
+        alt_adj = self._altitude_adj[action.altitude_idx]
+        if alt_adj == 0:
+            return 0.0, None
+
+        # Convert altitude adjustment to vertical speed
+        # Positive adj → climb, negative → descent
+        vs_ft_min = float(alt_adj)
+        return vs_ft_min, None
+
+    def translate_continuous_vertical(
+        self,
+        agent_id: str,
+        state: AircraftState,
+        action: np.ndarray,
+    ) -> tuple[float, float | None]:
+        """Translate continuous altitude action to vertical control parameters.
+
+        Returns ``(vs_ft_min, target_alt_ft)`` for use with
+        ``BlueSkyWrapper.set_vertical_control`` instead of ALT commands.
+
+        Args:
+            agent_id: Aircraft identifier.
+            state: Current aircraft state.
+            action: Array of 3 floats in [-1, 1]: [heading, altitude, speed].
+
+        Returns:
+            Tuple of (vertical_speed_ft_min, target_alt_ft).
+        """
+        altitude_adj = action[1]
+        # altitude_scale is in m/s, convert to ft/min
+        vs_ms = altitude_adj * self._altitude_scale
+        vs_ft_min = vs_ms * 60.0 / 0.3048
+        return vs_ft_min, None

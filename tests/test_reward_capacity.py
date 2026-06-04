@@ -7,7 +7,6 @@ import pytest
 from bluesky_pettingzoo.rewards.components.capacity import CapacityPenalty
 from tests.helpers.state_factory import make_action, make_state
 
-
 # Shared sector definitions for per-sector tests
 _SECTORS = [
     {"id": "sector_a", "bounds": [[39.0, 116.0], [39.5, 116.5]], "capacity": 3},
@@ -167,8 +166,7 @@ class TestSectorCapacityPenaltyExcess:
         comp = CapacityPenalty(sector_config)
         action = make_action()
         all_states = {
-            f"AC{i:03d}": make_state(f"AC{i:03d}", lat=39.1 + i * 0.05, lon=116.2)
-            for i in range(4)
+            f"AC{i:03d}": make_state(f"AC{i:03d}", lat=39.1 + i * 0.05, lon=116.2) for i in range(4)
         }
         result = comp.compute("AC000", all_states["AC000"], action, all_states["AC000"], all_states)
         # 1 excess * -10 = -10

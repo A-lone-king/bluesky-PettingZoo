@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 
@@ -50,7 +50,7 @@ class RewardCalculator:
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: Union[DiscreteAction, list, np.ndarray],
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,
@@ -59,7 +59,11 @@ class RewardCalculator:
         total = 0.0
         for component, weight in self._components:
             total += weight * component.compute(
-                agent_id, prev_state, action, curr_state, all_states,
+                agent_id,
+                prev_state,
+                action,
+                curr_state,
+                all_states,
                 step_count=step_count,
             )
         return total

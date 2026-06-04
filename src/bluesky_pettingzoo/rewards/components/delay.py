@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from bluesky_pettingzoo.rewards.base import RewardComponent
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
@@ -27,6 +29,7 @@ class DelayPenalty(RewardComponent):
     _stateful_attrs = ["_expected_steps"]
 
     def __init__(self, config: dict[str, Any]) -> None:
+        self._penalty_per_step: float = -0.05
         self._expected_steps: dict[str, int] = {}
         super().__init__(config)
 
@@ -55,7 +58,7 @@ class DelayPenalty(RewardComponent):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,

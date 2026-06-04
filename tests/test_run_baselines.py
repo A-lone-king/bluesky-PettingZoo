@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 
 class TestRunBaselinesCLI:
     """Run baselines script should accept CLI args and execute full pipeline."""
@@ -15,6 +13,7 @@ class TestRunBaselinesCLI:
     def _parse_args(self, args: list[str]):
         sys.path.insert(0, str(Path(__file__).parent.parent))
         from scripts.run_baselines import parse_args
+
         return parse_args(args)
 
     def test_run_baselines_accepts_scenario_arg(self) -> None:
@@ -46,6 +45,8 @@ class TestRunBaselinesCLI:
         args.save_dir = str(tmp_path / "models")
         args.max_steps = 10
         args.num_aircraft = 2
+        args.num_envs = 1
+        args.device = "cpu"
         args.algorithm = "PPO"
 
         run_baselines(args)

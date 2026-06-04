@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from bluesky_pettingzoo.rewards.base import RewardComponent
 from bluesky_pettingzoo.utils.geometry import haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
@@ -29,6 +31,11 @@ class EfficiencyReward(RewardComponent):
     _stateful_attrs = ["_goals"]
 
     def __init__(self, config: dict[str, Any]) -> None:
+        self._max_deviation: float = 50.0
+        self._deviation_scale: float = 0.0
+        self._arrival_reward: float = 1.0
+        self._step_penalty: float = 0.0
+        self._arrival_threshold: float = 2.0
         self._goals: dict[str, tuple[float, float]] = {}
         super().__init__(config)
 
@@ -40,7 +47,7 @@ class EfficiencyReward(RewardComponent):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,
@@ -52,8 +59,10 @@ class EfficiencyReward(RewardComponent):
             return reward
 
         distance = haversine_distance(
-            curr_state.lat, curr_state.lon,
-            goal[0], goal[1],
+            curr_state.lat,
+            curr_state.lon,
+            goal[0],
+            goal[1],
         )
 
         deviation_penalty = -(distance / self._max_deviation) * self._deviation_scale

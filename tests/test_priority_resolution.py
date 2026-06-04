@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
-from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
 from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
+from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
 from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
 from bluesky_pettingzoo.utils.types import AircraftState
 
@@ -74,7 +73,23 @@ class TestSectorCRPriority:
         scenario.setup(rng, bounds)
         wp = scenario.get_waypoint("AC000")
         # Aircraft close to waypoint
-        close = AircraftState(id="AC000", lat=wp["lat"], lon=wp["lon"], alt=35000.0, hdg=90.0, tas=450.0, vs=0.0)
+        close = AircraftState(
+            id="AC000",
+            lat=wp["lat"],
+            lon=wp["lon"],
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
+        )
         # Aircraft far from waypoint
-        far = AircraftState(id="AC001", lat=39.0, lon=116.0, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0)
+        far = AircraftState(
+            id="AC001",
+            lat=39.0,
+            lon=116.0,
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
+        )
         assert scenario.get_priority("AC000", close) > scenario.get_priority("AC001", far)

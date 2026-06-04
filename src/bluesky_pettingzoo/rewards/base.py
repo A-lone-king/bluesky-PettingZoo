@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 
@@ -68,7 +68,7 @@ class RewardComponent(ABC):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: Union[DiscreteAction, list, np.ndarray],
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,

@@ -9,28 +9,49 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 from gymnasium import spaces
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, DiscreteAction, SpawnConfig
-
+from bluesky_pettingzoo.utils.types import (
+    AircraftState,
+    ConflictConfig,
+    DiscreteAction,
+    SpawnConfig,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_state(acid="AC000", lat=40.0, lon=117.0, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0):
     return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
+        id=acid,
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=vs,
     )
 
 
 _MINIMAL_CONFIG = {
     "simulation": {"dt": 5.0, "action_frequency": 1, "max_episode_steps": 360},
-    "aircraft": {"initial_count": 1, "spawn": {"altitude_range": [30000, 40000], "speed_range": [400, 500], "heading_range": [0, 360]}},
-    "airspace": {"sectors": [{"id": "s0", "bounds": [[39.0, 116.0], [41.0, 118.0]], "capacity": 10}]},
+    "aircraft": {
+        "initial_count": 1,
+        "spawn": {
+            "altitude_range": [30000, 40000],
+            "speed_range": [400, 500],
+            "heading_range": [0, 360],
+        },
+    },
+    "airspace": {
+        "sectors": [
+            {"id": "s0", "bounds": [[39.0, 116.0], [41.0, 118.0]], "capacity": 10},
+        ],
+    },
     "rewards": {},
     "observation": {"max_other_aircraft": 10},
     "dynamic_entry": {"enabled": False},
@@ -75,7 +96,15 @@ def _make_env(action_space_type="discrete"):
     wrapper = MagicMock()
     # _get_all_aircraft_states expects dicts, not AircraftState objects
     wrapper.get_all_aircraft_states.return_value = {
-        "AC000": {"id": "AC000", "lat": 40.0, "lon": 117.0, "alt": 35000.0, "hdg": 90.0, "tas": 450.0, "vs": 0.0}
+        "AC000": {
+            "id": "AC000",
+            "lat": 40.0,
+            "lon": 117.0,
+            "alt": 35000.0,
+            "hdg": 90.0,
+            "tas": 450.0,
+            "vs": 0.0,
+        }
     }
     wrapper.is_aircraft_in_airspace.return_value = True
     wrapper.step_n.return_value = 10.0
@@ -115,6 +144,7 @@ def _make_env(action_space_type="discrete"):
 # Tests: step() dispatches to correct translator
 # ---------------------------------------------------------------------------
 
+
 class TestContinuousActionDispatch:
     """Verify step() calls translate_continuous for Box action space."""
 
@@ -153,6 +183,7 @@ class TestContinuousActionDispatch:
 # ---------------------------------------------------------------------------
 # Tests: SmoothnessPenalty with continuous actions
 # ---------------------------------------------------------------------------
+
 
 class TestSmoothnessPenaltyContinuous:
     """SmoothnessPenalty should work with continuous action arrays."""
@@ -198,6 +229,7 @@ class TestSmoothnessPenaltyContinuous:
 # ---------------------------------------------------------------------------
 # Tests: BaseScenario setter fix
 # ---------------------------------------------------------------------------
+
 
 class TestBaseScenarioSetter:
     """BaseScenario.action_space_type setter should not have dead code."""

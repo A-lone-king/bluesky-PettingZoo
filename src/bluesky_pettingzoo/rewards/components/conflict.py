@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from bluesky_pettingzoo.rewards.base import RewardComponent
 from bluesky_pettingzoo.utils.geometry import haversine_distance, project_position
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
@@ -46,7 +48,7 @@ class ConflictPenalty(RewardComponent):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,
@@ -62,8 +64,10 @@ class ConflictPenalty(RewardComponent):
                 continue
 
             h_dist = haversine_distance(
-                curr_state.lat, curr_state.lon,
-                other.lat, other.lon,
+                curr_state.lat,
+                curr_state.lon,
+                other.lat,
+                other.lon,
             )
             v_dist = abs(curr_state.alt - other.alt)
 
@@ -117,10 +121,18 @@ class ConflictPenalty(RewardComponent):
 
         for _ in range(steps):
             own_lat, own_lon = project_position(
-                own_lat, own_lon, own.hdg, own.tas, dt,
+                own_lat,
+                own_lon,
+                own.hdg,
+                own.tas,
+                dt,
             )
             oth_lat, oth_lon = project_position(
-                oth_lat, oth_lon, other.hdg, other.tas, dt,
+                oth_lat,
+                oth_lon,
+                other.hdg,
+                other.tas,
+                dt,
             )
             dist = haversine_distance(own_lat, own_lon, oth_lat, oth_lon)
             if dist < conflict_distance_nm:

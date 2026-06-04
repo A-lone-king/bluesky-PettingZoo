@@ -3,6 +3,8 @@
 from bluesky_pettingzoo.utils.geometry import (
     bearing,
     haversine_distance,
+    is_blueky_areafilter_available,
+    is_blueky_geo_available,
     point_at_distance,
     project_position,
     relative_position,
@@ -21,6 +23,8 @@ __all__ = [
     "DiscreteAction",
     "bearing",
     "haversine_distance",
+    "is_blueky_areafilter_available",
+    "is_blueky_geo_available",
     "point_at_distance",
     "project_position",
     "relative_position",

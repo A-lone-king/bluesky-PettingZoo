@@ -10,7 +10,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pytest
 import yaml
 
@@ -66,7 +65,13 @@ def make_state(
     vs: float = 0.0,
 ) -> AircraftState:
     return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
+        id=acid,
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=vs,
     )
 
 
@@ -110,12 +115,10 @@ class TestObservationToAction:
         a1 = DiscreteAction(heading_idx=3, altitude_idx=2, speed_idx=4)
         a2 = DiscreteAction(heading_idx=0, altitude_idx=4, speed_idx=2)
 
-        single = (
-            action_translator.translate("A", s1, a1)
-            + action_translator.translate("B", s2, a2)
-        )
+        single = action_translator.translate("A", s1, a1) + action_translator.translate("B", s2, a2)
         batch = action_translator.translate_batch(
-            {"A": a1, "B": a2}, {"A": s1, "B": s2},
+            {"A": a1, "B": a2},
+            {"A": s1, "B": s2},
         )
         assert batch == single
 
@@ -200,7 +203,8 @@ class TestFullPipeline:
         # Step 2: act (straight — no adjustment)
         action = DiscreteAction(heading_idx=2, altitude_idx=2, speed_idx=2)
         cmds = action_translator.translate_batch(
-            {"OWN": action, "OTH": action}, all_states,
+            {"OWN": action, "OTH": action},
+            all_states,
         )
         assert cmds == []
 
@@ -249,12 +253,12 @@ class TestFullPipeline:
         """Mix of nearby and far aircraft; only nearby appear in observation."""
         own = make_state("OWN", 39.25, 116.25, 35000.0)
         # 3 nearby (within 20NM)
-        near1 = make_state("N1", 39.30, 116.25, 35000.0)   # ~3NM
-        near2 = make_state("N2", 39.40, 116.25, 35000.0)   # ~9NM
-        near3 = make_state("N3", 39.25, 116.45, 35000.0)   # ~12NM
+        near1 = make_state("N1", 39.30, 116.25, 35000.0)  # ~3NM
+        near2 = make_state("N2", 39.40, 116.25, 35000.0)  # ~9NM
+        near3 = make_state("N3", 39.25, 116.45, 35000.0)  # ~12NM
         # 2 far (outside 20NM)
-        far1 = make_state("F1", 39.75, 116.25, 35000.0)    # ~30NM
-        far2 = make_state("F2", 39.25, 117.00, 35000.0)    # ~45NM
+        far1 = make_state("F1", 39.75, 116.25, 35000.0)  # ~30NM
+        far2 = make_state("F2", 39.25, 117.00, 35000.0)  # ~45NM
         others = [near1, near2, near3, far1, far2]
         goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
 

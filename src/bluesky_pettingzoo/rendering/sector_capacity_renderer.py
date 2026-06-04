@@ -41,8 +41,10 @@ class SectorCapacityRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         # Draw sector boundaries
@@ -52,23 +54,37 @@ class SectorCapacityRenderer(BaseRenderer):
             if sector_bounds and len(sector_bounds) == 2:
                 (lat_min, lon_min), (lat_max, lon_max) = sector_bounds
                 vertices = [
-                    (lat_min, lon_min), (lat_min, lon_max),
-                    (lat_max, lon_max), (lat_max, lon_min),
+                    (lat_min, lon_min),
+                    (lat_min, lon_max),
+                    (lat_max, lon_max),
+                    (lat_max, lon_min),
                 ]
                 draw_sector_polygon(
-                    self._screen, vertices, bounds, self._width, self._height,
-                    color=(100, 100, 255), line_width=2,
+                    self._screen,
+                    vertices,
+                    bounds,
+                    self._width,
+                    self._height,
+                    color=(100, 100, 255),
+                    line_width=2,
                 )
                 # Draw capacity label at sector center
                 if self._font is not None:
                     center_lat = (lat_min + lat_max) / 2
                     center_lon = (lon_min + lon_max) / 2
-                    cx, cy = latlon_to_pixel(center_lat, center_lon, bounds, self._width, self._height)
+                    cx, cy = latlon_to_pixel(
+                        center_lat,
+                        center_lon,
+                        bounds,
+                        self._width,
+                        self._height,
+                    )
                     sid = sector.get("id", "")
                     cap = sector.get("capacity", "?")
                     # Count aircraft in this sector
                     count = sum(
-                        1 for s in states.values()
+                        1
+                        for s in states.values()
                         if lat_min <= s.lat <= lat_max and lon_min <= s.lon <= lon_max
                     )
                     label = f"{sid}: {count}/{cap}"
@@ -83,7 +99,13 @@ class SectorCapacityRenderer(BaseRenderer):
         if waypoints and isinstance(waypoints, dict):
             for acid, wp in waypoints.items():
                 if isinstance(wp, dict) and "lat" in wp:
-                    wx, wy = latlon_to_pixel(wp["lat"], wp["lon"], bounds, self._width, self._height)
+                    wx, wy = latlon_to_pixel(
+                        wp["lat"],
+                        wp["lon"],
+                        bounds,
+                        self._width,
+                        self._height,
+                    )
                     draw_waypoint(self._screen, wx, wy)
 
         self._draw_hud(step=step, info=info)

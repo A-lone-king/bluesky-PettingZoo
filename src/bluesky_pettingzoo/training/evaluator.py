@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import numpy as np
 
@@ -117,7 +118,7 @@ class ModelEvaluator:
                 for step in range(self._max_steps):
                     if model is not None:
                         action, _ = model.predict(obs, deterministic=True)
-                        # Handle VecNormalize-wrapped environments (4 return values: obs, reward, done, info)
+                        # Handle VecNormalize (4 return values: obs, reward, done, info)
                         if hasattr(env, "training") and hasattr(env, "norm_reward"):
                             step_result = env.step(action)
                             obs = step_result[0]
@@ -132,12 +133,26 @@ class ModelEvaluator:
                     elif agent is not None:
                         # Multi-agent path: obs is {agent_id: obs_dict}
                         if hasattr(env, "agents") and env.agents:
+                            if not isinstance(obs, dict):
+                                obs = obs[0] if isinstance(obs, tuple) else obs
                             action_spaces = {aid: env.action_space(aid) for aid in env.agents}
                             actions = agent.act(obs, action_spaces)
                             obs, step_rewards, terminations, truncations, infos = env.step(actions)
-                            total_reward += sum(step_rewards.values()) if isinstance(step_rewards, dict) else float(step_rewards)
-                            terminated = any(terminations.values()) if isinstance(terminations, dict) else bool(terminations)
-                            truncated = any(truncations.values()) if isinstance(truncations, dict) else bool(truncations)
+                            total_reward += (
+                                sum(step_rewards.values())
+                                if isinstance(step_rewards, dict)
+                                else float(step_rewards)
+                            )
+                            terminated = (
+                                any(terminations.values())
+                                if isinstance(terminations, dict)
+                                else bool(terminations)
+                            )
+                            truncated = (
+                                any(truncations.values())
+                                if isinstance(truncations, dict)
+                                else bool(truncations)
+                            )
                         elif hasattr(env, "_env") and hasattr(env, "_ego"):
                             # SingleAgentGymWrapper path: wrap obs for multi-agent agent
                             ego = env._ego
@@ -151,18 +166,53 @@ class ModelEvaluator:
                     else:
                         # Random action for multi-agent environment
                         if hasattr(env, "agents") and env.agents:
+                            if not isinstance(obs, dict):
+                                obs = obs[0] if isinstance(obs, tuple) else obs
                             actions = {aid: env.action_space(aid).sample() for aid in env.agents}
                             obs, step_rewards, terminations, truncations, infos = env.step(actions)
-                            total_reward += sum(step_rewards.values()) if isinstance(step_rewards, dict) else float(step_rewards)
-                            terminated = any(terminations.values()) if isinstance(terminations, dict) else bool(terminations)
-                            truncated = any(truncations.values()) if isinstance(truncations, dict) else bool(truncations)
+                            total_reward += (
+                                sum(step_rewards.values())
+                                if isinstance(step_rewards, dict)
+                                else float(step_rewards)
+                            )
+                            terminated = (
+                                any(terminations.values())
+                                if isinstance(terminations, dict)
+                                else bool(terminations)
+                            )
+                            truncated = (
+                                any(truncations.values())
+                                if isinstance(truncations, dict)
+                                else bool(truncations)
+                            )
+                        elif hasattr(env, "_env") and hasattr(env, "_ego"):
+                            # SingleAgentGymWrapper: random action for ego agent
+                            ego = env._ego
+                            action = env.action_space.sample()
+                            obs, reward, terminated, truncated, info = env.step(action)
+                            total_reward += float(reward)
                         else:
-                            action = env.action_space(env.agents[0]).sample() if env.agents else None
-                            if action is not None:
-                                obs, reward, terminated, truncated, info = env.step({env.agents[0]: action})
-                                total_reward += sum(reward.values()) if isinstance(reward, dict) else float(reward)
-                                terminated = any(terminated.values()) if isinstance(terminated, dict) else bool(terminated)
-                                truncated = any(truncated.values()) if isinstance(truncated, dict) else bool(truncated)
+                            agents = getattr(env, "agents", None)
+                            action = env.action_space(agents[0]).sample() if agents else None
+                            if action is not None and agents is not None:
+                                obs, reward, terminated, truncated, info = env.step(
+                                    {agents[0]: action}
+                                )
+                                total_reward += (
+                                    sum(reward.values())
+                                    if isinstance(reward, dict)
+                                    else float(reward)
+                                )
+                                terminated = (
+                                    any(terminated.values())
+                                    if isinstance(terminated, dict)
+                                    else bool(terminated)
+                                )
+                                truncated = (
+                                    any(truncated.values())
+                                    if isinstance(truncated, dict)
+                                    else bool(truncated)
+                                )
 
                     episode_steps = step + 1
 
@@ -200,7 +250,10 @@ class ModelEvaluator:
     @staticmethod
     def format_table(results: list[EvalResult]) -> str:
         """Format evaluation results as a comparison table."""
-        header = f"{'Strategy':<12} {'MeanReward':>12} {'StdReward':>10} {'Min':>10} {'Max':>10} {'MeanSteps':>10} {'Arrival%':>10} {'NMAC%':>8}"
+        header = (
+            f"{'Strategy':<12} {'MeanReward':>12} {'StdReward':>10} "
+            f"{'Min':>10} {'Max':>10} {'MeanSteps':>10} {'Arrival%':>10} {'NMAC%':>8}"
+        )
         sep = "-" * len(header)
         lines = [sep, header, sep]
         for r in results:

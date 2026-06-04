@@ -7,11 +7,13 @@ Used to test route-aware conflict detection and resolution.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-from bluesky_pettingzoo.utils.geometry import haversine_distance, point_at_distance
-from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, Route, SpawnConfig
+from bluesky_pettingzoo.utils.geometry import point_at_distance
+from bluesky_pettingzoo.utils.types import ConflictConfig, Route, SpawnConfig
 
 CRUISE_ALT_FT = 35000.0
 CRUISE_SPEED_KT = 450.0
@@ -30,8 +32,14 @@ class RouteNavScenario(BaseScenario):
         seed: Optional seed for reproducibility.
     """
 
-    def __init__(self, num_aircraft: int = 3, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        num_aircraft: int = 3,
+        num_aircraft_range: tuple[int, int] | None = None,
+        seed: int | None = None,
+    ) -> None:
         self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._seed = seed
         self._agents: list[str] = []
         self._routes: dict[str, Route] = {}
@@ -41,6 +49,22 @@ class RouteNavScenario(BaseScenario):
     @property
     def action_dimensions(self) -> list[int]:
         return [0, 2]  # heading + speed
+
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Randomize aircraft count for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
+        self._agents = []
+        self._routes = {}
+        self._goals = {}
 
     def setup(
         self,
@@ -116,3 +140,32 @@ class RouteNavScenario(BaseScenario):
     def get_routes(self) -> dict[str, Route]:
         """Get all routes keyed by agent ID."""
         return dict(self._routes)
+
+    def configure_npc_navigation(self, wrapper: Any) -> list[str]:
+        """Configure LNAV for all aircraft to follow their assigned routes.
+
+        Uses BlueSky LNAV to make aircraft automatically follow waypoints.
+
+        Args:
+            wrapper: BlueSkyWrapper instance for sending commands.
+
+        Returns:
+            List of BlueSky commands sent.
+        """
+
+        commands: list[str] = []
+        wrapper.send_command("reso off")
+        commands.append("reso off")
+
+        for acid in self._agents:
+            route = self._routes.get(acid)
+            if route is None or not route.waypoints:
+                continue
+            # Set first waypoint as destination, enable LNAV
+            first_wp = route.waypoints[0]
+            wrapper.set_destination(acid, first_wp["lat"], first_wp["lon"])
+            commands.append(f"DEST {acid} {first_wp['lat']} {first_wp['lon']}")
+            wrapper.enable_lnav(acid)
+            commands.append(f"LNAV {acid} ON")
+
+        return commands

@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 
 

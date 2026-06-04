@@ -34,8 +34,14 @@ class SectorCRScenario(BaseScenario):
         seed: Optional seed for reproducibility.
     """
 
-    def __init__(self, num_aircraft: int = 5, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        num_aircraft: int = 5,
+        num_aircraft_range: tuple[int, int] | None = None,
+        seed: int | None = None,
+    ) -> None:
         self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._seed = seed
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
@@ -49,11 +55,29 @@ class SectorCRScenario(BaseScenario):
         """Return which action indices are valid (0=heading, 1=altitude, 2=speed)."""
         return [0, 2]  # heading + speed
 
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Randomize aircraft count and clear state for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
+        self._agents = []
+        self._waypoints = {}
+        self._polygon = []
+        self._initial_positions = None
+        self._altitudes = {}
+
     def get_sector_polygon(self) -> list[tuple[float, float]]:
         """Return the polygon vertices of the sector."""
         return self._polygon
 
-    def get_initial_positions(self) -> dict[str, tuple[float, float, float]] | None:
+    def get_initial_positions(self) -> dict[str, tuple[float, float, float]] | None:  # type: ignore[override]
         """Return initial (lat, lon, alt) positions inside the polygon for each agent."""
         if self._initial_positions is None:
             return None
@@ -175,7 +199,7 @@ class SectorCRScenario(BaseScenario):
         center_lat = (self._bounds["lat_min"] + self._bounds["lat_max"]) / 2
         center_lon = (self._bounds["lon_min"] + self._bounds["lon_max"]) / 2
 
-        return wrapper.create_conflict_aircraft(
+        return wrapper.create_conflict_aircraft(  # type: ignore[no-any-return]
             ownship_lat=center_lat,
             ownship_lon=center_lon,
             ownship_alt=CRUISE_ALT_FT,

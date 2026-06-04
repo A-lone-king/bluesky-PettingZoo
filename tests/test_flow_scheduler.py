@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.flow.scheduler import FlowScheduler
 
 

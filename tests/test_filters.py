@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
-
 from bluesky_pettingzoo.observations.filters import PerceptionFilter
 from bluesky_pettingzoo.utils.types import AircraftState
 
@@ -169,9 +166,9 @@ class TestFilterSortedByDistance:
         own = make_state("OWN", 39.25, 116.25, 35000.0)
 
         # Create aircraft at different distances
-        near = make_state("NEAR", 39.26, 116.25, 35000.0)    # ~0.6NM
-        mid = make_state("MID", 39.30, 116.25, 35000.0)      # ~3NM
-        far = make_state("FAR", 39.40, 116.25, 35000.0)      # ~9NM
+        near = make_state("NEAR", 39.26, 116.25, 35000.0)  # ~0.6NM
+        mid = make_state("MID", 39.30, 116.25, 35000.0)  # ~3NM
+        far = make_state("FAR", 39.40, 116.25, 35000.0)  # ~9NM
 
         result = filt.filter(own, [far, near, mid])
 

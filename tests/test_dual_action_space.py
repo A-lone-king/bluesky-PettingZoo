@@ -22,6 +22,7 @@ def discrete_scenario():
 
         def get_spawn_config(self):
             from bluesky_pettingzoo.utils.types import SpawnConfig
+
             return SpawnConfig(
                 altitude_range=(30000, 40000),
                 speed_range=(400, 500),
@@ -30,6 +31,7 @@ def discrete_scenario():
 
         def get_conflict_config(self):
             from bluesky_pettingzoo.utils.types import ConflictConfig
+
             return ConflictConfig(
                 nmac_horizontal_nm=5,
                 nmac_vertical_ft=1000,
@@ -55,6 +57,7 @@ def continuous_scenario():
 
         def get_spawn_config(self):
             from bluesky_pettingzoo.utils.types import SpawnConfig
+
             return SpawnConfig(
                 altitude_range=(30000, 40000),
                 speed_range=(400, 500),
@@ -63,6 +66,7 @@ def continuous_scenario():
 
         def get_conflict_config(self):
             from bluesky_pettingzoo.utils.types import ConflictConfig
+
             return ConflictConfig(
                 nmac_horizontal_nm=5,
                 nmac_vertical_ft=1000,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 
 class EnvWrapperMixin:
@@ -25,12 +25,12 @@ class EnvWrapperMixin:
     @property
     def agents(self) -> list[str]:
         """List of active agent IDs."""
-        return self.env.agents
+        return cast(list[str], self.env.agents)
 
     @property
     def possible_agents(self) -> list[str]:
         """List of all possible agent IDs."""
-        return self.env.possible_agents
+        return cast(list[str], self.env.possible_agents)
 
     def observation_space(self, agent: str) -> Any:
         """Get observation space for an agent.

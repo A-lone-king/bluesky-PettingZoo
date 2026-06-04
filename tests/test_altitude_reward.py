@@ -8,9 +8,6 @@ Three regimes inspired by bluesky-gym VerticalCR/Descent:
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
-
 from bluesky_pettingzoo.utils.types import AircraftState
 
 
@@ -24,12 +21,16 @@ class TestAltitudeRewardEnroute:
     def test_no_altitude_error(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         comp.set_goal("AC000", 40.5, 117.5, target_alt=35000.0)
 
@@ -40,12 +41,16 @@ class TestAltitudeRewardEnroute:
     def test_altitude_error_gives_penalty(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         comp.set_goal("AC000", 40.5, 117.5, target_alt=30000.0)
 
@@ -58,12 +63,16 @@ class TestAltitudeRewardEnroute:
     def test_altitude_error_symmetric(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         comp.set_goal("AC000", 40.5, 117.5, target_alt=30000.0)
 
@@ -80,12 +89,16 @@ class TestAltitudeRewardNearRunway:
     def test_near_runway_steeper_penalty(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         # Goal is very close (1 NM away) at altitude 3000
         comp.set_goal("AC000", 40.01, 117.01, target_alt=3000.0)
@@ -100,12 +113,16 @@ class TestAltitudeRewardNearRunway:
     def test_far_from_runway_uses_enroute(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         # Goal is far away (10 NM) at altitude 3000
         comp.set_goal("AC000", 41.0, 118.0, target_alt=3000.0)
@@ -122,12 +139,16 @@ class TestAltitudeRewardCrash:
     def test_crash_penalty(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         comp.set_goal("AC000", 40.5, 117.5, target_alt=3000.0)
 
@@ -138,12 +159,16 @@ class TestAltitudeRewardCrash:
     def test_negative_altitude_crash(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
         comp.set_goal("AC000", 40.5, 117.5, target_alt=3000.0)
 
@@ -158,12 +183,16 @@ class TestAltitudeRewardNoGoal:
     def test_no_goal_returns_zero(self):
         from bluesky_pettingzoo.rewards.components.altitude_reward import AltitudeReward
 
-        config = {"components": {"altitude_reward": {
-            "enroute_scale": 5.0 / 3000,
-            "runway_scale": 50.0 / 3000,
-            "runway_threshold_nm": 5.0,
-            "crash_penalty": -100.0,
-        }}}
+        config = {
+            "components": {
+                "altitude_reward": {
+                    "enroute_scale": 5.0 / 3000,
+                    "runway_scale": 50.0 / 3000,
+                    "runway_threshold_nm": 5.0,
+                    "crash_penalty": -100.0,
+                }
+            }
+        }
         comp = AltitudeReward(config)
 
         state = _make_state(alt=35000.0)

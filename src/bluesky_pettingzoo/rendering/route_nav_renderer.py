@@ -45,8 +45,10 @@ class RouteNavRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         # Draw route lines for each aircraft
@@ -76,7 +78,13 @@ class RouteNavRenderer(BaseRenderer):
         if waypoints and isinstance(waypoints, dict):
             for acid, wp in waypoints.items():
                 if isinstance(wp, dict) and "lat" in wp:
-                    wx, wy = latlon_to_pixel(wp["lat"], wp["lon"], bounds, self._width, self._height)
+                    wx, wy = latlon_to_pixel(
+                        wp["lat"],
+                        wp["lon"],
+                        bounds,
+                        self._width,
+                        self._height,
+                    )
                     draw_waypoint(self._screen, wx, wy, color=(255, 255, 0), radius=6)
 
         self._draw_hud(step=step, info=info)

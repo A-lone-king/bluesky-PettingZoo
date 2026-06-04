@@ -8,6 +8,7 @@ from typing import Any
 import yaml
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
@@ -15,8 +16,6 @@ from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 
 # Default test config template
 _DEFAULT_CONFIG: dict[str, Any] = {
@@ -89,6 +88,7 @@ def make_config(**overrides: Any) -> dict[str, Any]:
     like ``simulation={"dt": 10}``.
     """
     import copy
+
     config = copy.deepcopy(_DEFAULT_CONFIG)
 
     # Apply flat overrides
@@ -97,7 +97,9 @@ def make_config(**overrides: Any) -> dict[str, Any]:
     if "max_steps" in overrides:
         config["simulation"]["max_episode_steps"] = overrides["max_steps"]
     if "arrival_threshold_nm" in overrides:
-        config.setdefault("components", {}).setdefault("efficiency", {})["arrival_threshold_nm"] = overrides["arrival_threshold_nm"]
+        config.setdefault("components", {}).setdefault("efficiency", {})["arrival_threshold_nm"] = (
+            overrides["arrival_threshold_nm"]
+        )
 
     # Apply nested dict overrides (known keys merge into existing dicts,
     # unknown keys are added directly — e.g. dynamic_entry, components)
@@ -105,7 +107,11 @@ def make_config(**overrides: Any) -> dict[str, Any]:
     for key, val in overrides.items():
         if key in _known_nested and isinstance(val, dict):
             config[key].update(val)
-        elif key not in _known_nested and key not in {"initial_count", "max_steps", "arrival_threshold_nm"}:
+        elif key not in _known_nested and key not in {
+            "initial_count",
+            "max_steps",
+            "arrival_threshold_nm",
+        }:
             config[key] = val
 
     return config
@@ -136,6 +142,7 @@ def make_env(
         **config_overrides: Passed to make_config() when config is None.
     """
     import tempfile
+
     # Handle swapped args: _make_env(config, tmp_path) pattern
     if isinstance(tmp_path, dict) and isinstance(config, Path):
         tmp_path, config = config, tmp_path  # type: ignore[assignment]

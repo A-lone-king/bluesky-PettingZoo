@@ -1,10 +1,55 @@
-"""Geometric calculation utilities for ATM."""
+"""Geometric calculation utilities for ATM.
+
+When BlueSky is available, core calculations delegate to ``bs.tools.geo``
+(kwikdist, kwikqdrdist, kwikpos) for consistency with the simulation engine.
+Self-implemented fallbacks are used when BlueSky is not installed (e.g. unit
+tests that mock the engine).
+"""
 
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    pass
+
+# ---------------------------------------------------------------------------
+# Try to import BlueSky geo tools
+# ---------------------------------------------------------------------------
+_bs_geo_available = False
+try:
+    from bluesky.tools import geo as _bs_geo  # type: ignore[import-untyped]
+
+    _bs_geo_available = True
+except ImportError:
+    _bs_geo_available = False
+
+# ---------------------------------------------------------------------------
+# Try to import BlueSky areafilter tools
+# ---------------------------------------------------------------------------
+_bs_areafilter_available = False
+try:
+    from bluesky.tools.areafilter import shapes as _bs_shapes  # type: ignore[import-untyped]
+
+    _bs_areafilter_available = True
+except ImportError:
+    _bs_areafilter_available = False
+
+# Cache for BlueSky Poly objects keyed by polygon vertex hash
+_poly_cache: dict[str, object] = {}
+
+
+def is_blueky_geo_available() -> bool:
+    """Check if BlueSky native geo tools are available."""
+    return _bs_geo_available
+
+
+def is_blueky_areafilter_available() -> bool:
+    """Check if BlueSky native areafilter tools are available."""
+    return _bs_areafilter_available
 
 
 def haversine_distance(
@@ -15,7 +60,8 @@ def haversine_distance(
 ) -> float:
     """Calculate the great-circle distance between two points in nautical miles.
 
-    Uses the Haversine formula.
+    Delegates to ``bs.tools.geo.kwikdist`` when BlueSky is available,
+    otherwise uses the Haversine formula.
 
     Args:
         lat1: Latitude of point 1 (degrees)
@@ -26,6 +72,12 @@ def haversine_distance(
     Returns:
         Distance in nautical miles
     """
+    if _bs_geo_available:
+        try:
+            return float(_bs_geo.kwikdist(lat1, lon1, lat2, lon2))
+        except Exception:
+            pass  # fall through to self-implemented
+
     R_nm = 3440.065  # Earth radius in nautical miles
 
     lat1_rad = math.radians(lat1)
@@ -33,10 +85,7 @@ def haversine_distance(
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
 
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
-    )
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R_nm * c
@@ -55,7 +104,7 @@ def haversine_distance_matrix(
     Returns:
         Distance matrix (n, n) in nautical miles.
     """
-    R_nm = 3440.065
+    R_nm: float = 3440.065
 
     lats_rad = np.radians(lats)
     lons_rad = np.radians(lons)
@@ -70,7 +119,8 @@ def haversine_distance_matrix(
     )
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
-    return R_nm * c
+    result: np.ndarray = R_nm * c
+    return result
 
 
 def bearing(
@@ -81,6 +131,9 @@ def bearing(
 ) -> float:
     """Calculate the initial bearing from point 1 to point 2.
 
+    Delegates to ``bs.tools.geo.kwikqdrdist`` when BlueSky is available,
+    otherwise uses spherical trigonometry.
+
     Args:
         lat1: Latitude of point 1 (degrees)
         lon1: Longitude of point 1 (degrees)
@@ -90,6 +143,13 @@ def bearing(
     Returns:
         Bearing in degrees (0-360, where 0 is north)
     """
+    if _bs_geo_available:
+        try:
+            qdr, _dist = _bs_geo.kwikqdrdist(lat1, lon1, lat2, lon2)
+            return float(qdr)
+        except Exception:
+            pass  # fall through to self-implemented
+
     lat1_rad = math.radians(lat1)
     lat2_rad = math.radians(lat2)
     dlon_rad = math.radians(lon2 - lon1)
@@ -135,6 +195,9 @@ def point_at_distance(
 ) -> tuple[float, float]:
     """Calculate a point at a given distance and bearing from origin.
 
+    Delegates to ``bs.tools.geo.kwikpos`` when BlueSky is available,
+    otherwise uses spherical trigonometry.
+
     Args:
         lat: Origin latitude (degrees).
         lon: Origin longitude (degrees).
@@ -144,16 +207,20 @@ def point_at_distance(
     Returns:
         (lat, lon) of the destination point in degrees.
     """
+    if _bs_geo_available:
+        try:
+            lat2, lon2 = _bs_geo.kwikpos(lat, lon, bearing_deg, distance_nm)
+            return float(lat2), float(lon2)
+        except Exception:
+            pass  # fall through to self-implemented
+
     R_nm = 3440.065  # Earth radius in nautical miles
     lat1 = math.radians(lat)
     lon1 = math.radians(lon)
     brng = math.radians(bearing_deg)
     d = distance_nm / R_nm
 
-    lat2 = math.asin(
-        math.sin(lat1) * math.cos(d)
-        + math.cos(lat1) * math.sin(d) * math.cos(brng)
-    )
+    lat2 = math.asin(math.sin(lat1) * math.cos(d) + math.cos(lat1) * math.sin(d) * math.cos(brng))
     lon2 = lon1 + math.atan2(
         math.sin(brng) * math.sin(d) * math.cos(lat1),
         math.cos(d) - math.sin(lat1) * math.sin(lat2),
@@ -192,7 +259,11 @@ def point_in_polygon(
     lon: float,
     polygon: list[tuple[float, float]],
 ) -> bool:
-    """Check if a point is inside a polygon using ray casting algorithm.
+    """Check if a point is inside a polygon.
+
+    Delegates to ``bs.tools.areafilter.shapes.Poly.checkInside`` when BlueSky
+    is available (uses ``matplotlib.path.Path`` for fast batch checks),
+    otherwise falls back to a ray-casting algorithm.
 
     Args:
         lat: Point latitude.
@@ -202,15 +273,32 @@ def point_in_polygon(
     Returns:
         True if point is inside the polygon.
     """
+    if _bs_areafilter_available:
+        try:
+            # Build cache key from polygon vertices
+            key = repr(polygon)
+            if key not in _poly_cache:
+                # BlueSky Poly expects flat list: [lat1, lon1, lat2, lon2, ...]
+                flat_coords = []
+                for v_lat, v_lon in polygon:
+                    flat_coords.extend([v_lat, v_lon])
+                _poly_cache[key] = _bs_shapes.Poly("tmp", flat_coords)  # type: ignore[attr-defined]
+            poly = _poly_cache[key]
+            result = poly.checkInside(
+                np.array([lat]), np.array([lon]), np.array([0.0])
+            )
+            return bool(result[0])
+        except Exception:
+            pass  # fall through to self-implemented
+
+    # Ray-casting fallback
     n = len(polygon)
     inside = False
     j = n - 1
     for i in range(n):
         yi, xi = polygon[i]
         yj, xj = polygon[j]
-        if ((yi > lat) != (yj > lat)) and (
-            lon < (xj - xi) * (lat - yi) / (yj - yi) + xi
-        ):
+        if ((yi > lat) != (yj > lat)) and (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi):
             inside = not inside
         j = i
     return inside
@@ -236,13 +324,13 @@ def assign_sector(
         Sector id if point is inside a sector, otherwise ``None``.
     """
     for sector in sectors:
-        sid = sector["id"]
+        sid: str = str(sector["id"])
         if "polygon" in sector:
             if point_in_polygon(lat, lon, sector["polygon"]):  # type: ignore[arg-type]
-                return sid  # type: return-value
+                return sid
         elif "bounds" in sector:
             (lat_min, lon_min), (lat_max, lon_max) = sector["bounds"]  # type: ignore[misc]
-            if lat_min <= lat <= lat_max and lon_min <= lon <= lon_max:
+            if lat_min <= lat <= lat_max and lon_min <= lon <= lon_max:  # type: ignore
                 return sid
     return None
 
@@ -277,9 +365,8 @@ def segments_intersect(
         return _cross(b[0] - a[0], b[1] - a[1], c[0] - a[0], c[1] - a[1])
 
     def _on_segment(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> bool:
-        return (
-            min(a[0], b[0]) <= c[0] <= max(a[0], b[0])
-            and min(a[1], b[1]) <= c[1] <= max(a[1], b[1])
+        return min(a[0], b[0]) <= c[0] <= max(a[0], b[0]) and min(a[1], b[1]) <= c[1] <= max(
+            a[1], b[1]
         )
 
     o1 = _orient(p1, p2, p3)

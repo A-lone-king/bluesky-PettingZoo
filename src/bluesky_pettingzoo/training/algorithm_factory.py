@@ -49,8 +49,7 @@ class AlgorithmFactory:
         algo_cls = _ALGORITHM_MAP.get(algorithm)
         if algo_cls is None:
             raise ValueError(
-                f"Unknown algorithm '{algorithm}'. "
-                f"Supported: {list(_ALGORITHM_MAP.keys())}"
+                f"Unknown algorithm '{algorithm}'. Supported: {list(_ALGORITHM_MAP.keys())}"
             )
         return algo_cls(policy, env=env, **kwargs)
 

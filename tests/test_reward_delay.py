@@ -84,7 +84,7 @@ class TestDelayMultipleAgents:
     def test_independent_agents(self, delay_config: dict) -> None:
         comp = DelayPenalty(delay_config)
         comp.set_goal("A", distance_nm=100.0, speed_kt=450.0, dt=5.0)  # 160 steps
-        comp.set_goal("B", distance_nm=10.0, speed_kt=450.0, dt=5.0)   # 16 steps
+        comp.set_goal("B", distance_nm=10.0, speed_kt=450.0, dt=5.0)  # 16 steps
         a = make_state("A")
         b = make_state("B")
         all_states = {"A": a, "B": b}

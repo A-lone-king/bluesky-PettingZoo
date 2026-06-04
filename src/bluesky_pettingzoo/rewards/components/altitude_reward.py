@@ -8,7 +8,7 @@ Three regimes (inspired by bluesky-gym VerticalCR/Descent):
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class AltitudeReward(RewardComponent):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: Union[DiscreteAction, list, np.ndarray],
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,

@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 
 class TestEvaluateScriptCLI:
     """Evaluate script should accept CLI arguments and output comparison tables."""
@@ -15,6 +13,7 @@ class TestEvaluateScriptCLI:
     def _parse_args(self, args: list[str]):
         sys.path.insert(0, str(Path(__file__).parent.parent))
         from scripts.evaluate_baselines import parse_args
+
         return parse_args(args)
 
     def test_evaluate_accepts_scenario_arg(self) -> None:

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.utils.types import ConflictConfig, SpawnConfig
 
@@ -13,10 +11,19 @@ class DummyScenario(BaseScenario):
         return ["AC000"]
 
     def get_spawn_config(self):
-        return SpawnConfig(altitude_range=(30000, 40000), speed_range=(400, 500), heading_range=(0, 360))
+        return SpawnConfig(
+            altitude_range=(30000, 40000),
+            speed_range=(400, 500),
+            heading_range=(0, 360),
+        )
 
     def get_conflict_config(self):
-        return ConflictConfig(nmac_horizontal_nm=5, nmac_vertical_ft=1000, warning_horizontal_nm=10, warning_vertical_ft=2000)
+        return ConflictConfig(
+            nmac_horizontal_nm=5,
+            nmac_vertical_ft=1000,
+            warning_horizontal_nm=10,
+            warning_vertical_ft=2000,
+        )
 
     def get_waypoint(self, agent_id):
         return {"lat": 40.0, "lon": 117.0, "alt": 35000.0, "hdg": 90.0}

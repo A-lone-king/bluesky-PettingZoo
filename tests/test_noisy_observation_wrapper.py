@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 from gymnasium import spaces
 
 from bluesky_pettingzoo.wrappers.noisy_observation import NoisyObservationWrapper
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -28,10 +25,14 @@ def _make_mock_env(
     env = MagicMock()
     env.agents = list(agents)
     env.possible_agents = list(agents)
-    env.observation_space = MagicMock(return_value=spaces.Dict({
-        "self_state": spaces.Box(-1.0, 1.0, shape=obs_shape, dtype=np.float32),
-        "other_aircraft": spaces.Box(-1.0, 1.0, shape=(5, 7), dtype=np.float32),
-    }))
+    env.observation_space = MagicMock(
+        return_value=spaces.Dict(
+            {
+                "self_state": spaces.Box(-1.0, 1.0, shape=obs_shape, dtype=np.float32),
+                "other_aircraft": spaces.Box(-1.0, 1.0, shape=(5, 7), dtype=np.float32),
+            }
+        )
+    )
     env.action_space = MagicMock(return_value=spaces.MultiDiscrete([5, 5, 5]))
 
     # Default reset returns
@@ -218,9 +219,7 @@ class TestResetAddsNoise:
 
         obs, _ = wrapper.reset()
         # At least one agent's self_state should differ from zero
-        any_nonzero = any(
-            not np.allclose(obs[aid]["self_state"], 0.0) for aid in env.agents
-        )
+        any_nonzero = any(not np.allclose(obs[aid]["self_state"], 0.0) for aid in env.agents)
         assert any_nonzero, "reset() should add noise"
 
 
@@ -232,9 +231,7 @@ class TestStepAddsNoise:
         wrapper.reset()
 
         obs, _, _, _, _ = wrapper.step({aid: [2, 2, 2] for aid in env.agents})
-        any_nonzero = any(
-            not np.allclose(obs[aid]["self_state"], 0.0) for aid in env.agents
-        )
+        any_nonzero = any(not np.allclose(obs[aid]["self_state"], 0.0) for aid in env.agents)
         assert any_nonzero, "step() should add noise"
 
 

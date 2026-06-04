@@ -31,7 +31,14 @@ class PlanWaypointScenario(BaseScenario):
         seed: Optional seed for reproducibility.
     """
 
-    def __init__(self, num_aircraft: int = 1, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        num_aircraft: int = 1,
+        num_aircraft_range: tuple[int, int] | None = None,
+        seed: int | None = None,
+    ) -> None:
+        self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._seed = seed
         self._agents: list[str] = []
         self._waypoints: list[dict[str, float]] = []
@@ -44,6 +51,22 @@ class PlanWaypointScenario(BaseScenario):
     def action_dimensions(self) -> list[int]:
         """Heading only."""
         return [0]
+
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Randomize aircraft count and clear state for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
+        self._agents = []
+        self._waypoints = []
+        self._reached = []
 
     def setup(
         self,
@@ -71,12 +94,14 @@ class PlanWaypointScenario(BaseScenario):
         for i in range(NUM_WAYPOINTS):
             bearing = base_bearing + rng.uniform(-15, 15)
             wp_lat, wp_lon = point_at_distance(lat, lon, WAYPOINT_SPACING_NM, bearing)
-            self._waypoints.append({
-                "lat": wp_lat,
-                "lon": wp_lon,
-                "alt": CRUISE_ALT_FT,
-                "hdg": bearing,
-            })
+            self._waypoints.append(
+                {
+                    "lat": wp_lat,
+                    "lon": wp_lon,
+                    "alt": CRUISE_ALT_FT,
+                    "hdg": bearing,
+                }
+            )
             lat, lon = wp_lat, wp_lon
 
         return list(self._agents)

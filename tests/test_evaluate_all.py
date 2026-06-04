@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 
@@ -16,10 +14,12 @@ class TestEvaluateAllImport:
 
     def test_import(self):
         from scripts.evaluate_all import evaluate_all_scenarios
+
         assert evaluate_all_scenarios is not None
 
     def test_has_main(self):
         from scripts.evaluate_all import main
+
         assert callable(main)
 
 
@@ -53,6 +53,7 @@ class TestEvaluateAllScenarios:
         mock_evaluator.evaluate_ddpg.return_value = mock_result
 
         from scripts.evaluate_all import evaluate_all_scenarios
+
         results = evaluate_all_scenarios(
             scenario_name="HorizontalCR",
             num_aircraft=3,
@@ -83,6 +84,7 @@ class TestEvaluateAllScenarios:
         mock_evaluator.evaluate_ddpg.side_effect = FileNotFoundError("not found")
 
         from scripts.evaluate_all import evaluate_all_scenarios
+
         results = evaluate_all_scenarios(
             scenario_name="HorizontalCR",
             num_aircraft=3,

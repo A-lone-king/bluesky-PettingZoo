@@ -9,38 +9,19 @@ Two aircraft on converging courses. Validates:
 
 from __future__ import annotations
 
-import math
-from typing import Any
-
-import numpy as np
 import pytest
 
-from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-from bluesky_pettingzoo.observations.manager import ObservationManager
-from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
-from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-from tests.helpers.env_factory import make_config as _make_config
-from tests.helpers.env_factory import _DEFAULT_REWARDS as _make_rewards_config
 from tests.helpers.env_factory import make_env as _make_env
-
 
 # ---------------------------------------------------------------------------
 # Fake BlueSkyWrapper
 # ---------------------------------------------------------------------------
 
 
-
 # ---------------------------------------------------------------------------
 # Config & env factory
 # ---------------------------------------------------------------------------
-
-
-
 
 
 def _place_aircraft(
@@ -67,10 +48,13 @@ class TestConflictDetected:
         env.reset(seed=42)
 
         # ~3NM apart, same altitude → warning-level conflict
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.30, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.30, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, _, _, infos = env.step(actions)
@@ -98,10 +82,13 @@ class TestNMACTriggersTermination:
         env.reset(seed=42)
 
         # ~1NM apart, same altitude, heading toward each other
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.27, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.27, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, terminations, _, infos = env.step(actions)
@@ -118,9 +105,7 @@ class TestNMACTriggersTermination:
 
         # NMAC should trigger termination for involved agents
         for agent_id in terminations:
-            assert terminations[agent_id] is True, (
-                f"{agent_id} should be terminated after NMAC"
-            )
+            assert terminations[agent_id] is True, f"{agent_id} should be terminated after NMAC"
 
 
 class TestConflictPenaltyApplied:
@@ -132,10 +117,13 @@ class TestConflictPenaltyApplied:
 
         # --- NMAC case ---
         env.reset(seed=42)
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.26, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.26, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards_nmac, _, _, _ = env.step(actions)
         assert rewards_nmac["AC000"] <= -100.0
@@ -144,10 +132,13 @@ class TestConflictPenaltyApplied:
         # ~7.8NM apart (0.13 deg lat), same altitude → warning but not NMAC
         env2 = _make_env(initial_count=2, max_steps=2)
         env2.reset(seed=42)
-        _place_aircraft(env2, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env2,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
         actions2 = {a: [2, 2, 2] for a in env2.agents}
         _, rewards_warn, _, _, _ = env2.step(actions2)
         # Warning penalty (-10) * weight (1.0) + other components
@@ -157,10 +148,13 @@ class TestConflictPenaltyApplied:
         # --- Safe case ---
         env3 = _make_env(initial_count=2, max_steps=2)
         env3.reset(seed=42)
-        _place_aircraft(env3, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env3,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 270, "tas": 450},
+            },
+        )
         actions3 = {a: [2, 2, 2] for a in env3.agents}
         _, rewards_safe, _, _, _ = env3.step(actions3)
         # No conflict penalty, only step penalty
@@ -176,10 +170,13 @@ class TestRewardComponentWeights:
         env.reset(seed=42)
 
         # Aircraft in warning zone (~7.8NM), no action → no smoothness penalty
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         # No-op action: conflict + efficiency only (no smoothness)
         actions_noop = {a: [2, 2, 2] for a in env.agents}
@@ -188,10 +185,13 @@ class TestRewardComponentWeights:
         # Action with heading change: conflict + efficiency + smoothness
         env2 = _make_env(initial_count=2, max_steps=2)
         env2.reset(seed=42)
-        _place_aircraft(env2, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env2,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.38, "lon": 116.25, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
         actions_turn = {"AC000": [4, 2, 2], "AC001": [2, 2, 2]}
         _, rewards_turn, _, _, _ = env2.step(actions_turn)
 

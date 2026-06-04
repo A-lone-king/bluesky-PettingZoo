@@ -7,12 +7,12 @@ limits. Combines conflict resolution with traffic management.
 
 from __future__ import annotations
 
-import math
+from typing import Any
 
 import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-from bluesky_pettingzoo.utils.geometry import assign_sector, point_at_distance
+from bluesky_pettingzoo.utils.geometry import assign_sector
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
 CRUISE_ALT_FT = 35000.0
@@ -37,17 +37,19 @@ class SectorCapacityScenario(BaseScenario):
     def __init__(
         self,
         num_aircraft: int = 6,
+        num_aircraft_range: tuple[int, int] | None = None,
         num_sectors: int = 2,
         sector_capacity: int = 4,
         seed: int | None = None,
     ) -> None:
         self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._num_sectors = num_sectors
         self._sector_capacity = sector_capacity
         self._seed = seed
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
-        self._sectors: list[dict[str, object]] = []
+        self._sectors: list[dict[str, Any]] = []
         self._initial_positions: dict[str, tuple[float, float]] | None = None
 
     @property
@@ -55,7 +57,24 @@ class SectorCapacityScenario(BaseScenario):
         """Heading + speed adjustments."""
         return [0, 2]
 
-    def get_sectors(self) -> list[dict[str, object]]:
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Randomize aircraft count and clear state for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
+        self._agents = []
+        self._waypoints = {}
+        self._sectors = []
+        self._initial_positions = None
+
+    def get_sectors(self) -> list[dict[str, Any]]:
         """Return sector definitions with capacity."""
         return self._sectors
 
@@ -72,9 +91,6 @@ class SectorCapacityScenario(BaseScenario):
         self._agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
         self._waypoints = {}
 
-        center_lat = (airspace_bounds["lat_min"] + airspace_bounds["lat_max"]) / 2
-        center_lon = (airspace_bounds["lon_min"] + airspace_bounds["lon_max"]) / 2
-        lat_span = airspace_bounds["lat_max"] - airspace_bounds["lat_min"]
         lon_span = airspace_bounds["lon_max"] - airspace_bounds["lon_min"]
 
         # Generate sectors as adjacent rectangles along longitude
@@ -83,18 +99,20 @@ class SectorCapacityScenario(BaseScenario):
         for i in range(self._num_sectors):
             lon_min = airspace_bounds["lon_min"] + i * sector_width
             lon_max = lon_min + sector_width
-            self._sectors.append({
-                "id": f"sector_{i}",
-                "bounds": [
-                    [airspace_bounds["lat_min"], lon_min],
-                    [airspace_bounds["lat_max"], lon_max],
-                ],
-                "capacity": self._sector_capacity,
-            })
+            self._sectors.append(
+                {
+                    "id": f"sector_{i}",
+                    "bounds": [
+                        [airspace_bounds["lat_min"], lon_min],
+                        [airspace_bounds["lat_max"], lon_max],
+                    ],
+                    "capacity": self._sector_capacity,
+                }
+            )
 
         # Place aircraft in the first sector
         first = self._sectors[0]
-        (s_lat_min, s_lon_min), (s_lat_max, s_lon_max) = first["bounds"]  # type: ignore[misc]
+        (s_lat_min, s_lon_min), (s_lat_max, s_lon_max) = first["bounds"]
         self._initial_positions = {}
         for acid in self._agents:
             ac_lat = rng.uniform(s_lat_min + 0.05, s_lat_max - 0.05)
@@ -103,7 +121,7 @@ class SectorCapacityScenario(BaseScenario):
 
             # Assign waypoint in the last sector
             last = self._sectors[-1]
-            (_, w_lon_min), (_, w_lon_max) = last["bounds"]  # type: ignore[misc]
+            (_, w_lon_min), (_, w_lon_max) = last["bounds"]
             wp_lat = rng.uniform(airspace_bounds["lat_min"] + 0.1, airspace_bounds["lat_max"] - 0.1)
             wp_lon = rng.uniform(w_lon_min + 0.1, w_lon_max - 0.1)
             self._waypoints[acid] = {

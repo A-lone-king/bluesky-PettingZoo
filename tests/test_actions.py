@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
@@ -18,7 +16,13 @@ def make_state(
     vs: float = 0.0,
 ) -> AircraftState:
     return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
+        id=acid,
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=vs,
     )
 
 

@@ -93,4 +93,6 @@ class TestScenarioRewardOverrides:
 
         RewardCalculator.merge_reward_config(base_config, overrides)
 
-        assert base_config["components"]["conflict"]["nmac_penalty"] == pytest.approx(original_penalty)
+        assert base_config["components"]["conflict"]["nmac_penalty"] == (
+            pytest.approx(original_penalty)
+        )

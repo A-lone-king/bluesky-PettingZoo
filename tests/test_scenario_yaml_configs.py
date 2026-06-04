@@ -41,6 +41,7 @@ class TestScenarioYamlConfigs:
     @pytest.mark.parametrize("name", EXPECTED_SCENARIOS)
     def test_config_scenario_registered(self, name: str):
         from bluesky_pettingzoo.envs.scenarios.base import _SCENARIO_REGISTRY
+
         config_path = CONFIG_DIR / f"{name}.yaml"
         with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)

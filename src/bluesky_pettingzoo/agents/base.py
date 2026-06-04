@@ -17,7 +17,7 @@ class BaseAgent(ABC):
     def act(
         self,
         observations: dict[AgentID, Any],
-        action_spaces: dict[AgentID, spaces.Space],
+        action_spaces: dict[AgentID, spaces.Space[Any]],
     ) -> dict[AgentID, Any]:
         """Select actions for all agents.
 

@@ -11,10 +11,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pytest
 import yaml
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
@@ -23,11 +23,8 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.types import AircraftState
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -147,8 +144,13 @@ class TestDescentCrashTruncation:
         agents = scenario.setup(rng, bounds)
 
         state = AircraftState(
-            id=agents[0], lat=39.25, lon=116.25,
-            alt=0.0, hdg=90.0, tas=150.0, vs=-5.0,
+            id=agents[0],
+            lat=39.25,
+            lon=116.25,
+            alt=0.0,
+            hdg=90.0,
+            tas=150.0,
+            vs=-5.0,
         )
         assert scenario.should_truncate(agents[0], state, bounds) is True
 
@@ -160,8 +162,13 @@ class TestDescentCrashTruncation:
         agents = scenario.setup(rng, bounds)
 
         state = AircraftState(
-            id=agents[0], lat=39.25, lon=116.25,
-            alt=-500.0, hdg=90.0, tas=150.0, vs=-10.0,
+            id=agents[0],
+            lat=39.25,
+            lon=116.25,
+            alt=-500.0,
+            hdg=90.0,
+            tas=150.0,
+            vs=-10.0,
         )
         assert scenario.should_truncate(agents[0], state, bounds) is True
 
@@ -173,8 +180,13 @@ class TestDescentCrashTruncation:
         agents = scenario.setup(rng, bounds)
 
         state = AircraftState(
-            id=agents[0], lat=39.25, lon=116.25,
-            alt=10000.0, hdg=90.0, tas=150.0, vs=-3.0,
+            id=agents[0],
+            lat=39.25,
+            lon=116.25,
+            alt=10000.0,
+            hdg=90.0,
+            tas=150.0,
+            vs=-3.0,
         )
         assert scenario.should_truncate(agents[0], state, bounds) is False
 

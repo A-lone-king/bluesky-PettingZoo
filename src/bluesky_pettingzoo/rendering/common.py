@@ -131,6 +131,78 @@ def draw_nmac_circle(
     pygame.draw.circle(screen, color, (x, y), pixel_radius, width)
 
 
+def draw_aircraft_dot(
+    screen: Any,
+    x: int,
+    y: int,
+    color: tuple[int, int, int] = (0, 0, 0),
+    size: int = 4,
+) -> None:
+    """Draw an aircraft as a small filled rectangle (dot).
+
+    Args:
+        screen: Pygame surface.
+        x: Pixel x coordinate.
+        y: Pixel y coordinate.
+        color: RGB color tuple.
+        size: Half-size of the rectangle in pixels.
+    """
+    if pygame is None:
+        return
+    rect = pygame.Rect(x - size, y - size, size * 2, size * 2)
+    pygame.draw.rect(screen, color, rect)
+
+
+def draw_heading_line(
+    screen: Any,
+    x: int,
+    y: int,
+    heading: float,
+    length: int = 30,
+    color: tuple[int, int, int] = (80, 80, 80),
+    width: int = 1,
+) -> None:
+    """Draw a line from aircraft position in the heading direction.
+
+    Args:
+        screen: Pygame surface.
+        x: Pixel x coordinate.
+        y: Pixel y coordinate.
+        heading: Heading in degrees (0=north, 90=east).
+        length: Line length in pixels.
+        color: RGB color tuple.
+        width: Line width in pixels.
+    """
+    if pygame is None:
+        return
+    if isinstance(heading, dict):
+        heading = heading.get("hdg", 0.0)
+    heading = float(heading)
+    hdg_rad = math.radians(heading)
+    end_x = x + int(length * math.sin(hdg_rad))
+    end_y = y - int(length * math.cos(hdg_rad))
+    pygame.draw.line(screen, color, (x, y), (end_x, end_y), width)
+
+
+def compute_pixels_per_nm(bounds: dict[str, float], height: int) -> float:
+    """Compute pixels per nautical mile from geographic bounds.
+
+    Uses latitude range: 1 degree lat ~ 60 NM.
+
+    Args:
+        bounds: Dict with lat_min, lat_max, lon_min, lon_max.
+        height: Screen height in pixels.
+
+    Returns:
+        Pixels per NM, or 10.0 as default if bounds are degenerate.
+    """
+    lat_range = bounds["lat_max"] - bounds["lat_min"]
+    if lat_range == 0:
+        return 10.0
+    lat_range_nm = lat_range * 60.0
+    return height / lat_range_nm
+
+
 def draw_sector_polygon(
     screen: Any,
     vertices: list[tuple[float, float]],
@@ -153,8 +225,5 @@ def draw_sector_polygon(
     """
     if pygame is None or not vertices:
         return
-    pixel_points = [
-        latlon_to_pixel(lat, lon, bounds, width, height)
-        for lat, lon in vertices
-    ]
+    pixel_points = [latlon_to_pixel(lat, lon, bounds, width, height) for lat, lon in vertices]
     pygame.draw.polygon(screen, color, pixel_points, line_width)

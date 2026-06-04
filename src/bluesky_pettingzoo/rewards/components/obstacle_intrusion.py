@@ -6,6 +6,10 @@ Each intrusion incurs a flat penalty and signals termination.
 
 from __future__ import annotations
 
+from typing import Any
+
+import numpy as np
+
 from bluesky_pettingzoo.rewards.base import RewardComponent
 from bluesky_pettingzoo.utils.geometry import point_in_polygon
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
@@ -42,7 +46,7 @@ class ObstacleIntrusion(RewardComponent):
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,

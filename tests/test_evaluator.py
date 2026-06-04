@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
@@ -30,7 +30,13 @@ def _make_mock_env():
     env.action_space.sample.return_value = np.array([2, 2, 2])
     env.agents = ["AC000"]
     # step returns (obs, rewards, terminations, truncations, infos) for multi-agent
-    env.step.return_value = (multi_obs, {"AC000": -1.0}, {"AC000": False}, {"AC000": False}, {"AC000": {}})
+    env.step.return_value = (
+        multi_obs,
+        {"AC000": -1.0},
+        {"AC000": False},
+        {"AC000": False},
+        {"AC000": {}},
+    )
     return env
 
 
@@ -62,8 +68,10 @@ def _make_single_agent_mock_env():
 
 def _make_env_factory():
     """Return a factory that creates mock envs."""
+
     def factory():
         return _make_mock_env()
+
     return factory
 
 
@@ -133,18 +141,48 @@ class TestModelEvaluator:
 
     def test_format_table_output(self, tmp_path: Path) -> None:
         """format_table should include all strategy names."""
-        from bluesky_pettingzoo.training.evaluator import ModelEvaluator, EvalResult
+        from bluesky_pettingzoo.training.evaluator import EvalResult, ModelEvaluator
 
         results = [
-            EvalResult(strategy="Random", scenario="Test", mean_reward=-10.0, std_reward=5.0,
-                       min_reward=-20.0, max_reward=-2.0, mean_steps=30.0,
-                       arrival_rate=0.0, nmac_rate=0.5, num_episodes=10, seed=42),
-            EvalResult(strategy="RuleBased", scenario="Test", mean_reward=-5.0, std_reward=3.0,
-                       min_reward=-15.0, max_reward=0.0, mean_steps=25.0,
-                       arrival_rate=0.2, nmac_rate=0.1, num_episodes=10, seed=42),
-            EvalResult(strategy="PPO", scenario="Test", mean_reward=-3.0, std_reward=2.0,
-                       min_reward=-10.0, max_reward=1.0, mean_steps=20.0,
-                       arrival_rate=0.5, nmac_rate=0.0, num_episodes=10, seed=42),
+            EvalResult(
+                strategy="Random",
+                scenario="Test",
+                mean_reward=-10.0,
+                std_reward=5.0,
+                min_reward=-20.0,
+                max_reward=-2.0,
+                mean_steps=30.0,
+                arrival_rate=0.0,
+                nmac_rate=0.5,
+                num_episodes=10,
+                seed=42,
+            ),
+            EvalResult(
+                strategy="RuleBased",
+                scenario="Test",
+                mean_reward=-5.0,
+                std_reward=3.0,
+                min_reward=-15.0,
+                max_reward=0.0,
+                mean_steps=25.0,
+                arrival_rate=0.2,
+                nmac_rate=0.1,
+                num_episodes=10,
+                seed=42,
+            ),
+            EvalResult(
+                strategy="PPO",
+                scenario="Test",
+                mean_reward=-3.0,
+                std_reward=2.0,
+                min_reward=-10.0,
+                max_reward=1.0,
+                mean_steps=20.0,
+                arrival_rate=0.5,
+                nmac_rate=0.0,
+                num_episodes=10,
+                seed=42,
+            ),
         ]
         table = ModelEvaluator.format_table(results)
         assert "Random" in table

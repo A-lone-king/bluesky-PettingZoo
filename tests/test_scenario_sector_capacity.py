@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
-from bluesky_pettingzoo.utils.geometry import assign_sector
 from bluesky_pettingzoo.utils.types import AircraftState
 
 

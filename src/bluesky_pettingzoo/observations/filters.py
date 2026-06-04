@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from bluesky_pettingzoo.utils.geometry import haversine_distance, bearing
+from bluesky_pettingzoo.utils.geometry import bearing, haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState
 
 
@@ -40,8 +40,10 @@ class PerceptionFilter:
 
         for other in others:
             dist = haversine_distance(
-                own_state["lat"], own_state["lon"],
-                other["lat"], other["lon"],
+                own_state["lat"],
+                own_state["lon"],
+                other["lat"],
+                other["lon"],
             )
             # Tolerance for floating-point and coordinate precision
             if dist > self._radius_nm + 0.05:
@@ -52,14 +54,18 @@ class PerceptionFilter:
                 continue
 
             bear = bearing(
-                own_state["lat"], own_state["lon"],
-                other["lat"], other["lon"],
+                own_state["lat"],
+                own_state["lon"],
+                other["lat"],
+                other["lon"],
             )
-            results.append({
-                "state": other,
-                "distance_nm": dist,
-                "bearing_deg": bear,
-            })
+            results.append(
+                {
+                    "state": other,
+                    "distance_nm": dist,
+                    "bearing_deg": bear,
+                }
+            )
 
         results.sort(key=lambda r: r["distance_nm"])
         return results[: self._max_observable]

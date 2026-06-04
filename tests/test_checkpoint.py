@@ -6,8 +6,6 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 
 class TestCheckpointManager:
     """CheckpointManager should save, load, and rotate model checkpoints."""
@@ -24,9 +22,11 @@ class TestCheckpointManager:
 
     def _mock_model(self) -> MagicMock:
         model = MagicMock()
+
         # Make save() actually create a .zip file
         def fake_save(path: str):
             Path(path).touch()
+
         model.save.side_effect = fake_save
         return model
 

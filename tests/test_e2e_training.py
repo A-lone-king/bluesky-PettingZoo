@@ -7,8 +7,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -24,13 +22,18 @@ class TestE2ETraining:
         args.resume = None
         args.max_steps = 10
         args.num_aircraft = 2
+        args.num_envs = 1
+        args.device = "cpu"
+        args.verbose = 0
+        args.batch_size = 64
         args.algorithm = "PPO"
         return args
 
     def test_train_save_load_evaluate_flow(self, tmp_path: Path) -> None:
         """Train PPO, save checkpoint, load it, and evaluate."""
-        from scripts.train_ppo_scenarios import train_scenario
         from stable_baselines3 import PPO
+
+        from scripts.train_ppo_scenarios import train_scenario
 
         args = self._make_args(tmp_path)
         train_scenario(args)
@@ -50,7 +53,9 @@ class TestE2ETraining:
         args = self._make_args(tmp_path)
         train_scenario(args)
 
-        csv_path = Path(args.save_dir) / args.scenario / args.algorithm / "logs" / "training_log.csv"
+        csv_path = (
+            Path(args.save_dir) / args.scenario / args.algorithm / "logs" / "training_log.csv"
+        )
         assert csv_path.exists(), f"CSV log not found at {csv_path}"
 
         with open(csv_path, encoding="utf-8") as f:
@@ -58,12 +63,23 @@ class TestE2ETraining:
             rows = list(reader)
         # Header + at least 1 data row
         assert len(rows) >= 2, f"CSV has {len(rows)} rows, expected >= 2"
-        assert rows[0] == ["timestep", "episode", "reward", "episode_length", "conflicts", "arrivals", "algorithm", "action_space", "timestamp"]
+        assert rows[0] == [
+            "timestep",
+            "episode",
+            "reward",
+            "episode_length",
+            "conflicts",
+            "arrivals",
+            "algorithm",
+            "action_space",
+            "timestamp",
+        ]
 
     def test_checkpoint_loadable_by_sb3(self, tmp_path: Path) -> None:
         """Saved checkpoint must be loadable by SB3 PPO.load()."""
-        from scripts.train_ppo_scenarios import train_scenario
         from stable_baselines3 import PPO
+
+        from scripts.train_ppo_scenarios import train_scenario
 
         args = self._make_args(tmp_path)
         train_scenario(args)
@@ -82,7 +98,9 @@ class TestE2ETraining:
         args1 = self._make_args(tmp_path, timesteps=256)
         train_scenario(args1)
 
-        model_path = Path(args1.save_dir) / args1.scenario / args1.algorithm / "checkpoint_final.zip"
+        model_path = (
+            Path(args1.save_dir) / args1.scenario / args1.algorithm / "checkpoint_final.zip"
+        )
         assert model_path.exists()
 
         # Second run: resume from checkpoint
@@ -91,7 +109,9 @@ class TestE2ETraining:
         train_scenario(args2)
 
         # Should complete without error
-        final_path = Path(args2.save_dir) / args2.scenario / args2.algorithm / "checkpoint_final.zip"
+        final_path = (
+            Path(args2.save_dir) / args2.scenario / args2.algorithm / "checkpoint_final.zip"
+        )
         assert final_path.exists()
 
     def test_deterministic_results_with_seed(self, tmp_path: Path) -> None:
@@ -107,6 +127,10 @@ class TestE2ETraining:
             args.resume = None
             args.max_steps = 10
             args.num_aircraft = 2
+            args.num_envs = 1
+            args.device = "cpu"
+            args.verbose = 0
+            args.batch_size = 64
             args.algorithm = "PPO"
             train_scenario(args)
 

@@ -4,11 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
-
 
 SCENARIOS_DIR = Path(__file__).parent.parent / "config" / "scenarios"
 

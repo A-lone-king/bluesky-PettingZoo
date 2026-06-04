@@ -6,7 +6,6 @@ They run actual BlueSky simulations to verify end-to-end correctness.
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Any
 
@@ -18,15 +17,15 @@ import yaml
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
-from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
-from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
-from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
-from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
 from bluesky_pettingzoo.envs.scenarios.descent import DescentScenario
-from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
-from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
+from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
+from bluesky_pettingzoo.envs.scenarios.merge import MergeScenario
 from bluesky_pettingzoo.envs.scenarios.route_nav import RouteNavScenario
+from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
+from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
+from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
+from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
+from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
@@ -39,6 +38,7 @@ CONFIG_DIR = Path(__file__).parent.parent.parent / "config"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_config() -> dict[str, Any]:
     with open(CONFIG_DIR / "default.yaml", encoding="utf-8") as f:

@@ -28,11 +28,18 @@ class HorizontalCRScenario(BaseScenario):
 
     Args:
         num_aircraft: Number of aircraft to spawn.
+        num_aircraft_range: Optional (min, max) for procedural generation.
         seed: Optional seed for reproducibility (used if rng not provided).
     """
 
-    def __init__(self, num_aircraft: int = 5, seed: int | None = None) -> None:
+    def __init__(
+        self,
+        num_aircraft: int = 5,
+        num_aircraft_range: tuple[int, int] | None = None,
+        seed: int | None = None,
+    ) -> None:
         self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._seed = seed
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
@@ -42,6 +49,21 @@ class HorizontalCRScenario(BaseScenario):
     def action_dimensions(self) -> list[int]:
         """Return which action indices are valid (0=heading, 1=altitude, 2=speed)."""
         return [0]  # heading only
+
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Randomize aircraft count for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
+        self._agents = []
+        self._waypoints = {}
 
     def setup(
         self,
@@ -58,13 +80,15 @@ class HorizontalCRScenario(BaseScenario):
         self._agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
         self._waypoints = {}
 
-        mid_lat = (airspace_bounds["lat_min"] + airspace_bounds["lat_max"]) / 2
-        mid_lon = (airspace_bounds["lon_min"] + airspace_bounds["lon_max"]) / 2
-
         for i, acid in enumerate(self._agents):
             # Place aircraft at random position within airspace
-            ac_lat = rng.uniform(airspace_bounds["lat_min"] + 0.05, airspace_bounds["lat_max"] - 0.05)
-            ac_lon = rng.uniform(airspace_bounds["lon_min"] + 0.05, airspace_bounds["lon_max"] - 0.05)
+            lat_min = airspace_bounds["lat_min"] + 0.05
+            lat_max = airspace_bounds["lat_max"] - 0.05
+            ac_lat = rng.uniform(lat_min, lat_max)
+
+            lon_min = airspace_bounds["lon_min"] + 0.05
+            lon_max = airspace_bounds["lon_max"] - 0.05
+            ac_lon = rng.uniform(lon_min, lon_max)
 
             # Alternate waypoint direction: even → east, odd → west
             # This creates head-on conflict opportunities
@@ -109,7 +133,9 @@ class HorizontalCRScenario(BaseScenario):
     def get_priority(self, agent_id: str, state: AircraftState) -> float:
         """Higher altitude → higher priority (normalized to [-1, 1])."""
         alt_min, alt_max = 29000.0, 37000.0
-        return max(-1.0, min(1.0, (state.alt - (alt_min + alt_max) / 2) / ((alt_max - alt_min) / 2)))
+        alt_mid = (alt_min + alt_max) / 2
+        alt_half = (alt_max - alt_min) / 2
+        return max(-1.0, min(1.0, (state.alt - alt_mid) / alt_half))
 
     def create_intruders(self, wrapper: Any, rng: np.random.RandomState | None = None) -> list[str]:
         """Create intruder aircraft using creconfs for head-on conflicts.
@@ -127,7 +153,7 @@ class HorizontalCRScenario(BaseScenario):
         dpsi = 150.0 + (rng.uniform(-20, 20) if rng is not None else 0)
         dcpa = 3.0 + (rng.uniform(-1, 1) if rng is not None else 0)
 
-        return wrapper.create_conflict_aircraft(
+        return wrapper.create_conflict_aircraft(  # type: ignore[no-any-return]
             ownship_lat=mid_lat,
             ownship_lon=mid_lon,
             ownship_alt=CRUISE_ALT_FT,

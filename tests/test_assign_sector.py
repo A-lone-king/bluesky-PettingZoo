@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.utils.geometry import assign_sector
-
 
 # Rectangular sectors (bounds format: [[lat_min, lon_min], [lat_max, lon_max]])
 SECTORS_BOUNDS = [

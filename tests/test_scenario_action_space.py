@@ -5,8 +5,6 @@ Verify action_space_type and continuous_action_dims properties.
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 
 
@@ -22,6 +20,7 @@ class TestActionSpaceType:
 
             def get_spawn_config(self):
                 from bluesky_pettingzoo.utils.types import SpawnConfig
+
                 return SpawnConfig(
                     altitude_range=(30000, 40000),
                     speed_range=(400, 500),
@@ -30,6 +29,7 @@ class TestActionSpaceType:
 
             def get_conflict_config(self):
                 from bluesky_pettingzoo.utils.types import ConflictConfig
+
                 return ConflictConfig(
                     nmac_horizontal_nm=5,
                     nmac_vertical_ft=1000,
@@ -54,6 +54,7 @@ class TestActionSpaceType:
 
             def get_spawn_config(self):
                 from bluesky_pettingzoo.utils.types import SpawnConfig
+
                 return SpawnConfig(
                     altitude_range=(30000, 40000),
                     speed_range=(400, 500),
@@ -62,6 +63,7 @@ class TestActionSpaceType:
 
             def get_conflict_config(self):
                 from bluesky_pettingzoo.utils.types import ConflictConfig
+
                 return ConflictConfig(
                     nmac_horizontal_nm=5,
                     nmac_vertical_ft=1000,
@@ -88,6 +90,7 @@ class TestContinuousActionDims:
 
             def get_spawn_config(self):
                 from bluesky_pettingzoo.utils.types import SpawnConfig
+
                 return SpawnConfig(
                     altitude_range=(30000, 40000),
                     speed_range=(400, 500),
@@ -96,6 +99,7 @@ class TestContinuousActionDims:
 
             def get_conflict_config(self):
                 from bluesky_pettingzoo.utils.types import ConflictConfig
+
                 return ConflictConfig(
                     nmac_horizontal_nm=5,
                     nmac_vertical_ft=1000,

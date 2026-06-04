@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+import numpy as np
+
 from bluesky_pettingzoo.rewards.base import RewardComponent
 from bluesky_pettingzoo.utils.geometry import assign_sector
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
@@ -47,18 +49,20 @@ class CapacityPenalty(RewardComponent):
     }
 
     def __init__(self, config: dict[str, Any]) -> None:
+        self._max_aircraft: int = 5
+        self._penalty_per_excess: float = -10.0
+        self._sectors: list[dict[str, Any]] = []
+        self._warning_threshold: float = 0.8
         super().__init__(config)
         # Warning penalty depends on penalty_per_excess, so compute after base init
         comp = config.get("components", {}).get("capacity", {})
-        self._warning_penalty: float = comp.get(
-            "warning_penalty", self._penalty_per_excess / 2
-        )
+        self._warning_penalty: float = comp.get("warning_penalty", self._penalty_per_excess / 2)
 
     def compute(
         self,
         agent_id: str,
         prev_state: AircraftState,
-        action: DiscreteAction,
+        action: DiscreteAction | list[Any] | np.ndarray,
         curr_state: AircraftState,
         all_states: dict[str, AircraftState],
         step_count: int = 0,

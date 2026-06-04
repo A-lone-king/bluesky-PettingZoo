@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 import pytest
 
@@ -12,9 +10,7 @@ from bluesky_pettingzoo.utils.types import (
     AircraftState,
     ConflictConfig,
     SpawnConfig,
-    WaypointConfig,
 )
-
 
 # ---------------------------------------------------------------------------
 # Concrete test implementation
@@ -187,8 +183,9 @@ class TestResetDefaultNoop:
     def test_reset_default_noop(self) -> None:
         """BaseScenario.reset() does nothing by default."""
         scenario = DummyScenario()
+        rng = np.random.RandomState(42)
         # reset is inherited from BaseScenario (DummyScenario doesn't override it)
-        scenario.reset()  # Should not raise
+        scenario.reset(rng)  # Should not raise
 
 
 class TestGetInitialPositionsDefault:

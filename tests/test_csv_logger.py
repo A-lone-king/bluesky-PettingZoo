@@ -6,8 +6,6 @@ import csv
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 
 class TestCSVLoggerCallback:
     """CSVLoggerCallback should write episode metrics to a CSV file."""
@@ -40,7 +38,17 @@ class TestCSVLoggerCallback:
             reader = csv.reader(f)
             headers = next(reader)
 
-        expected = ["timestep", "episode", "reward", "episode_length", "conflicts", "arrivals", "algorithm", "action_space", "timestamp"]
+        expected = [
+            "timestep",
+            "episode",
+            "reward",
+            "episode_length",
+            "conflicts",
+            "arrivals",
+            "algorithm",
+            "action_space",
+            "timestamp",
+        ]
         assert headers == expected
 
     def test_episode_logged_on_done(self, tmp_path: Path) -> None:

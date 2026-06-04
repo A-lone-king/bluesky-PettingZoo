@@ -27,6 +27,7 @@ class TestRewardsYamlCompleteness:
 
     def test_all_registered_components_in_yaml(self):
         from bluesky_pettingzoo.rewards.components import __all__ as registered
+
         with open(REWARDS_YAML, encoding="utf-8") as f:
             data = yaml.safe_load(f)
         yaml_keys = set(data.get("components", {}).keys())
@@ -65,11 +66,21 @@ class TestScenarioOverrideKeys:
             data = yaml.safe_load(f)
         return set(data.get("reward_overrides", {}).keys())
 
-    @pytest.mark.parametrize("scenario", [
-        "horizontal_cr", "vertical_cr", "sector_cr", "plan_waypoint",
-        "descent", "merge", "route_nav", "sector_capacity",
-        "static_obstacle", "waypoint_nav",
-    ])
+    @pytest.mark.parametrize(
+        "scenario",
+        [
+            "horizontal_cr",
+            "vertical_cr",
+            "sector_cr",
+            "plan_waypoint",
+            "descent",
+            "merge",
+            "route_nav",
+            "sector_capacity",
+            "static_obstacle",
+            "waypoint_nav",
+        ],
+    )
     def test_scenario_override_keys_match_base(self, scenario: str):
         base_keys = self._get_base_keys()
         override_keys = self._get_scenario_overrides(scenario)

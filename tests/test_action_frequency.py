@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-import math
-from typing import Any
-
 import pytest
 
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-
 
 # ---------------------------------------------------------------------------
 # BlueSkyWrapper for testing step_n without real BlueSky
@@ -122,6 +116,7 @@ class TestStepNMethodExists:
     def test_step_calls_step_n(self) -> None:
         """step() should delegate to step_n(1) for backward compatibility."""
         import inspect
+
         source = inspect.getsource(BlueSkyWrapper.step)
         assert "step_n" in source, "step() should call step_n() internally"
 

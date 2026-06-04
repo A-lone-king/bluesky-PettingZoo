@@ -5,13 +5,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from bluesky_pettingzoo.envs.scenarios.horizontal_cr import HorizontalCRScenario
 from bluesky_pettingzoo.rewards.components.delay import DelayPenalty
-
 from tests.helpers.env_factory import make_env
 
 

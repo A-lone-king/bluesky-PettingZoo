@@ -305,10 +305,7 @@ class ScenarioConfig(DictBackedMixin):
         )
 
         air_data = data["airspace"]
-        sectors = [
-            SectorConfig(id=s["id"], bounds=s["bounds"])
-            for s in air_data["sectors"]
-        ]
+        sectors = [SectorConfig(id=s["id"], bounds=s["bounds"]) for s in air_data["sectors"]]
         waypoints = [
             WaypointConfig(id=w["id"], lat=w["lat"], lon=w["lon"], alt=w["alt"])
             for w in air_data.get("waypoints", [])

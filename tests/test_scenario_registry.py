@@ -41,9 +41,11 @@ class TestScenarioImportable:
     @pytest.mark.parametrize("name,cls_name", list(EXPECTED_SCENARIOS.items()))
     def test_scenario_class_importable(self, name: str, cls_name: str):
         import bluesky_pettingzoo.envs.scenarios as scenarios_mod
+
         assert hasattr(scenarios_mod, cls_name), f"{cls_name} not importable from scenarios module"
 
     @pytest.mark.parametrize("name,cls_name", list(EXPECTED_SCENARIOS.items()))
     def test_scenario_in_all(self, name: str, cls_name: str):
         from bluesky_pettingzoo.envs.scenarios import __all__
+
         assert cls_name in __all__, f"{cls_name} missing from __all__"

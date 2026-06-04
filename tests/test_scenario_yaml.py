@@ -5,10 +5,7 @@ Verify that action_space field loads correctly from YAML.
 
 from __future__ import annotations
 
-import pytest
 import yaml
-
-from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 
 
 class TestScenarioYamlActionSpace:

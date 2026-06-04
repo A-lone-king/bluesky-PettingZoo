@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pytest
 import yaml
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
@@ -21,8 +21,6 @@ from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.obstacle_intrusion import ObstacleIntrusion
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 

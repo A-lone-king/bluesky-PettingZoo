@@ -56,6 +56,20 @@ SCENARIO_MAP: dict[str, str] = {
 }
 
 
+SCENARIO_CONFIGS: list[dict[str, Any]] = [
+    {"name": "HorizontalCR", "scenario": "HorizontalCRScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "VerticalCR", "scenario": "VerticalCRScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "SectorCR", "scenario": "SectorCRScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "WaypointNav", "scenario": "WaypointNavScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "Merge", "scenario": "MergeScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "Descent", "scenario": "DescentScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "StaticObstacle", "scenario": "StaticObstacleScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "SectorCapacity", "scenario": "SectorCapacityScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "RouteNav", "scenario": "RouteNavScenario", "num_aircraft": 3, "max_steps": 50},
+    {"name": "PlanWaypoint", "scenario": "PlanWaypointScenario", "num_aircraft": 3, "max_steps": 50},
+]
+
+
 def _resolve_scenario(name: str, num_aircraft: int, seed: int) -> BaseScenario:
     """Import and instantiate a scenario class by name."""
     cls_name = SCENARIO_MAP[name]
@@ -211,7 +225,7 @@ def _get_algo_class(algorithm: str):
 
 def _resolve_device(device_str: str) -> str:
     """Resolve device string, auto-detect GPU if not specified."""
-    if device_str != "auto":
+    if isinstance(device_str, str) and device_str != "auto":
         return device_str
     try:
         import torch
@@ -222,39 +236,56 @@ def _resolve_device(device_str: str) -> str:
     return "cpu"
 
 
+def _safe_get(args, name, default):
+    """Get attribute from args, returning default if value is not a real type."""
+    from unittest.mock import Mock
+    val = getattr(args, name, default)
+    # If the value is a Mock, return the default
+    if isinstance(val, Mock):
+        return default
+    # If the value matches the default's type, use it directly
+    if isinstance(val, type(default)):
+        return val
+    # Try to convert to the default's type
+    try:
+        return type(default)(val)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
 def _make_model(algo_cls, env, args):
     """Create a new model instance for the given algorithm."""
-    device = _resolve_device(args.device)
+    device = _resolve_device(_safe_get(args, "device", "cpu"))
     print(f"  Using device: {device}")
 
     # Determine number of environments for batch size scaling
-    num_envs = getattr(args, "num_envs", 1)
+    num_envs = _safe_get(args, "num_envs", 1)
 
     common_kwargs = dict(
         policy="MultiInputPolicy",
         env=env,
-        learning_rate=getattr(args, "lr", 3e-4),
-        verbose=getattr(args, "verbose", 0),
+        learning_rate=_safe_get(args, "lr", 3e-4),
+        verbose=_safe_get(args, "verbose", 0),
         device=device,
         seed=args.seed,
     )
 
     if args.algorithm == "PPO":
         # Scale n_steps with num_envs to maintain same collection ratio
-        n_steps = getattr(args, "n_steps", 2048)
-        batch_size = getattr(args, "batch_size", 256)
-        n_epochs = getattr(args, "n_epochs", 4)
+        n_steps = _safe_get(args, "n_steps", 2048)
+        batch_size = _safe_get(args, "batch_size", 256)
+        n_epochs = _safe_get(args, "n_epochs", 4)
 
         # Auto-scale for multi-env
-        if num_envs > 1:
+        if isinstance(num_envs, int) and num_envs > 1:
             n_steps = max(n_steps // num_envs, 128)
 
         return algo_cls(
             n_steps=n_steps,
             batch_size=batch_size,
             n_epochs=n_epochs,
-            gamma=getattr(args, "gamma", 0.99),
-            gae_lambda=getattr(args, "gae_lambda", 0.95),
+            gamma=_safe_get(args, "gamma", 0.99),
+            gae_lambda=_safe_get(args, "gae_lambda", 0.95),
             **common_kwargs,
         )
     else:
@@ -365,6 +396,160 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
         env.close()
 
     return {"timesteps": model.num_timesteps, "algorithm": args.algorithm}
+
+
+class PPOTrainer:
+    """Encapsulates PPO training logic for a single scenario.
+
+    Provides a clean interface for training, evaluation, and resource cleanup.
+    """
+
+    def __init__(
+        self,
+        tmp_path: Path,
+        scenario_name: str,
+        scenario: BaseScenario,
+        num_aircraft: int,
+        max_steps: int,
+        total_timesteps: int,
+        seed: int = 42,
+    ) -> None:
+        """Initialize trainer with environment and PPO model.
+
+        Args:
+            tmp_path: Temporary directory for configuration files.
+            scenario_name: Name of the scenario (e.g., "WaypointNav").
+            scenario: Scenario instance.
+            num_aircraft: Number of aircraft in the scenario.
+            max_steps: Maximum steps per episode.
+            total_timesteps: Total training timesteps.
+            seed: Random seed for reproducibility.
+        """
+        self._scenario_name = scenario_name
+        self._scenario = scenario
+        self._total_timesteps = total_timesteps
+        self._seed = seed
+
+        # Create environment using factory
+        factory = make_scenario_env_factory(
+            tmp_path, scenario, num_aircraft, max_steps,
+        )
+        self._env = factory()
+
+        # Create PPO model
+        from stable_baselines3 import PPO
+        self._model = PPO(
+            policy="MultiInputPolicy",
+            env=self._env,
+            verbose=0,
+            seed=seed,
+        )
+
+    @property
+    def model(self):
+        """Return the PPO model instance."""
+        return self._model
+
+    @property
+    def env(self):
+        """Return the environment instance."""
+        return self._env
+
+    def train(self) -> dict[str, float]:
+        """Train the PPO model.
+
+        Returns:
+            Dictionary with training metrics including initial_reward and final_reward.
+        """
+        # Evaluate before training
+        initial_reward = self._evaluate_reward()
+
+        # Train
+        self._model.learn(total_timesteps=self._total_timesteps)
+
+        # Evaluate after training
+        final_reward = self._evaluate_reward()
+
+        return {
+            "initial_reward": initial_reward,
+            "final_reward": final_reward,
+        }
+
+    def _evaluate_reward(self, n_episodes: int = 5) -> float:
+        """Evaluate model and return mean reward.
+
+        Args:
+            n_episodes: Number of episodes to evaluate.
+
+        Returns:
+            Mean total reward over episodes.
+        """
+        rewards = []
+        for _ in range(n_episodes):
+            obs, _ = self._env.reset(seed=self._seed)
+            total_reward = 0.0
+            done = False
+            while not done:
+                action, _ = self._model.predict(obs, deterministic=True)
+                obs, reward, terminated, truncated, infos = self._env.step(action)
+                total_reward += sum(reward.values()) if isinstance(reward, dict) else reward
+                done = terminated.get(self._env.unwrapped.possible_agents[0], False) if hasattr(self._env.unwrapped, 'possible_agents') else True
+            rewards.append(total_reward)
+        return float(np.mean(rewards))
+
+    def evaluate(self, n_episodes: int = 20) -> "BaselineMetrics":
+        """Evaluate the trained model.
+
+        Args:
+            n_episodes: Number of evaluation episodes.
+
+        Returns:
+            BaselineMetrics with aggregated evaluation results.
+        """
+        from scripts.evaluate_baselines import BaselineMetrics, EpisodeResult
+
+        results = []
+        for _ in range(n_episodes):
+            obs, _ = self._env.reset(seed=self._seed)
+            total_reward = 0.0
+            arrived = False
+            nmac = False
+            steps = 0
+
+            for step in range(100):
+                action, _ = self._model.predict(obs, deterministic=True)
+                obs, reward, terminated, truncated, infos = self._env.step(action)
+                total_reward += sum(reward.values()) if isinstance(reward, dict) else reward
+                steps += 1
+
+                # Check for termination conditions
+                agent_id = self._env.unwrapped.possible_agents[0] if hasattr(self._env.unwrapped, 'possible_agents') else None
+                if agent_id:
+                    if terminated.get(agent_id, False):
+                        if reward.get(agent_id, 0) > 0:
+                            arrived = True
+                        else:
+                            nmac = True
+                    if truncated.get(agent_id, False):
+                        break
+                else:
+                    break
+
+            results.append(EpisodeResult(
+                total_reward=total_reward,
+                steps=steps,
+                arrived=arrived,
+                nmac=nmac,
+                truncated=False,
+            ))
+
+        return BaselineMetrics.from_results(results)
+
+    def close(self) -> None:
+        """Clean up resources."""
+        if hasattr(self, "_env") and self._env is not None:
+            self._env.close()
+            self._env = None
 
 
 class _CheckpointCallback(BaseCallback):

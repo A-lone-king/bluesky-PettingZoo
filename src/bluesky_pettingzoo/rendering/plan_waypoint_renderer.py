@@ -45,8 +45,10 @@ class PlanWaypointRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         for acid, state in states.items():

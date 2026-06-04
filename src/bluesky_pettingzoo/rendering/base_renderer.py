@@ -10,6 +10,7 @@ except ImportError:
     pygame = None  # type: ignore[assignment]
 
 from bluesky_pettingzoo.rendering.common import (
+    compute_pixels_per_nm,
     draw_aircraft,
     draw_waypoint,
     latlon_to_pixel,
@@ -45,6 +46,7 @@ class BaseRenderer:
         caption: str = "BlueSky MARL",
         fps: int = 30,
         bounds: dict[str, float] | None = None,
+        background_color: tuple[int, int, int] = (0, 0, 0),
     ) -> None:
         self._width = width
         self._height = height
@@ -55,6 +57,7 @@ class BaseRenderer:
         self._font: Any = None
         self._initialized = False
         self._bounds = bounds or self._DEFAULT_BOUNDS.copy()
+        self._background_color = background_color
 
     def set_bounds(self, bounds: dict[str, float]) -> None:
         """Set geographic bounds for rendering.
@@ -64,6 +67,14 @@ class BaseRenderer:
         """
         self._bounds = bounds
 
+    def _compute_pixels_per_nm(self) -> float:
+        """Compute pixels per nautical mile from current bounds.
+
+        Returns:
+            Pixels per NM scale factor.
+        """
+        return compute_pixels_per_nm(self._bounds, self._height)
+
     def display(self) -> None:
         """Initialize Pygame and create the display window.
 
@@ -71,10 +82,7 @@ class BaseRenderer:
             ImportError: If pygame is not installed.
         """
         if pygame is None:
-            raise ImportError(
-                "pygame is required for rendering. "
-                "Install with: pip install pygame"
-            )
+            raise ImportError("pygame is required for rendering. Install with: pip install pygame")
         pygame.init()
         self._screen = pygame.display.set_mode((self._width, self._height))
         pygame.display.set_caption(self._caption)
@@ -104,13 +112,11 @@ class BaseRenderer:
             return
 
         # Clear screen
-        self._screen.fill((0, 0, 0))
+        self._screen.fill(self._background_color)
 
         # Draw aircraft
         for agent_id, state in states.items():
-            x, y = latlon_to_pixel(
-                state.lat, state.lon, self._bounds, self._width, self._height
-            )
+            x, y = latlon_to_pixel(state.lat, state.lon, self._bounds, self._width, self._height)
             draw_aircraft(self._screen, x, y, state.hdg)
 
         # Draw waypoints

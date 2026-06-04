@@ -13,8 +13,13 @@ from bluesky_pettingzoo.utils.types import AircraftState
 
 def make_state(lat: float = 39.25, lon: float = 116.25, alt: float = 35000.0) -> AircraftState:
     return AircraftState(
-        id="AC001", lat=lat, lon=lon, alt=alt,
-        hdg=90.0, tas=450.0, vs=0.0,
+        id="AC001",
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=90.0,
+        tas=450.0,
+        vs=0.0,
     )
 
 
@@ -38,8 +43,9 @@ class TestPerceptionRadius:
         own = make_state(lat=39.25, lon=116.25)
         # ~10NM away
         other = make_state(lat=39.25, lon=116.45, alt=35000.0)
-        other = AircraftState(id="AC002", lat=39.25, lon=116.45, alt=35000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.45, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -51,8 +57,9 @@ class TestPerceptionRadius:
         filt = PerceptionFilter(config)
         own = make_state(lat=39.25, lon=116.25)
         # ~30NM away
-        other = AircraftState(id="AC002", lat=39.25, lon=116.85, alt=35000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.85, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -63,8 +70,9 @@ class TestPerceptionRadius:
         filt = PerceptionFilter(config)
         own = make_state(lat=39.25, lon=116.25)
         # ~20NM away (with tolerance)
-        other = AircraftState(id="AC002", lat=39.25, lon=116.65, alt=35000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.65, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -79,8 +87,9 @@ class TestAltitudeDifference:
         """Aircraft within 3000ft altitude difference should be visible."""
         filt = PerceptionFilter(config)
         own = make_state(alt=35000.0)
-        other = AircraftState(id="AC002", lat=39.25, lon=116.25, alt=34000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.25, alt=34000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -90,8 +99,9 @@ class TestAltitudeDifference:
         """Aircraft with > 3000ft altitude difference should be filtered out."""
         filt = PerceptionFilter(config)
         own = make_state(alt=35000.0)
-        other = AircraftState(id="AC002", lat=39.25, lon=116.25, alt=31000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.25, alt=31000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -101,8 +111,9 @@ class TestAltitudeDifference:
         """Aircraft at exactly 3000ft difference should be visible."""
         filt = PerceptionFilter(config)
         own = make_state(alt=35000.0)
-        other = AircraftState(id="AC002", lat=39.25, lon=116.25, alt=32000.0,
-                              hdg=90.0, tas=450.0, vs=0.0)
+        other = AircraftState(
+            id="AC002", lat=39.25, lon=116.25, alt=32000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [other])
 
@@ -119,8 +130,15 @@ class TestMaxObservable:
         own = make_state(alt=35000.0)
 
         others = [
-            AircraftState(id=f"AC{i:03d}", lat=39.25, lon=116.25 + i * 0.01,
-                          alt=35000.0, hdg=90.0, tas=450.0, vs=0.0)
+            AircraftState(
+                id=f"AC{i:03d}",
+                lat=39.25,
+                lon=116.25 + i * 0.01,
+                alt=35000.0,
+                hdg=90.0,
+                tas=450.0,
+                vs=0.0,
+            )
             for i in range(5)
         ]
 
@@ -138,10 +156,12 @@ class TestSortedByDistance:
         own = make_state(lat=39.25, lon=116.25)
 
         # Create aircraft at different distances
-        far = AircraftState(id="AC_FAR", lat=39.25, lon=116.55, alt=35000.0,
-                            hdg=90.0, tas=450.0, vs=0.0)
-        near = AircraftState(id="AC_NEAR", lat=39.25, lon=116.35, alt=35000.0,
-                             hdg=90.0, tas=450.0, vs=0.0)
+        far = AircraftState(
+            id="AC_FAR", lat=39.25, lon=116.55, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
+        near = AircraftState(
+            id="AC_NEAR", lat=39.25, lon=116.35, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0
+        )
 
         results = filt.filter(own, [far, near])
 

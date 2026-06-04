@@ -1,22 +1,45 @@
-"""HorizontalCR scenario renderer — Pygame visualization for horizontal conflict resolution."""
+"""HorizontalCR scenario renderer — aviation-style visualization."""
 
 from __future__ import annotations
 
 from typing import Any
 
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
-from bluesky_pettingzoo.rendering.common import draw_nmac_circle, latlon_to_pixel
+from bluesky_pettingzoo.rendering.common import (
+    draw_aircraft_dot,
+    draw_heading_line,
+    draw_nmac_circle,
+    draw_waypoint,
+    latlon_to_pixel,
+)
+from bluesky_pettingzoo.utils.geometry import haversine_distance
+
+# Aviation-style color palette
+_SKY_BLUE = (135, 206, 235)
+_AIRCRAFT_COLOR = (30, 30, 30)
+_PROTECTION_COLOR = (30, 30, 30)
+_CONFLICT_COLOR = (255, 0, 0)
+_HEADING_COLOR = (80, 80, 80)
+
+# Separation thresholds (NM)
+_NMAC_HORIZONTAL_NM = 5.0
 
 
 class HorizontalCRRenderer(BaseRenderer):
     """Renderer for HorizontalCR scenario.
 
-    Draws aircraft as rotated triangles, waypoints as circles,
-    and NMAC conflict circles around each aircraft.
+    Aviation-style rendering with light blue background, black protection
+    zones around all aircraft, heading lines, and red conflict circles
+    for aircraft pairs within separation minima.
     """
 
     def __init__(self, width: int = 800, height: int = 600) -> None:
-        super().__init__(width=width, height=height, caption="HorizontalCR")
+        super().__init__(
+            width=width,
+            height=height,
+            caption="HorizontalCR",
+            background_color=_SKY_BLUE,
+        )
 
     def render_frame(
         self,
@@ -25,7 +48,7 @@ class HorizontalCRRenderer(BaseRenderer):
         step: int = 0,
         info: dict[str, Any] | None = None,
     ) -> None:
-        """Render aircraft, waypoints, and NMAC circles.
+        """Render aircraft with protection zones, heading lines, and conflict highlights.
 
         Args:
             states: Aircraft states keyed by agent ID.
@@ -36,14 +59,77 @@ class HorizontalCRRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        # Call base renderer to draw aircraft and waypoints
-        super().render_frame(states, waypoints, step, info)
+        self._screen.fill(_SKY_BLUE)
+        ppm = self._compute_pixels_per_nm()
 
-        # Add NMAC circles on top
+        # Detect conflicting aircraft pairs
+        conflict_ids = self._detect_conflicts(states)
+
+        # Draw aircraft with protection zones and heading lines
         for acid, state in states.items():
-            x, y = latlon_to_pixel(
-                state.lat, state.lon, self._bounds, self._width, self._height
+            x, y = latlon_to_pixel(state.lat, state.lon, self._bounds, self._width, self._height)
+            # Black protection zone (always visible)
+            draw_nmac_circle(
+                self._screen,
+                x,
+                y,
+                radius_nm=_NMAC_HORIZONTAL_NM,
+                pixels_per_nm=ppm,
+                color=_PROTECTION_COLOR,
+                width=1,
             )
-            draw_nmac_circle(self._screen, x, y)
+            # Red conflict circle (overrides black for conflicting aircraft)
+            if acid in conflict_ids:
+                draw_nmac_circle(
+                    self._screen,
+                    x,
+                    y,
+                    radius_nm=_NMAC_HORIZONTAL_NM,
+                    pixels_per_nm=ppm,
+                    color=_CONFLICT_COLOR,
+                    width=2,
+                )
+            # Heading line
+            draw_heading_line(
+                self._screen,
+                x,
+                y,
+                state.hdg,
+                length=30,
+                color=_HEADING_COLOR,
+                width=1,
+            )
+            # Aircraft dot
+            draw_aircraft_dot(self._screen, x, y, color=_AIRCRAFT_COLOR, size=4)
 
+        # Draw waypoints
+        if waypoints:
+            for agent_id, wp in waypoints.items():
+                wx, wy = latlon_to_pixel(
+                    wp["lat"], wp["lon"], self._bounds, self._width, self._height
+                )
+                draw_waypoint(self._screen, wx, wy)
+
+        self._draw_hud(step, info)
         self.flip()
+
+    def _detect_conflicts(self, states: dict[str, Any]) -> set[str]:
+        """Detect aircraft pairs within NMAC horizontal separation.
+
+        Args:
+            states: Aircraft states keyed by agent ID.
+
+        Returns:
+            Set of aircraft IDs involved in conflicts.
+        """
+        conflict_ids: list[str] = []
+        acid_list = list(states.keys())
+        for i in range(len(acid_list)):
+            for j in range(i + 1, len(acid_list)):
+                s1 = states[acid_list[i]]
+                s2 = states[acid_list[j]]
+                dist = haversine_distance(s1.lat, s1.lon, s2.lat, s2.lon)
+                if dist < _NMAC_HORIZONTAL_NM:
+                    conflict_ids.append(acid_list[i])
+                    conflict_ids.append(acid_list[j])
+        return set(conflict_ids)

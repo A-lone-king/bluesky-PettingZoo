@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.utils.types import ConflictLevel
 from tests.helpers.state_factory import make_action, make_state
@@ -61,7 +59,7 @@ class TestNMAC:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -100.0
+        assert result == -500.0
 
 
 class TestWarning:
@@ -89,7 +87,7 @@ class TestWarning:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -10.0
+        assert result == -50.0
 
 
 class TestSeparation:
@@ -110,7 +108,7 @@ class TestSeparation:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -5.0
+        assert result == -20.0
 
 
 class TestMultipleConflicts:
@@ -133,7 +131,7 @@ class TestMultipleConflicts:
 
         result = comp.compute("OWN", own, action, own, all_states)
 
-        assert result == -100.0  # Most severe
+        assert result == -500.0  # Most severe
 
 
 class TestBoundary:
@@ -210,7 +208,7 @@ class TestMultiAircraftChainConflict:
         # A at origin, B very close to A (NMAC-level), C ~8 NM north (warning-level)
         state_a = make_state("A", 39.25, 116.25, 35000.0)
         state_b = make_state("B", 39.252, 116.25, 35000.0)  # ~0.1 NM from A
-        state_c = make_state("C", 39.39, 116.25, 35000.0)   # ~9.4 NM from B, ~9.5 NM from A
+        state_c = make_state("C", 39.39, 116.25, 35000.0)  # ~9.4 NM from B, ~9.5 NM from A
         all_states = {"A": state_a, "B": state_b, "C": state_c}
 
         chains = comp.detect_chain_conflict(all_states)
@@ -241,6 +239,9 @@ class TestConflictConfigurableDistance:
         # Actually they are heading TOWARD each other, so distance decreases.
         # Let's just verify we can pass a custom distance and get a result.
         result_custom = comp.predict_conflict(
-            own, other, lookahead_s=60.0, conflict_distance_nm=3.0,
+            own,
+            other,
+            lookahead_s=60.0,
+            conflict_distance_nm=3.0,
         )
         assert isinstance(result_custom, bool)

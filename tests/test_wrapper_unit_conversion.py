@@ -28,7 +28,9 @@ class TestCreateAircraftUnitConversion:
     """create_aircraft must convert feet→meters and knots→m/s."""
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
-    def test_altitude_feet_converted_to_meters(self, mock_bs: MagicMock, default_config: dict) -> None:
+    def test_altitude_feet_converted_to_meters(
+        self, mock_bs: MagicMock, default_config: dict
+    ) -> None:
         """Altitude in feet is converted to meters before calling bs.traf.cre."""
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()
@@ -91,7 +93,9 @@ class TestGetAircraftStateUnitConversion:
     """get_aircraft_state must convert meters→feet and m/s→knots."""
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
-    def test_altitude_meters_converted_to_feet(self, mock_bs: MagicMock, default_config: dict) -> None:
+    def test_altitude_meters_converted_to_feet(
+        self, mock_bs: MagicMock, default_config: dict
+    ) -> None:
         """Altitude returned by BlueSky (meters) is converted to feet."""
         # BlueSky stores altitude in meters internally
         mock_bs.traf.id = np.array(["AC001"], dtype="U10")
@@ -151,7 +155,9 @@ class TestGetAircraftStateUnitConversion:
         assert state["vs"] == pytest.approx(expected_vs_fpm, rel=1e-3)
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
-    def test_lat_lon_heading_unchanged_in_state(self, mock_bs: MagicMock, default_config: dict) -> None:
+    def test_lat_lon_heading_unchanged_in_state(
+        self, mock_bs: MagicMock, default_config: dict
+    ) -> None:
         """Lat, lon, hdg returned without conversion."""
         mock_bs.traf.id = np.array(["AC001"], dtype="U10")
         mock_bs.traf.lat = np.array([39.25])
@@ -201,7 +207,9 @@ class TestRoundTripConsistency:
     """Verify that create → state → NMAC check is consistent."""
 
     @patch("bluesky_pettingzoo.bluesky.wrapper.bs")
-    def test_staggered_altitudes_preserved_through_roundtrip(self, mock_bs: MagicMock, default_config: dict) -> None:
+    def test_staggered_altitudes_preserved_through_roundtrip(
+        self, mock_bs: MagicMock, default_config: dict
+    ) -> None:
         """Altitudes created in feet return as feet after roundtrip."""
         wrapper = BlueSkyWrapper(default_config)
         wrapper.init_simulation()

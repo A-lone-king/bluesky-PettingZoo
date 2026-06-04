@@ -63,12 +63,15 @@ def _make_obs(
     self_state = np.zeros(9, dtype=np.float32)
     self_state[8] = own_priority
 
-    goal = np.array([
-        goal_distance_nm / 20.0,  # normalized distance
-        math.cos(math.radians(goal_bearing_deg)),  # bearing_cos
-        math.sin(math.radians(goal_bearing_deg)),  # bearing_sin
-        0.0,  # alt_diff
-    ], dtype=np.float32)
+    goal = np.array(
+        [
+            goal_distance_nm / 20.0,  # normalized distance
+            math.cos(math.radians(goal_bearing_deg)),  # bearing_cos
+            math.sin(math.radians(goal_bearing_deg)),  # bearing_sin
+            0.0,  # alt_diff
+        ],
+        dtype=np.float32,
+    )
 
     return {
         "self_state": self_state,
@@ -80,7 +83,9 @@ def _make_obs(
 
 class TestActReturnsDict:
     def test_act_returns_dict(
-        self, agent: RuleBasedAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RuleBasedAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         obs = {"AC001": _make_obs()}
         result = agent.act(obs, {"AC001": action_space})
@@ -88,7 +93,9 @@ class TestActReturnsDict:
         assert "AC001" in result
 
     def test_act_keys_match_agents(
-        self, agent: RuleBasedAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RuleBasedAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         agents = ["A", "B", "C"]
         obs = {a: _make_obs() for a in agents}
@@ -178,10 +185,12 @@ class TestConflictAvoidance:
 
     def test_closest_threat_is_used(self, agent: RuleBasedAgent) -> None:
         """When multiple threats, the closest one drives the decision."""
-        obs = _make_obs(other_aircraft=[
-            [15.0, 30.0, 0.0],  # far threat
-            [3.0, 120.0, 0.0],  # close threat
-        ])
+        obs = _make_obs(
+            other_aircraft=[
+                [15.0, 30.0, 0.0],  # far threat
+                [3.0, 120.0, 0.0],  # close threat
+            ]
+        )
         action = agent._decide(obs)
         # Both are ahead (bearing < 180), so right turn
         assert action[0] > 2

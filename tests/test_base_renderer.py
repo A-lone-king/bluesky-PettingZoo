@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch, PropertyMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 
 class TestBaseRendererImport:
@@ -12,18 +10,22 @@ class TestBaseRendererImport:
 
     def test_import(self):
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         assert BaseRenderer is not None
 
     def test_has_display_method(self):
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         assert hasattr(BaseRenderer, "display")
 
     def test_has_close_method(self):
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         assert hasattr(BaseRenderer, "close")
 
     def test_has_draw_hud_method(self):
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         assert hasattr(BaseRenderer, "_draw_hud")
 
 
@@ -39,6 +41,7 @@ class TestBaseRendererLifecycle:
         mock_pygame.time.Clock.return_value = MagicMock()
 
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         renderer = BaseRenderer(width=800, height=600)
         renderer.display()
 
@@ -55,6 +58,7 @@ class TestBaseRendererLifecycle:
         mock_pygame.time.Clock.return_value = MagicMock()
 
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         renderer = BaseRenderer(width=800, height=600)
         renderer.display()
         renderer.close()
@@ -70,6 +74,7 @@ class TestBaseRendererLifecycle:
         mock_pygame.time.Clock.return_value = MagicMock()
 
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         renderer = BaseRenderer(width=1024, height=768)
         renderer.display()
 
@@ -90,6 +95,7 @@ class TestBaseRendererDrawHud:
         mock_pygame.time.Clock.return_value = MagicMock()
 
         from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
+
         renderer = BaseRenderer(width=800, height=600)
         renderer.display()
         renderer._draw_hud(step=10, info={"test": "value"})

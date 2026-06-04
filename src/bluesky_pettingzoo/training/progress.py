@@ -23,13 +23,14 @@ class ProgressCallback(BaseCallback):
 
     def _init_callback(self) -> None:
         self._start_time = time.time()
-        self._total_timesteps = getattr(self.model, "total_timesteps", None) or getattr(self.model, "_total_timesteps", 0)
+        self._total_timesteps = getattr(self.model, "total_timesteps", 0) or getattr(
+            self.model, "_total_timesteps", 0
+        )
 
     def _on_step(self) -> bool:
         # Track episode rewards
         dones = self.locals.get("dones", [])
         infos = self.locals.get("infos", [])
-        rewards = self.locals.get("rewards", [])
 
         for i, done in enumerate(dones):
             if not done:

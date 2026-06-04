@@ -45,11 +45,21 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+"src/bluesky_pettingzoo/bluesky/wrapper.py" = ["N803"]
+"src/bluesky_pettingzoo/utils/geometry.py" = ["N806"]
+"src/bluesky_pettingzoo/envs/scenarios/static_obstacle.py" = ["N806"]
+"tests/**" = ["F841", "N802"]
+
 [tool.mypy]
 python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["bluesky", "bluesky.*", "pettingzoo", "pettingzoo.*", "yaml", "stable_baselines3", "stable_baselines3.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -23,7 +23,9 @@ class TestActReturnsDict:
     """act() must return a dict."""
 
     def test_act_returns_dict(
-        self, agent: RandomAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RandomAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         obs = {"AC001": np.zeros(6, dtype=np.float32)}
         spaces_map = {"AC001": action_space}
@@ -37,7 +39,9 @@ class TestActKeysMatchAgents:
     """Returned dict keys must match input agent IDs."""
 
     def test_act_keys_match_agents(
-        self, agent: RandomAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RandomAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         agents = ["A", "B", "C"]
         obs = {a: np.zeros(6, dtype=np.float32) for a in agents}
@@ -52,7 +56,9 @@ class TestActionInSpace:
     """Each action must be valid within its action space."""
 
     def test_action_in_space(
-        self, agent: RandomAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RandomAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         obs = {"AC001": np.zeros(6, dtype=np.float32)}
         spaces_map = {"AC001": action_space}
@@ -68,7 +74,9 @@ class TestDifferentObservationsDifferentActions:
     """Different random seeds / calls should produce varied actions."""
 
     def test_different_observations_different_actions(
-        self, agent: RandomAgent, action_space: spaces.MultiDiscrete,
+        self,
+        agent: RandomAgent,
+        action_space: spaces.MultiDiscrete,
     ) -> None:
         obs = {"AC001": np.zeros(6, dtype=np.float32)}
         spaces_map = {"AC001": action_space}

@@ -41,8 +41,10 @@ class StaticObstacleRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         # Draw obstacle polygons (red no-fly zones)
@@ -50,8 +52,13 @@ class StaticObstacleRenderer(BaseRenderer):
         for polygon in obstacles:
             if polygon:
                 draw_sector_polygon(
-                    self._screen, polygon, bounds, self._width, self._height,
-                    color=(255, 50, 50), line_width=2,
+                    self._screen,
+                    polygon,
+                    bounds,
+                    self._width,
+                    self._height,
+                    color=(255, 50, 50),
+                    line_width=2,
                 )
 
         for acid, state in states.items():
@@ -62,7 +69,13 @@ class StaticObstacleRenderer(BaseRenderer):
         if waypoints and isinstance(waypoints, dict):
             for acid, wp in waypoints.items():
                 if isinstance(wp, dict) and "lat" in wp:
-                    wx, wy = latlon_to_pixel(wp["lat"], wp["lon"], bounds, self._width, self._height)
+                    wx, wy = latlon_to_pixel(
+                        wp["lat"],
+                        wp["lon"],
+                        bounds,
+                        self._width,
+                        self._height,
+                    )
                     draw_waypoint(self._screen, wx, wy)
 
         self._draw_hud(step=step, info=info)

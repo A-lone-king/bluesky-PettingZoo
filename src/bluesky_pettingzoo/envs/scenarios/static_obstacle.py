@@ -13,7 +13,6 @@ import numpy as np
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.utils.geometry import (
-    haversine_distance,
     point_at_distance,
     point_in_polygon,
 )
@@ -121,8 +120,10 @@ def _sort_vertices_clockwise(
     center_lon: float,
 ) -> list[tuple[float, float]]:
     """Sort vertices by angle from center, clockwise."""
+
     def angle(v: tuple[float, float]) -> float:
         return math.atan2(v[1] - center_lon, v[0] - center_lat)
+
     return sorted(vertices, key=angle)
 
 
@@ -142,10 +143,12 @@ class StaticObstacleScenario(BaseScenario):
     def __init__(
         self,
         num_aircraft: int = 1,
+        num_aircraft_range: tuple[int, int] | None = None,
         num_obstacles: int = NUM_OBSTACLES,
         seed: int | None = None,
     ) -> None:
         self._num_aircraft = num_aircraft
+        self._num_aircraft_range = num_aircraft_range
         self._num_obstacles = num_obstacles
         self._seed = seed
         self._agents: list[str] = []
@@ -159,6 +162,11 @@ class StaticObstacleScenario(BaseScenario):
     def action_dimensions(self) -> list[int]:
         """Heading + speed (matching bluesky-gym StaticObstacleEnv)."""
         return [0, 2]
+
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return dynamic aircraft count range if configured."""
+        return self._num_aircraft_range
 
     def get_obstacles(self) -> list[list[tuple[float, float]]]:
         """Return obstacle polygons for the current episode."""
@@ -213,11 +221,19 @@ class StaticObstacleScenario(BaseScenario):
         for acid in self._agents:
             ac_lat, ac_lon = self._initial_positions[acid]
             wp_lat, wp_lon = self._find_waypoint_outside_obstacles(
-                rng, ac_lat, ac_lon,
+                rng,
+                ac_lat,
+                ac_lon,
             )
-            bearing = math.degrees(math.atan2(
-                wp_lon - ac_lon, wp_lat - ac_lat,
-            )) % 360
+            bearing = (
+                math.degrees(
+                    math.atan2(
+                        wp_lon - ac_lon,
+                        wp_lat - ac_lat,
+                    )
+                )
+                % 360
+            )
             self._waypoints[acid] = {
                 "lat": wp_lat,
                 "lon": wp_lon,
@@ -291,8 +307,13 @@ class StaticObstacleScenario(BaseScenario):
         """Return the assigned waypoint for an agent."""
         return self._waypoints[agent_id]
 
-    def reset(self) -> None:
-        """Clear scenario state for a new episode."""
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Clear scenario state and randomize for procedural generation."""
+        if self._num_aircraft_range is not None:
+            self._num_aircraft = int(rng.randint(
+                self._num_aircraft_range[0],
+                self._num_aircraft_range[1] + 1,
+            ))
         self._agents = []
         self._waypoints = {}
         self._obstacles = []

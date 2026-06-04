@@ -11,8 +11,8 @@ try:
     import bluesky as bs
     from bluesky.tools.aero import vtas2cas
 except ImportError:
-    bs = None  # type: ignore[assignment]
-    vtas2cas = None  # type: ignore[assignment,misc]
+    bs = None
+    vtas2cas = None
 
 
 _FT_TO_M = 0.3048
@@ -48,7 +48,7 @@ class BlueSkyWrapper:
         self._step_count: int = 0
         self._simt: float = 0.0
         self._managed_aircraft: set[str] = set()
-        self._airspace_bounds: dict[str, tuple[float, float]] = {}
+        self._airspace_bounds: dict[str, float] = {}
         self._parse_airspace_bounds()
 
     def _parse_airspace_bounds(self) -> None:
@@ -99,7 +99,7 @@ class BlueSkyWrapper:
         self._step_count = 0
         self._simt = 0.0
 
-    def step(self, on_substep: "Callable[[int], bool] | None" = None) -> float:
+    def step(self, on_substep: Callable[[int], bool] | None = None) -> float:
         """Advance simulation by one timestep.
 
         Args:
@@ -115,7 +115,7 @@ class BlueSkyWrapper:
     def step_n(
         self,
         n: int,
-        on_substep: "Callable[[int], bool] | None" = None,
+        on_substep: Callable[[int], bool] | None = None,
     ) -> float:
         """Advance simulation by n timesteps.
 
@@ -215,7 +215,8 @@ class BlueSkyWrapper:
             count: Number of intruder aircraft to create.
             dpsi: Conflict angle spread (deg). Overridden by dpsi_list per intruder.
             dcpa: Distance at closest point of approach (NM). Overridden by dcpa_list per intruder.
-            tlosh: Horizontal time to loss of separation (sec). Overridden by tlosh_list per intruder.
+            tlosh: Horizontal time to loss of separation (sec).
+                Overridden by tlosh_list per intruder.
             dH: Vertical distance offset (ft). None = same altitude.
             tlosv: Vertical time to loss of separation (sec).
             prefix: Callsign prefix for intruder aircraft.
@@ -228,20 +229,51 @@ class BlueSkyWrapper:
         """
         # Create ownship
         own_id = f"{prefix}000"
-        self.create_aircraft(own_id, "B737", ownship_lat, ownship_lon, ownship_alt, ownship_hdg, ownship_spd)
+        self.create_aircraft(
+            own_id, "B737", ownship_lat, ownship_lon, ownship_alt, ownship_hdg, ownship_spd
+        )
         own_idx = self._resolve_idx(own_id)
 
         # Create intruders via creconfs
         intruder_ids: list[str] = []
         for i in range(count):
             acid = f"{prefix}{i + 1:03d}"
-            angle = dpsi_list[i] if dpsi_list is not None else dpsi * (i + 1) / max(count, 1)
-            cpa = dcpa_list[i] if dcpa_list is not None else dcpa
-            tsh = tlosh_list[i] if tlosh_list is not None else tlosh
-            bs.traf.creconfs(
-                acid, "B737", own_idx, angle, cpa, tsh,
-                dH=dH, tlosv=tlosv,
-            )
+            angle = float(dpsi_list[i] if dpsi_list is not None else dpsi * (i + 1) / max(count, 1))
+            cpa = float(dcpa_list[i] if dcpa_list is not None else dcpa)
+            tsh = float(tlosh_list[i] if tlosh_list is not None else tlosh)
+            try:
+                bs.traf.creconfs(
+                    acid,
+                    "B737",
+                    own_idx,
+                    angle,
+                    cpa,
+                    tsh,
+                    dH=float(dH) if dH is not None else None,
+                    tlosv=float(tlosv) if tlosv is not None else None,
+                )
+            except TypeError:
+                # BlueSky creconfs may fail with numpy arrays in windfield
+                # Fallback: create intruder at offset position
+                from bluesky_pettingzoo.utils.geometry import point_at_distance
+
+                offset_nm = max(cpa, 1.0)
+                intr_lat, intr_lon = point_at_distance(
+                    ownship_lat,
+                    ownship_lon,
+                    offset_nm,
+                    ownship_hdg + angle,
+                )
+                intr_alt = ownship_alt + (float(dH) if dH is not None else 0.0)
+                self.create_aircraft(
+                    acid,
+                    "B737",
+                    intr_lat,
+                    intr_lon,
+                    intr_alt,
+                    ownship_hdg + angle,
+                    ownship_spd,
+                )
             intruder_ids.append(acid)
 
         return [own_id] + intruder_ids
@@ -253,6 +285,55 @@ class BlueSkyWrapper:
             command: BlueSky command string
         """
         bs.stack.stack(command)
+
+    def set_origin(self, acid: str, lat: float, lon: float) -> None:
+        """Set aircraft origin waypoint.
+
+        Args:
+            acid: Aircraft ID
+            lat: Origin latitude (degrees)
+            lon: Origin longitude (degrees)
+        """
+        bs.stack.stack(f"ORIG {acid} {lat} {lon}")
+
+    def set_destination(self, acid: str, lat: float, lon: float) -> None:
+        """Set aircraft destination waypoint.
+
+        Args:
+            acid: Aircraft ID
+            lat: Destination latitude (degrees)
+            lon: Destination longitude (degrees)
+        """
+        bs.stack.stack(f"DEST {acid} {lat} {lon}")
+
+    def add_waypoint(self, acid: str, lat: float, lon: float) -> None:
+        """Add a waypoint to the aircraft's route.
+
+        Args:
+            acid: Aircraft ID
+            lat: Waypoint latitude (degrees)
+            lon: Waypoint longitude (degrees)
+        """
+        bs.stack.stack(f"ADDWPT {acid} {lat} {lon}")
+
+    def enable_lnav(self, acid: str) -> None:
+        """Enable lateral navigation (LNAV) for an aircraft.
+
+        Once enabled, the aircraft will automatically follow its route
+        waypoints using BlueSky's built-in navigation system.
+
+        Args:
+            acid: Aircraft ID
+        """
+        bs.stack.stack(f"LNAV {acid} ON")
+
+    def disable_lnav(self, acid: str) -> None:
+        """Disable lateral navigation (LNAV) for an aircraft.
+
+        Args:
+            acid: Aircraft ID
+        """
+        bs.stack.stack(f"LNAV {acid} OFF")
 
     def send_commands_batch(self, commands: list[str]) -> None:
         """Send multiple commands to BlueSky.
@@ -348,6 +429,40 @@ class BlueSkyWrapper:
             bs.traf.tas[idx] = kwargs["tas"] * _KTS_TO_MS
         if "vs" in kwargs:
             bs.traf.vs[idx] = kwargs["vs"] * _FT_TO_M / 60.0
+
+    def set_vertical_control(
+        self,
+        acid: str,
+        vs_kts: float,
+        target_alt_ft: float | None = None,
+    ) -> None:
+        """Set vertical control via selalt/selvs, bypassing ALT command stack.
+
+        Follows the bluesky-gym pattern: disable VNAV, then set selalt and
+        selvs directly.  For a climb ``target_alt_ft`` should be a large
+        value (e.g. 1_000_000); for descent it should be 0.
+
+        Args:
+            acid: Aircraft ID.
+            vs_kts: Vertical speed in ft/min (positive = climb).
+            target_alt_ft: Target altitude in feet.  If ``None``, uses
+                1_000_000 for climb (vs > 0) or 0 for descent (vs <= 0).
+        """
+        idx = self._resolve_idx(acid)
+        if idx < 0:
+            raise ValueError(f"Aircraft {acid} not found")
+
+        # Disable VNAV so selalt/selvs take effect
+        bs.traf.swvnav[idx] = False
+
+        # Convert ft/min → m/s for selvs
+        vs_ms = vs_kts * _FT_TO_M / 60.0
+        bs.traf.selvs[idx] = vs_ms
+
+        # Set target altitude
+        if target_alt_ft is None:
+            target_alt_ft = 1_000_000.0 if vs_kts > 0 else 0.0
+        bs.traf.selalt[idx] = target_alt_ft * _FT_TO_M
 
     def get_active_aircraft_ids(self) -> list[str]:
         """Get list of active aircraft IDs.

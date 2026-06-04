@@ -16,7 +16,7 @@ class RandomAgent(BaseAgent):
     def act(
         self,
         observations: dict[AgentID, Any],
-        action_spaces: dict[AgentID, spaces.Space],
+        action_spaces: dict[AgentID, spaces.Space[Any]],
     ) -> dict[AgentID, Any]:
         return {aid: space.sample() for aid, space in action_spaces.items()}
 

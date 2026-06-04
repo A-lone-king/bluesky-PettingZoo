@@ -7,23 +7,25 @@ and the agent continues flying.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
-
 import numpy as np
-import pytest
-from gymnasium import spaces
 
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_state(acid="AC000", lat=40.0, lon=117.0, alt=35000.0, hdg=90.0, tas=450.0, vs=0.0):
     return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
+        id=acid,
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=vs,
     )
 
 
@@ -75,6 +77,7 @@ class _StreamingScenario(BaseScenario):
 # Tests: BaseScenario default
 # ---------------------------------------------------------------------------
 
+
 class TestBaseScenarioDefault:
     """BaseScenario.update_waypoint() should return None by default."""
 
@@ -82,16 +85,34 @@ class TestBaseScenarioDefault:
         """Default implementation should return None (no streaming)."""
         scenario = _StreamingScenario()
         state = _make_state()
+
         # Even though _StreamingScenario overrides update_waypoint,
         # BaseScenario's default should be None
         # Use a minimal scenario that doesn't override
         class _MinimalScenario(BaseScenario):
             name = "Minimal"
             _action_space_type = "discrete"
-            def setup(self, rng, airspace_bounds): return ["AC000"]
-            def get_spawn_config(self): return SpawnConfig(altitude_range=(30000, 40000), speed_range=(400, 500), heading_range=(0, 360))
-            def get_conflict_config(self): return ConflictConfig(nmac_horizontal_nm=5.0, nmac_vertical_ft=1000.0, warning_horizontal_nm=10.0, warning_vertical_ft=2000.0)
-            def get_waypoint(self, agent_id): return {"lat": 40.5, "lon": 117.5}
+
+            def setup(self, rng, airspace_bounds):
+                return ["AC000"]
+
+            def get_spawn_config(self):
+                return SpawnConfig(
+                    altitude_range=(30000, 40000),
+                    speed_range=(400, 500),
+                    heading_range=(0, 360),
+                )
+
+            def get_conflict_config(self):
+                return ConflictConfig(
+                    nmac_horizontal_nm=5.0,
+                    nmac_vertical_ft=1000.0,
+                    warning_horizontal_nm=10.0,
+                    warning_vertical_ft=2000.0,
+                )
+
+            def get_waypoint(self, agent_id):
+                return {"lat": 40.5, "lon": 117.5}
 
         minimal = _MinimalScenario()
         result = minimal.update_waypoint("AC000", state)
@@ -101,6 +122,7 @@ class TestBaseScenarioDefault:
 # ---------------------------------------------------------------------------
 # Tests: Streaming scenario
 # ---------------------------------------------------------------------------
+
 
 class TestStreamingScenario:
     """Streaming scenario should provide sequential waypoints."""

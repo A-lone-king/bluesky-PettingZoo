@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
 import pytest
 
 from bluesky_pettingzoo.observations.normalizer import Normalizer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_config() -> dict:
     return {

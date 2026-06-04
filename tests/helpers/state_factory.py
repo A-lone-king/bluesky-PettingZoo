@@ -29,7 +29,13 @@ def make_state(
         AircraftState instance
     """
     return AircraftState(
-        id=acid, lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=vs,
+        id=acid,
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=vs,
     )
 
 

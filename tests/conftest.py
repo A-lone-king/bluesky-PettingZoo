@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pytest
 import yaml
 
@@ -26,6 +25,7 @@ def bluesky_wrapper(default_config: dict[str, Any]):
     wrapper.reset()
     yield wrapper
     wrapper.close()
+
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 

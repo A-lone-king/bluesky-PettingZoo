@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from bluesky_pettingzoo.observations.normalizer import Normalizer
@@ -191,7 +190,11 @@ class TestOutputClipping:
 class TestNormalizeAircraftState:
     """Test full aircraft state normalization."""
 
-    def test_normalize_aircraft_state(self, default_config: dict, sample_aircraft_state: dict) -> None:
+    def test_normalize_aircraft_state(
+        self,
+        default_config: dict,
+        sample_aircraft_state: dict,
+    ) -> None:
         """Test normalizing complete aircraft state."""
         norm = Normalizer(default_config)
         result = norm.normalize_aircraft_state(sample_aircraft_state)
@@ -201,9 +204,13 @@ class TestNormalizeAircraftState:
         assert "speed" in result
         assert result["heading"] == pytest.approx(-0.5)  # 90° -> -0.5
         assert result["altitude"] == pytest.approx(0.2)  # 35000ft -> 0.2
-        assert result["speed"] == pytest.approx(0.0)     # 450kt -> 0.0
+        assert result["speed"] == pytest.approx(0.0)  # 450kt -> 0.0
 
-    def test_normalize_aircraft_state_fields(self, default_config: dict, sample_aircraft_state: dict) -> None:
+    def test_normalize_aircraft_state_fields(
+        self,
+        default_config: dict,
+        sample_aircraft_state: dict,
+    ) -> None:
         """Test that all required fields are present in normalized state."""
         norm = Normalizer(default_config)
         result = norm.normalize_aircraft_state(sample_aircraft_state)
@@ -229,8 +236,8 @@ class TestNormalizeRelativePosition:
 
         assert "distance" in result
         assert "bearing" in result
-        assert result["distance"] == pytest.approx(0.5)   # 10NM / 20NM
-        assert result["bearing"] == pytest.approx(0.25)   # 90° / 360°
+        assert result["distance"] == pytest.approx(0.5)  # 10NM / 20NM
+        assert result["bearing"] == pytest.approx(0.25)  # 90° / 360°
 
     def test_normalize_relative_position_zero(self, default_config: dict) -> None:
         """Test normalizing zero relative position."""

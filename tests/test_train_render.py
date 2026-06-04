@@ -5,8 +5,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from train_ppo_scenarios import parse_args
@@ -24,10 +22,14 @@ class TestRenderArgument:
         assert args.render is False
 
     def test_render_with_other_args(self):
-        args = parse_args([
-            "--scenario", "HorizontalCR",
-            "--timesteps", "1000",
-            "--render",
-        ])
+        args = parse_args(
+            [
+                "--scenario",
+                "HorizontalCR",
+                "--timesteps",
+                "1000",
+                "--render",
+            ]
+        )
         assert args.render is True
         assert args.timesteps == 1000

@@ -38,10 +38,10 @@ _SAME_ALT_THRESHOLD_FT = 2000.0
 
 # Action indices: 0=-20, 1=-10, 2=0, 3=+10, 4=+20
 _ACTION_NEUTRAL = 2
-_ACTION_RIGHT_SMALL = 3   # +10
-_ACTION_RIGHT_LARGE = 4   # +20
-_ACTION_CLIMB_SMALL = 3   # +1000ft
-_ACTION_CLIMB_LARGE = 4   # +2000ft
+_ACTION_RIGHT_SMALL = 3  # +10
+_ACTION_RIGHT_LARGE = 4  # +20
+_ACTION_CLIMB_SMALL = 3  # +1000ft
+_ACTION_CLIMB_LARGE = 4  # +2000ft
 
 
 def _denorm_distance(norm_dist: float) -> float:
@@ -77,7 +77,7 @@ class RuleBasedAgent(BaseAgent):
     def act(
         self,
         observations: dict[AgentID, Any],
-        action_spaces: dict[AgentID, spaces.Space],
+        action_spaces: dict[AgentID, spaces.Space[Any]],
     ) -> dict[AgentID, Any]:
         actions: dict[AgentID, Any] = {}
 
@@ -125,22 +125,16 @@ class RuleBasedAgent(BaseAgent):
 
                 # Threat is ahead (0-180) → turn right; behind (180-360) → turn left
                 if 0 <= bearing <= 180:
-                    heading_idx = (
-                        _ACTION_RIGHT_LARGE if closest_dist < 5.0
-                        else _ACTION_RIGHT_SMALL
-                    )
+                    heading_idx = _ACTION_RIGHT_LARGE if closest_dist < 5.0 else _ACTION_RIGHT_SMALL
                 else:
                     # Threat behind — small right turn to create separation
                     heading_idx = _ACTION_RIGHT_SMALL
 
                 # Climb if threat at similar altitude
-                rel_alt_ft = _denorm_relative_alt(
-                    float(other_aircraft[closest_idx, _REL_ALT_IDX])
-                )
+                rel_alt_ft = _denorm_relative_alt(float(other_aircraft[closest_idx, _REL_ALT_IDX]))
                 if abs(rel_alt_ft) < _SAME_ALT_THRESHOLD_FT:
                     altitude_idx = (
-                        _ACTION_CLIMB_LARGE if closest_dist < 5.0
-                        else _ACTION_CLIMB_SMALL
+                        _ACTION_CLIMB_LARGE if closest_dist < 5.0 else _ACTION_CLIMB_SMALL
                     )
         else:
             # No threat — steer toward goal

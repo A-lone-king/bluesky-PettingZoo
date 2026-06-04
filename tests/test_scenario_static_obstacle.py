@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from bluesky_pettingzoo.envs.scenarios.static_obstacle import (
     StaticObstacleScenario,
@@ -117,7 +116,7 @@ class TestStaticObstacleScenarioConfig:
         rng = np.random.RandomState(42)
         bounds = {"lat_min": 39.0, "lat_max": 41.0, "lon_min": 116.0, "lon_max": 118.0}
         scenario.setup(rng, bounds)
-        scenario.reset()
+        scenario.reset(rng)
         assert scenario.get_obstacles() == []
         assert scenario.get_initial_positions() is None
 

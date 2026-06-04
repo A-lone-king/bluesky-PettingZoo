@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
 from tests.helpers.env_factory import make_config
 
 

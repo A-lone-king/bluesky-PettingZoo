@@ -14,8 +14,13 @@ from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 def make_state(hdg: float = 90.0, alt: float = 35000.0, tas: float = 450.0) -> AircraftState:
     return AircraftState(
-        id="AC001", lat=39.25, lon=116.25, alt=alt,
-        hdg=hdg, tas=tas, vs=0.0,
+        id="AC001",
+        lat=39.25,
+        lon=116.25,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=0.0,
     )
 
 

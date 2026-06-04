@@ -11,7 +11,7 @@ from gymnasium import spaces
 try:
     import bluesky as bs
 except ImportError:
-    bs = None  # type: ignore[assignment]
+    bs = None
 
 from bluesky_pettingzoo.wrappers.base import EnvWrapperMixin
 
@@ -58,25 +58,28 @@ class WindFieldWrapper(EnvWrapperMixin):
         # Call EnvWrapperMixin.__init__ which sets self.env
         super().__init__(env)
 
+        self._extended_space: spaces.Dict | None = None
         if self.augment_obs:
             base_space = self.env.observation_space(self.env.agents[0])
-            self._extended_space = spaces.Dict({
-                **base_space.spaces,
-                "wind_u": spaces.Box(-np.inf, np.inf, shape=(1,), dtype=np.float64),
-                "wind_v": spaces.Box(-np.inf, np.inf, shape=(1,), dtype=np.float64),
-            })
+            self._extended_space = spaces.Dict(
+                {
+                    **base_space.spaces,
+                    "wind_u": spaces.Box(-np.inf, np.inf, shape=(1,), dtype=np.float64),
+                    "wind_v": spaces.Box(-np.inf, np.inf, shape=(1,), dtype=np.float64),
+                }
+            )
         else:
-            self._extended_space = None
+            pass
 
     # ------------------------------------------------------------------
     # Overridden methods
     # ------------------------------------------------------------------
 
-    def observation_space(self, agent: str) -> spaces.Space:
+    def observation_space(self, agent: str) -> spaces.Space[Any]:
         """Get observation space, with wind components if augmented."""
         if self._extended_space is not None:
             return self._extended_space
-        return self.env.observation_space(agent)
+        return self.env.observation_space(agent)  # type: ignore[no-any-return]
 
     # ------------------------------------------------------------------
     # Core interface
@@ -97,7 +100,7 @@ class WindFieldWrapper(EnvWrapperMixin):
     def step(
         self,
         actions: dict[str, Any],
-    ) -> tuple[dict, dict, dict, dict, dict]:
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         if self.augment_obs:
             observations = self._augment(observations)

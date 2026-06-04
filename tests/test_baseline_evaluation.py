@@ -2,29 +2,18 @@
 
 from __future__ import annotations
 
+# Import the module under test
+import sys
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
-import yaml
 
-from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.agents.random_agent import RandomAgent
 from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
-from bluesky_pettingzoo.observations.manager import ObservationManager
-from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
-from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-from tests.helpers.env_factory import make_config, write_rewards_yaml
-
-# Import the module under test
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from evaluate_baselines import (
     BaselineMetrics,
@@ -33,7 +22,6 @@ from evaluate_baselines import (
     make_env_factory,
     run_episode,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -141,7 +129,11 @@ class TestMakeEnvFactory:
     def test_factory_with_scenario(self, tmp_path: Path) -> None:
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         factory = make_env_factory(
-            tmp_path=tmp_path, num_aircraft=2, max_steps=10, seed=42, scenario=scenario,
+            tmp_path=tmp_path,
+            num_aircraft=2,
+            max_steps=10,
+            seed=42,
+            scenario=scenario,
         )
         env = factory()
         assert isinstance(env, BlueSkyMARLEnv)

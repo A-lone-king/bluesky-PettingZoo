@@ -2,24 +2,19 @@
 
 from __future__ import annotations
 
-import math
-import tempfile
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 import yaml
 from gymnasium import spaces
 
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.utils.types import AircraftState
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
-
 
 # ---------------------------------------------------------------------------
 # Fake BlueSkyWrapper
@@ -29,7 +24,6 @@ from tests.helpers.env_factory import write_rewards_yaml as _write_rewards_yaml
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
 
 
 @pytest.fixture
@@ -79,6 +73,7 @@ def env(env_config: dict[str, Any]) -> BlueSkyMARLEnv:
 # ===========================================================================
 # Reset tests
 # ===========================================================================
+
 
 class TestResetReturnsTuple:
     """reset() must return (observations, infos) tuple."""
@@ -147,8 +142,11 @@ class TestResetWithSeed:
             calc.register(SmoothnessPenalty(merged), 0.5)
             calc.register(EfficiencyReward(merged), 0.3)
             return BlueSkyMARLEnv(
-                config=env_config, wrapper=wrapper, observation_manager=obs_manager,
-                action_translator=action_translator, reward_calculator=calc,
+                config=env_config,
+                wrapper=wrapper,
+                observation_manager=obs_manager,
+                action_translator=action_translator,
+                reward_calculator=calc,
                 rewards_config=rewards_cfg,
             )
 
@@ -179,6 +177,7 @@ class TestResetClearsPreviousState:
 # ===========================================================================
 # Step tests
 # ===========================================================================
+
 
 class TestStepReturnsFiveTuple:
     """step() must return (obs, rewards, terms, truncs, infos)."""
@@ -233,7 +232,9 @@ class TestStepObservationInSpace:
         obs2, _, _, _, _ = env.step(actions)
         for agent_id in obs2:
             space = env.observation_space(agent_id)
-            assert space.contains(obs2[agent_id]), f"Observation for {agent_id} not in space after step"
+            assert space.contains(obs2[agent_id]), (
+                f"Observation for {agent_id} not in space after step"
+            )
 
 
 class TestStepAgentsUpdate:
@@ -253,6 +254,7 @@ class TestStepAgentsUpdate:
 # ===========================================================================
 # Space tests
 # ===========================================================================
+
 
 class TestObservationSpaceType:
     """observation_space() must return a Dict space."""
@@ -288,6 +290,7 @@ class TestActionSpaceSampleValid:
 # Lifecycle tests
 # ===========================================================================
 
+
 class TestEpisodeEndsOnMaxSteps:
     """Truncations must be all-True when max_episode_steps is reached."""
 
@@ -315,8 +318,11 @@ class TestEpisodeEndsOnMaxSteps:
         calc.register(EfficiencyReward(merged), 0.3)
 
         env = BlueSkyMARLEnv(
-            config=config, wrapper=wrapper, observation_manager=obs_mgr,
-            action_translator=act_trans, reward_calculator=calc,
+            config=config,
+            wrapper=wrapper,
+            observation_manager=obs_mgr,
+            action_translator=act_trans,
+            reward_calculator=calc,
             rewards_config=rw_cfg,
         )
 
@@ -419,6 +425,7 @@ class _TrackingScenario:
 
     def get_spawn_config(self):
         from bluesky_pettingzoo.utils.types import SpawnConfig
+
         return SpawnConfig(
             altitude_range=(29000, 37000),
             speed_range=(400, 500),
@@ -427,6 +434,7 @@ class _TrackingScenario:
 
     def get_conflict_config(self):
         from bluesky_pettingzoo.utils.types import ConflictConfig
+
         return ConflictConfig(
             nmac_horizontal_nm=5.0,
             nmac_vertical_ft=1000.0,
@@ -434,12 +442,20 @@ class _TrackingScenario:
             warning_vertical_ft=2000.0,
         )
 
-    def should_truncate(self, agent_id: str, state: AircraftState, airspace_bounds: dict[str, float]) -> bool:
+    def should_truncate(
+        self,
+        agent_id: str,
+        state: AircraftState,
+        airspace_bounds: dict[str, float],
+    ) -> bool:
         self.truncate_checks.append((agent_id, state))
         return agent_id in self._truncate_ids
 
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
-        return self._waypoints.get(agent_id, {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90.0})
+        return self._waypoints.get(
+            agent_id,
+            {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90.0},
+        )
 
     def update(self, step_count: int, all_states: dict[str, AircraftState]) -> list[str]:
         self.update_called = True
@@ -447,7 +463,7 @@ class _TrackingScenario:
         self.update_step_counts.append(step_count)
         return list(self._new_agents_per_update)
 
-    def reset(self) -> None:
+    def reset(self, rng: np.random.RandomState) -> None:
         self.reset_called = True
         self.reset_call_count += 1
 
@@ -598,6 +614,7 @@ class TestSubstepMidTermination:
                 if on_substep is not None:
                     return on_substep(step)
                 return True
+
             return original_step_n(n, on_substep=tracking_callback)
 
         env._wrapper.step_n = tracking_step_n

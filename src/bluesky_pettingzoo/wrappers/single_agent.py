@@ -11,7 +11,7 @@ from gymnasium import spaces
 _NOOP_ACTION = [2, 2, 2]
 
 
-class SingleAgentGymWrapper(gymnasium.Env):
+class SingleAgentGymWrapper(gymnasium.Env[Any, Any]):
     """Wraps a PettingZoo ParallelEnv as a single-agent gymnasium.Env.
 
     One "ego" agent is controlled by the RL policy. All other agents
@@ -27,8 +27,8 @@ class SingleAgentGymWrapper(gymnasium.Env):
         self._ego = ego_agent
 
         # Expose spaces for the ego agent
-        self.observation_space: spaces.Space = env.observation_space(ego_agent)
-        self.action_space: spaces.Space = env.action_space(ego_agent)
+        self.observation_space: spaces.Space[Any] = env.observation_space(ego_agent)
+        self.action_space: spaces.Space[Any] = env.action_space(ego_agent)
 
     # ------------------------------------------------------------------
     # gymnasium.Env interface

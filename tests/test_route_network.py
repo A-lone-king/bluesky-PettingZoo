@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from bluesky_pettingzoo.utils.geometry import haversine_distance, segments_intersect
+from bluesky_pettingzoo.utils.geometry import segments_intersect
 from bluesky_pettingzoo.utils.types import AircraftState
-
 
 # ---------------------------------------------------------------------------
 # Route type tests
@@ -110,6 +109,7 @@ class TestRouteNavScenario:
     def _setup_scenario(self, num_aircraft: int = 3):
         """Create and setup a scenario, returning (scenario, agents)."""
         import numpy as np
+
         scenario = self._make_scenario(num_aircraft)
         rng = np.random.RandomState(42)
         bounds = {"lat_min": 39.0, "lat_max": 42.0, "lon_min": -75.0, "lon_max": -72.0}
@@ -195,12 +195,22 @@ class TestRouteConflictPenalty:
 
         # Two aircraft within NMAC distance
         state_a = AircraftState(
-            id="A", lat=40.0, lon=-74.0, alt=35000,
-            hdg=90, tas=450, vs=0,
+            id="A",
+            lat=40.0,
+            lon=-74.0,
+            alt=35000,
+            hdg=90,
+            tas=450,
+            vs=0,
         )
         state_b = AircraftState(
-            id="B", lat=40.005, lon=-74.005, alt=35000,
-            hdg=270, tas=450, vs=0,
+            id="B",
+            lat=40.005,
+            lon=-74.005,
+            alt=35000,
+            hdg=270,
+            tas=450,
+            vs=0,
         )
         action = DiscreteAction(heading_idx=2, altitude_idx=2, speed_idx=2)
         all_states = {"A": state_a, "B": state_b}

@@ -323,11 +323,34 @@ class BaseScenario(ABC):
         """
         return 0.0
 
-    def reset(self) -> None:
-        """Reset scenario-internal state (default: no-op)."""
+    @property
+    def num_aircraft_range(self) -> tuple[int, int] | None:
+        """Return (min, max) range for dynamic aircraft count.
+
+        Override in subclasses to enable procedural generation of varying
+        aircraft counts.  When None, the fixed ``_num_aircraft`` value is
+        used (default behavior).
+
+        Returns:
+            Tuple of (min, max) aircraft count, or None for fixed count.
+        """
+        return None
+
+    def reset(self, rng: np.random.RandomState) -> None:
+        """Reset scenario state and randomize parameters for next episode.
+
+        Called before ``setup()`` on every episode.  Subclasses should
+        clear stale internal state and optionally randomize mutable
+        parameters (aircraft count, positions, etc.) using *rng*.
+
+        The default implementation is a no-op for backward compatibility.
+
+        Args:
+            rng: Seeded random number generator for reproducibility.
+        """
 
     @classmethod
-    def from_config(cls, config_path: Path) -> "BaseScenario":
+    def from_config(cls, config_path: Path) -> BaseScenario:
         """Load a scenario instance from a YAML config file.
 
         The YAML must contain a ``scenario`` key mapping to a registered
@@ -355,20 +378,19 @@ class BaseScenario(ABC):
         cls_name = _SCENARIO_REGISTRY.get(scenario_name)
         if cls_name is None:
             raise ValueError(
-                f"Unknown scenario '{scenario_name}'. "
-                f"Registered: {list(_SCENARIO_REGISTRY.keys())}"
+                f"Unknown scenario '{scenario_name}'. Registered: {list(_SCENARIO_REGISTRY.keys())}"
             )
 
         from bluesky_pettingzoo.envs.scenarios import (
-            horizontal_cr,
-            vertical_cr,
-            sector_cr,
-            plan_waypoint,
             descent,
+            horizontal_cr,
             merge,
+            plan_waypoint,
             route_nav,
             sector_capacity,
+            sector_cr,
             static_obstacle,
+            vertical_cr,
             waypoint_nav,
         )
 
@@ -388,13 +410,17 @@ class BaseScenario(ABC):
         scenario_cls = getattr(mod, cls_name)
         # Filter out keys not accepted by the constructor
         import inspect
+
         sig = inspect.signature(scenario_cls.__init__)
         valid_params = {
-            p.name for p in sig.parameters.values()
-            if p.name != "self" and p.kind in (
+            p.name
+            for p in sig.parameters.values()
+            if p.name != "self"
+            and p.kind
+            in (
                 inspect.Parameter.POSITIONAL_OR_KEYWORD,
                 inspect.Parameter.KEYWORD_ONLY,
             )
         }
         filtered = {k: v for k, v in data.items() if k in valid_params}
-        return scenario_cls(**filtered)
+        return scenario_cls(**filtered)  # type: ignore[no-any-return]

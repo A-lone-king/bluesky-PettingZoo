@@ -2,20 +2,8 @@
 
 from __future__ import annotations
 
-import math
-from pathlib import Path
-from typing import Any
-
-import numpy as np
-import pytest
-import yaml
-
-from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
 from tests.helpers.env_factory import make_config as _make_config
 from tests.helpers.env_factory import make_env as _make_env
-
 
 # ---------------------------------------------------------------------------
 # BlueSkyWrapper
@@ -25,7 +13,6 @@ from tests.helpers.env_factory import make_env as _make_env
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
 
 
 class TestDynamicEntry:
@@ -50,7 +37,9 @@ class TestDynamicEntry:
 
         # At least one new agent should have appeared
         new_agents = set(env.agents) - initial_agents
-        assert len(new_agents) >= 1, f"Expected new agents, but agents={env.agents}, initial={list(initial_agents)}"
+        assert len(new_agents) >= 1, (
+            f"Expected new agents, but agents={env.agents}, initial={list(initial_agents)}"
+        )
 
     def test_dynamic_entry_gets_observation(self) -> None:
         """Newly entered aircraft gets a valid observation."""

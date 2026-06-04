@@ -1,0 +1,330 @@
+{
+  "project": "bluesky-pettingzoo",
+  "last_updated": "2026-06-03",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true
+  },
+  "status_legend": {
+    "not_started": "功能还没开始做。",
+    "in_progress": "这个功能是当前唯一正在进行的任务。",
+    "blocked": "因为已记录的阻塞问题，当前无法继续推进。",
+    "passing": "要求的验证已经通过，并且证据已经记录。"
+  },
+  "features": [
+    {
+      "id": "env-core-001",
+      "priority": 1,
+      "area": "envs",
+      "title": "BlueSkyMARLEnv ParallelEnv 核心",
+      "user_visible_behavior": "env.reset() 返回所有 agent 的观测，env.step(actions) 推进仿真并返回观测/奖励/终止信号。",
+      "status": "passing",
+      "verification": [
+        "pip install -e . 安装成功",
+        "pytest tests/ -v --ignore=tests/integration 通过",
+        "env.reset() 返回正确结构的 obs dict",
+        "env.step(actions) 返回 obs, rewards, terms, truncs, infos"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "核心环境，所有其他功能依赖此模块"
+    },
+    {
+      "id": "bluesky-001",
+      "priority": 1,
+      "area": "bluesky",
+      "title": "BlueSkyWrapper 仿真引擎接口",
+      "user_visible_behavior": "wrapper 能初始化 BlueSky、创建飞机、查询状态、发送命令、清理资源。",
+      "status": "passing",
+      "verification": [
+        "init_simulation() 成功初始化 BlueSky headless 模式",
+        "create_aircraft() 成功创建飞机",
+        "get_aircraft_state() 返回正确状态（英尺/节）",
+        "step() 推进仿真",
+        "close() 清理所有托管飞机"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "封装 BlueSky 引擎，处理单位转换和命令批处理"
+    },
+    {
+      "id": "scenario-001",
+      "priority": 2,
+      "area": "envs",
+      "title": "10 个 ATM 场景实现",
+      "user_visible_behavior": "选择不同场景名称即可创建对应的多智能体环境，每个场景有独立的飞机配置和终止条件。",
+      "status": "passing",
+      "verification": [
+        "HorizontalCR 场景创建 5 架飞机，同高度对头冲突",
+        "VerticalCR 场景创建 5 架飞机，垂直冲突",
+        "SectorCR 场景创建 5 架飞机，扇区内冲突",
+        "WaypointNav 场景创建 3 架飞机，航路点导航",
+        "所有 10 个场景均可通过配置加载"
+      ],
+      "evidence": [
+        "pytest 集成测试通过"
+      ],
+      "notes": "包含 HorizontalCR, VerticalCR, SectorCR, WaypointNav, PlanWaypoint, StaticObstacle, SectorCapacity, RouteNav, Merge, Descent"
+    },
+    {
+      "id": "reward-001",
+      "priority": 2,
+      "area": "rewards",
+      "title": "9 个奖励组件实现",
+      "user_visible_behavior": "RewardCalculator 能汇总所有启用的奖励组件，返回加权求和的标量奖励。",
+      "status": "passing",
+      "verification": [
+        "ConflictPenalty 正确计算三级冲突惩罚",
+        "EfficiencyReward 正确计算航路效率",
+        "SmoothnessPenalty 正确惩罚动作变化",
+        "所有 9 个组件可通过 rewards.yaml 配置权重",
+        "RewardCalculator 加权求和结果正确"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "包含 ConflictPenalty, EfficiencyReward, SmoothnessPenalty, DriftPenalty, DelayPenalty, CapacityPenalty, FlowEfficiencyReward, FairnessReward, ObstacleIntrusion"
+    },
+    {
+      "id": "obs-001",
+      "priority": 2,
+      "area": "observations",
+      "title": "观测管理与归一化",
+      "user_visible_behavior": "ObservationManager 为每个 agent 生成包含自身状态、他机、目标的观测包，值归一化到 [-1, 1]。",
+      "status": "passing",
+      "verification": [
+        "PerceptionFilter 按半径和垂直范围过滤飞机",
+        "Normalizer 将原始值映射到 [-1, 1]",
+        "航向/方位使用 circular 编码（cos/sin）",
+        "观测空间结构包含 self_state, other_aircraft, goal"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "支持感知半径、垂直范围、最大可观测数配置"
+    },
+    {
+      "id": "action-001",
+      "priority": 2,
+      "area": "actions",
+      "title": "离散/连续动作翻译",
+      "user_visible_behavior": "离散动作 MultiDiscrete([5,5,5]) 和连续动作 Box(-1,1,shape=(3,)) 均可翻译为 BlueSky 命令。",
+      "status": "passing",
+      "verification": [
+        "离散索引正确映射到航向/高度/速度调整",
+        "连续值正确缩放到实际调整量",
+        "翻译结果可发送给 BlueSkyWrapper"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "航向 ±10°/±20°，高度 ±1000/±2000ft，速度 ±10/±20kts"
+    },
+    {
+      "id": "train-001",
+      "priority": 3,
+      "area": "training",
+      "title": "训练基础设施",
+      "user_visible_behavior": "可通过脚本启动 PPO/SAC/TD3/DDPG 训练，支持 YAML 配置、模型检查点、CSV 日志。",
+      "status": "passing",
+      "verification": [
+        "train_smoke_test.py 快速验证训练流程",
+        "train_ppo_scenarios.py 单场景训练正常",
+        "evaluator 输出 EvalResult（均值/标准差/到达率/NMAC率）",
+        "CheckpointManager 保存/加载模型检查点"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "基于 Stable-Baselines3"
+    },
+    {
+      "id": "render-001",
+      "priority": 4,
+      "area": "rendering",
+      "title": "Pygame 可视化渲染",
+      "user_visible_behavior": "调用 render() 可在 Pygame 窗口中显示飞机位置、航路点、NMAC 圆、扇区边界。",
+      "status": "passing",
+      "verification": [
+        "HorizontalCRRenderer 正确渲染飞机和航路点",
+        "VerticalCRRenderer 显示高度标签",
+        "SectorCrRenderer 显示扇区多边形",
+        "BaseRenderer 管理 Pygame 初始化和资源清理"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "支持 3 个场景的渲染"
+    },
+    {
+      "id": "wrapper-001",
+      "priority": 3,
+      "area": "wrappers",
+      "title": "环境包装器",
+      "user_visible_behavior": "SingleAgentGymWrapper 将 ParallelEnv 转为单智能体 gymnasium.Env，NoisyObservationWrapper 添加高斯噪声，WindFieldWrapper 注入风场。",
+      "status": "passing",
+      "verification": [
+        "SingleAgentGymWrapper 返回 gymnasium.Env 接口",
+        "ego 飞机由 RL 策略控制，其余使用 noop",
+        "NoisyObservationWrapper 添加高斯噪声",
+        "WindFieldWrapper 注入均匀风场"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": ""
+    },
+    {
+      "id": "test-001",
+      "priority": 3,
+      "area": "tests",
+      "title": "测试体系",
+      "user_visible_behavior": "pytest tests/ 能运行全部单元测试和集成测试，覆盖率 >= 90%。",
+      "status": "passing",
+      "verification": [
+        "单元测试 ~83 个通过",
+        "集成测试 ~16 个通过",
+        "性能测试 ~2 个通过",
+        "覆盖率报告 >= 90%"
+      ],
+      "evidence": [
+        "pytest 单元测试通过"
+      ],
+      "notes": "测试分层：单元测试、集成测试、性能测试"
+    },
+    {
+      "id": "bluesky-geo-001",
+      "priority": 1,
+      "area": "bluesky",
+      "title": "几何计算改用 bs.tools.geo",
+      "user_visible_behavior": "haversine_distance/bearing/point_at_distance 优先使用 BlueSky 原生工具函数，保留自实现作为 fallback。",
+      "status": "passing",
+      "verification": [
+        "bs.tools.geo.kwikdist 可用时自动切换",
+        "bs.tools.geo 不可用时 fallback 到自实现",
+        "现有几何测试全部通过"
+      ],
+      "evidence": [
+        "is_blueky_geo_available() 返回 True",
+        "London->Paris: 181.3 NM, bearing 149.4 deg (bs geo) vs 148.5 deg (fallback)",
+        "25 点位测试 0 mismatch"
+      ],
+      "notes": "参考 bluesky-gym 的 geometry 使用方式"
+    },
+    {
+      "id": "bluesky-area-001",
+      "priority": 1,
+      "area": "bluesky",
+      "title": "面积检测改用 bs.tools.areafilter",
+      "user_visible_behavior": "扇区/障碍物面积检测使用 BlueSky 原生 defineArea + checkInside，替代自实现 point_in_polygon。",
+      "status": "passing",
+      "verification": [
+        "define_area() 成功创建多边形区域",
+        "check_inside() 正确返回布尔数组",
+        "capacity 和 obstacle_intrusion 组件测试通过"
+      ],
+      "evidence": [
+        "is_blueky_areafilter_available() 返回 True",
+        "三角形/正方形多边形内外检测正确",
+        "25 点位 bs areafilter vs fallback 0 mismatch"
+      ],
+      "notes": "局限性: 2D 检查，高度需 Python 侧额外过滤"
+    },
+    {
+      "id": "bluesky-vert-001",
+      "priority": 1,
+      "area": "bluesky",
+      "title": "垂直控制改用 selalt/selvs",
+      "user_visible_behavior": "垂直场景直接写 bs.traf.selalt/selvs，绕过 ALT stack 命令，与 bluesky-gym 一致。",
+      "status": "passing",
+      "verification": [
+        "set_vertical_control() 正确设置爬升/下降",
+        "VNAV 已关闭时控制生效",
+        "VerticalCR/Descent 场景测试通过"
+      ],
+      "evidence": [
+        "BlueSkyWrapper.set_vertical_control() 已实现",
+        "ActionTranslator.translate_vertical() 返回 (vs_ft_min, target_alt_ft)",
+        "爬升: vs=2000.0, 下降: vs=-1000.0, 无调整: vs=0.0"
+      ],
+      "notes": "需先关闭 VNAV: bs.traf.swvnav[i] = False"
+    },
+    {
+      "id": "bluesky-freq-001",
+      "priority": 1,
+      "area": "envs",
+      "title": "动作频率配置",
+      "user_visible_behavior": "支持可配置的 action_frequency（每个 RL step 执行 N 个 sim.step()）。",
+      "status": "passing",
+      "verification": [
+        "scenario.action_frequency 属性可配置",
+        "step() 中正确执行 N 次 sim.step()",
+        "默认值 1 保持向后兼容"
+      ],
+      "evidence": [
+        "default.yaml: action_frequency: 10",
+        "parallel_env.py: config['simulation'].get('action_frequency', 1)",
+        "wrapper.step_n() 已实现并调用"
+      ],
+      "notes": "bluesky-gym 参考值: ACTION_FREQUENCY = 5"
+    },
+    {
+      "id": "obs-procgen-001",
+      "priority": 2,
+      "area": "envs",
+      "title": "过程式场景随机生成",
+      "user_visible_behavior": "每次 reset() 随机化飞机数量、位置、航路点，防止过拟合。",
+      "status": "passing",
+      "verification": [
+        "reset(rng=...) 每次生成不同场景",
+        "飞机数量/位置/航路点随机变化",
+        "num_aircraft_range 属性控制动态飞机数量"
+      ],
+      "evidence": [
+        "10 个场景全部实现 reset(rng) 和 num_aircraft_range",
+        "parallel_env.py 支持动态飞机数量",
+        "36 个过程式生成测试全部通过",
+        "ruff check + mypy 通过"
+      ],
+      "notes": "bluesky-gym 核心设计原则"
+    },
+    {
+      "id": "nav-lnav-001",
+      "priority": 2,
+      "area": "bluesky",
+      "title": "LNAV 航路跟随集成",
+      "user_visible_behavior": "飞机可通过 LNAV 模式自动跟随航路点序列。",
+      "status": "passing",
+      "verification": [
+        "LNAV ON 后飞机自动转向航路点",
+        "wrapper 提供 set_origin/set_destination/add_waypoint/enable_lnav/disable_lnav",
+        "RouteNav/WaypointNav 场景 configure_npc_navigation 发送正确命令"
+      ],
+      "evidence": [
+        "wrapper 5 个 LNAV 方法实现",
+        "RouteNav/WaypointNav 场景添加 configure_npc_navigation",
+        "7 个 LNAV 测试全部通过",
+        "ruff check + mypy 通过"
+      ],
+      "notes": "BlueSky 命令: ORIG/DEST/ADDWPT/LNAV ON"
+    },
+    {
+      "id": "perf-bada-001",
+      "priority": 2,
+      "area": "bluesky",
+      "title": "BADA 性能模型集成",
+      "user_visible_behavior": "激活 BlueSky BADA 性能模型，约束爬升/下降率和速度。",
+      "status": "not_started",
+      "verification": [
+        "SPECIFY BADA 命令成功执行",
+        "飞机性能受 BADA 约束",
+        "燃油消耗可计算"
+      ],
+      "evidence": [],
+      "notes": "需确认 BADA 数据文件是否包含在 BlueSky 中"
+    }
+  ]
+}

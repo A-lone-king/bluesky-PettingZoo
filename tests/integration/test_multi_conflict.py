@@ -10,37 +10,18 @@ Five aircraft in crossing paths. Validates:
 from __future__ import annotations
 
 import math
-from typing import Any
 
-import numpy as np
-import pytest
-
-from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
-from bluesky_pettingzoo.observations.manager import ObservationManager
-from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
-from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
-from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-
-from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
-from tests.helpers.env_factory import make_config as _make_config
-from tests.helpers.env_factory import _DEFAULT_REWARDS as _make_rewards_config
 from tests.helpers.env_factory import make_env as _make_env
-
 
 # ---------------------------------------------------------------------------
 # Fake BlueSkyWrapper — in-memory, no real BlueSky dependency
 # ---------------------------------------------------------------------------
 
 
-
 # ---------------------------------------------------------------------------
 # Config & env factory
 # ---------------------------------------------------------------------------
-
-
-
 
 
 def _place_aircraft(
@@ -72,25 +53,31 @@ class TestMultiConflictDetection:
         # AC000-AC002: ~6NM (warning zone)
         # AC001-AC003: ~8NM (warning zone)
         # AC004: ~12NM from center (safe but within perception)
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.30, "alt": 33000, "hdg": 270, "tas": 450},
-            "AC002": {"lat": 39.30, "lon": 116.25, "alt": 33000, "hdg": 180, "tas": 450},
-            "AC003": {"lat": 39.30, "lon": 116.33, "alt": 33000, "hdg": 0, "tas": 450},
-            "AC004": {"lat": 39.10, "lon": 116.50, "alt": 36000, "hdg": 45, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.30, "alt": 33000, "hdg": 270, "tas": 450},
+                "AC002": {"lat": 39.30, "lon": 116.25, "alt": 33000, "hdg": 180, "tas": 450},
+                "AC003": {"lat": 39.30, "lon": 116.33, "alt": 33000, "hdg": 0, "tas": 450},
+                "AC004": {"lat": 39.10, "lon": 116.50, "alt": 36000, "hdg": 45, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, terms, truncs, infos = env.step(actions)
 
         # At least 2 agents should have conflict (in infos, including terminated ones)
         conflict_agents = [
-            aid for aid in infos
+            aid
+            for aid in infos
             if infos[aid].get("textual_state", {}).get("conflict_status") in ("warning", "nmac")
         ]
+        statuses = {
+            a: infos.get(a, {}).get("textual_state", {}).get("conflict_status") for a in infos
+        }
         assert len(conflict_agents) >= 2, (
-            f"Expected at least 2 conflict agents, got {len(conflict_agents)}: "
-            f"statuses={ {a: infos.get(a, {}).get('textual_state', {}).get('conflict_status') for a in infos} }"
+            f"Expected at least 2 conflict agents, got {len(conflict_agents)}: statuses={statuses}"
         )
 
         # AC004 should be safe (far from the cluster)
@@ -111,11 +98,14 @@ class TestAgentLifecycle:
         env.reset(seed=42)
 
         # Place 2 aircraft far apart (stable), 1 near boundary heading out
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.75, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.25, "lon": 116.95, "alt": 33000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.75, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.25, "lon": 116.95, "alt": 33000, "hdg": 90, "tas": 450},
+            },
+        )
 
         initial_agents = set(env.agents)
         assert len(initial_agents) == 3
@@ -153,13 +143,16 @@ class TestInfosCompleteness:
         env.reset(seed=42)
 
         # Place aircraft spread out to avoid NMAC
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.15, "lon": 116.30, "alt": 31000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.20, "lon": 116.50, "alt": 32000, "hdg": 90, "tas": 450},
-            "AC003": {"lat": 39.30, "lon": 116.20, "alt": 34000, "hdg": 90, "tas": 450},
-            "AC004": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.15, "lon": 116.30, "alt": 31000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.20, "lon": 116.50, "alt": 32000, "hdg": 90, "tas": 450},
+                "AC003": {"lat": 39.30, "lon": 116.20, "alt": 34000, "hdg": 90, "tas": 450},
+                "AC004": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         obs, rewards, terms, truncs, infos = env.step(actions)
@@ -193,13 +186,16 @@ class TestEpisodeCompletion:
         env.reset(seed=42)
 
         # Place aircraft on parallel tracks — safe spacing
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.15, "lon": 116.20, "alt": 31000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.20, "lon": 116.30, "alt": 32000, "hdg": 90, "tas": 450},
-            "AC003": {"lat": 39.30, "lon": 116.40, "alt": 34000, "hdg": 90, "tas": 450},
-            "AC004": {"lat": 39.40, "lon": 116.50, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.15, "lon": 116.20, "alt": 31000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.20, "lon": 116.30, "alt": 32000, "hdg": 90, "tas": 450},
+                "AC003": {"lat": 39.30, "lon": 116.40, "alt": 34000, "hdg": 90, "tas": 450},
+                "AC004": {"lat": 39.40, "lon": 116.50, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         total_reward = 0.0
         step_count = 0
@@ -225,13 +221,16 @@ class TestEpisodeCompletion:
         env = _make_env(initial_count=5, max_steps=max_steps)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.15, "lon": 116.20, "alt": 31000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.20, "lon": 116.30, "alt": 32000, "hdg": 90, "tas": 450},
-            "AC003": {"lat": 39.30, "lon": 116.40, "alt": 34000, "hdg": 90, "tas": 450},
-            "AC004": {"lat": 39.40, "lon": 116.50, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.15, "lon": 116.20, "alt": 31000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.20, "lon": 116.30, "alt": 32000, "hdg": 90, "tas": 450},
+                "AC003": {"lat": 39.30, "lon": 116.40, "alt": 34000, "hdg": 90, "tas": 450},
+                "AC004": {"lat": 39.40, "lon": 116.50, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         step_count = 0
         for _ in range(max_steps):

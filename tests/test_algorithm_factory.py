@@ -35,24 +35,28 @@ class TestCreate:
     def test_create_ppo(self, dummy_env) -> None:
         """create('PPO') should return PPO instance."""
         from stable_baselines3 import PPO
+
         algo = AlgorithmFactory.create("PPO", "MlpPolicy", env=dummy_env)
         assert isinstance(algo, PPO)
 
     def test_create_sac(self, dummy_env) -> None:
         """create('SAC') should return SAC instance."""
         from stable_baselines3 import SAC
+
         algo = AlgorithmFactory.create("SAC", "MlpPolicy", env=dummy_env)
         assert isinstance(algo, SAC)
 
     def test_create_td3(self, dummy_env) -> None:
         """create('TD3') should return TD3 instance."""
         from stable_baselines3 import TD3
+
         algo = AlgorithmFactory.create("TD3", "MlpPolicy", env=dummy_env)
         assert isinstance(algo, TD3)
 
     def test_create_ddpg(self, dummy_env) -> None:
         """create('DDPG') should return DDPG instance."""
         from stable_baselines3 import DDPG
+
         algo = AlgorithmFactory.create("DDPG", "MlpPolicy", env=dummy_env)
         assert isinstance(algo, DDPG)
 
@@ -68,6 +72,7 @@ class TestFromYaml:
     def test_from_yaml_ppo(self, dummy_env, tmp_path) -> None:
         """from_yaml() should create PPO with config params."""
         import yaml
+
         config = {
             "PPO": {
                 "learning_rate": 3e-4,
@@ -88,6 +93,7 @@ class TestFromYaml:
     def test_from_yaml_sac(self, dummy_env, tmp_path) -> None:
         """from_yaml() should create SAC with config params."""
         import yaml
+
         config = {
             "SAC": {
                 "learning_rate": 1e-3,

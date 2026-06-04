@@ -78,16 +78,16 @@ class TestConflictConfig:
     """ConflictPenalty should align with bluesky-gym parameters."""
 
     def test_nmac_penalty(self, rewards_config: dict) -> None:
-        """nmac_penalty should be -100.0."""
+        """nmac_penalty should be -500.0."""
         cfg = rewards_config["components"]["conflict"]
-        assert cfg["nmac_penalty"] == pytest.approx(-100.0)
+        assert cfg["nmac_penalty"] == pytest.approx(-500.0)
 
     def test_warning_penalty_zero(self, rewards_config: dict) -> None:
-        """warning_penalty should be -10.0."""
+        """warning_penalty should be -50.0."""
         cfg = rewards_config["components"]["conflict"]
-        assert cfg["warning_penalty"] == pytest.approx(-10.0)
+        assert cfg["warning_penalty"] == pytest.approx(-50.0)
 
     def test_separation_penalty_zero(self, rewards_config: dict) -> None:
-        """separation_penalty should be -5.0."""
+        """separation_penalty should be -20.0."""
         cfg = rewards_config["components"]["conflict"]
-        assert cfg["separation_penalty"] == pytest.approx(-5.0)
+        assert cfg["separation_penalty"] == pytest.approx(-20.0)

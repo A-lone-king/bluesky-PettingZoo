@@ -294,8 +294,8 @@ python scripts/train_ppo_scenarios.py \
 ```bibtex
 @software{bluesky_pettingzoo,
   title={bluesky-pettingzoo: Multi-Agent RL Environment for Air Traffic Management},
-  author={Your Name},
-  year={2025},
+  author={George Stone},
+  year={2026},
   url={https://github.com/A-lone-king/bluesky-PettingZoo}
 }
 ```

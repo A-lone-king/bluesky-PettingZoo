@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pytest
 
@@ -30,7 +28,13 @@ def scenario():
 
 def _make_state(lat=40.0, lon=117.0, alt=35000.0, hdg=90.0, tas=450.0):
     return AircraftState(
-        id="AC000", lat=lat, lon=lon, alt=alt, hdg=hdg, tas=tas, vs=0.0,
+        id="AC000",
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=hdg,
+        tas=tas,
+        vs=0.0,
     )
 
 

@@ -6,21 +6,14 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from bluesky_pettingzoo.agents.random_agent import RandomAgent
-from bluesky_pettingzoo.agents.rule_based_agent import RuleBasedAgent
-from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
 from bluesky_pettingzoo.wrappers.single_agent import SingleAgentGymWrapper
-
-from tests.helpers.env_factory import make_env
 
 # Import module under test
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from train_ppo_scenarios import PPOTrainer, make_scenario_env_factory, SCENARIO_CONFIGS
-
+from train_ppo_scenarios import SCENARIO_CONFIGS, PPOTrainer, make_scenario_env_factory
 
 # ---------------------------------------------------------------------------
 # Tests
@@ -50,12 +43,14 @@ class TestMakeScenarioEnvFactory:
 
     def test_factory_returns_callable(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         factory = make_scenario_env_factory(tmp_path, scenario, num_aircraft=2, max_steps=10)
         assert callable(factory)
 
     def test_factory_creates_single_agent_wrapper(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         factory = make_scenario_env_factory(tmp_path, scenario, num_aircraft=2, max_steps=10)
         env = factory()
@@ -64,6 +59,7 @@ class TestMakeScenarioEnvFactory:
 
     def test_factory_observation_in_space(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         factory = make_scenario_env_factory(tmp_path, scenario, num_aircraft=2, max_steps=10)
         env = factory()
@@ -77,6 +73,7 @@ class TestPPOTrainerInit:
 
     def test_trainer_creates_model(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         trainer = PPOTrainer(
             tmp_path=tmp_path,
@@ -91,6 +88,7 @@ class TestPPOTrainerInit:
 
     def test_trainer_has_env(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         trainer = PPOTrainer(
             tmp_path=tmp_path,
@@ -109,6 +107,7 @@ class TestPPOTrainerTrain:
 
     def test_train_returns_metrics(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         trainer = PPOTrainer(
             tmp_path=tmp_path,
@@ -131,6 +130,7 @@ class TestPPOTrainerEvaluate:
     def test_evaluate_returns_metrics(self, tmp_path: Path) -> None:
         from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
         from scripts.evaluate_baselines import BaselineMetrics
+
         scenario = WaypointNavScenario(num_aircraft=2, seed=42)
         trainer = PPOTrainer(
             tmp_path=tmp_path,

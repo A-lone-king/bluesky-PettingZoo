@@ -45,8 +45,10 @@ class MergeRenderer(BaseRenderer):
 
         self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
-            "lat_min": 39.0, "lat_max": 41.0,
-            "lon_min": 116.0, "lon_max": 118.0,
+            "lat_min": 39.0,
+            "lat_max": 41.0,
+            "lon_min": 116.0,
+            "lon_max": 118.0,
         }
 
         controllable = info.get("controllable", []) if info else []
@@ -75,7 +77,13 @@ class MergeRenderer(BaseRenderer):
             # Use first waypoint as FAF
             first_wp = next(iter(waypoints.values()), None)
             if first_wp and isinstance(first_wp, dict) and "lat" in first_wp:
-                fx, fy = latlon_to_pixel(first_wp["lat"], first_wp["lon"], bounds, self._width, self._height)
+                fx, fy = latlon_to_pixel(
+                    first_wp["lat"],
+                    first_wp["lon"],
+                    bounds,
+                    self._width,
+                    self._height,
+                )
                 draw_waypoint(self._screen, fx, fy, color=(255, 100, 0), radius=8)
                 # Draw FAF label
                 if self._font is not None:

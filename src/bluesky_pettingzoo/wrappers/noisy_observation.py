@@ -44,7 +44,7 @@ class NoisyObservationWrapper(EnvWrapperMixin):
     def step(
         self,
         actions: dict[str, Any],
-    ) -> tuple[dict, dict, dict, dict, dict]:
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         noisy_obs = {aid: self._add_noise(obs) for aid, obs in observations.items()}
         return noisy_obs, rewards, terminations, truncations, infos
@@ -58,12 +58,14 @@ class NoisyObservationWrapper(EnvWrapperMixin):
         if isinstance(observation, dict):
             return {
                 key: (
-                    value + self._rng.normal(0, self.noise_level, size=value.shape).astype(value.dtype)
+                    value
+                    + self._rng.normal(0, self.noise_level, size=value.shape).astype(value.dtype)  # type: ignore[attr-defined]
                     if isinstance(value, np.ndarray)
                     else value
                 )
                 for key, value in observation.items()
             }
         if isinstance(observation, np.ndarray):
-            return observation + self._rng.normal(0, self.noise_level, size=observation.shape).astype(observation.dtype)
+            noise = self._rng.normal(0, self.noise_level, size=observation.shape)
+            return observation + noise.astype(observation.dtype)  # type: ignore[attr-defined]
         return observation

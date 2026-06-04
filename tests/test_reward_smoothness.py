@@ -6,7 +6,7 @@ import pytest
 
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
 from bluesky_pettingzoo.utils.types import DiscreteAction
-from tests.helpers.state_factory import make_action, make_state
+from tests.helpers.state_factory import make_state
 
 
 class TestNoActionPenalty:

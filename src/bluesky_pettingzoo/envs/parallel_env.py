@@ -10,16 +10,16 @@ from pettingzoo import ParallelEnv
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
-from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.utils.geometry import assign_sector, haversine_distance
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 _AIRCRAFT_TYPE = "B737"
 
 
-class BlueSkyMARLEnv(ParallelEnv):
+class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
     """PettingZoo-compatible multi-agent environment wrapping BlueSky.
 
     Combines BlueSkyWrapper, ObservationManager, ActionTranslator,
@@ -57,8 +57,10 @@ class BlueSkyMARLEnv(ParallelEnv):
         lats = [s["bounds"][0][0] for s in sectors] + [s["bounds"][1][0] for s in sectors]
         lons = [s["bounds"][0][1] for s in sectors] + [s["bounds"][1][1] for s in sectors]
         self._airspace = {
-            "lat_min": min(lats), "lat_max": max(lats),
-            "lon_min": min(lons), "lon_max": max(lons),
+            "lat_min": min(lats),
+            "lat_max": max(lats),
+            "lon_min": min(lons),
+            "lon_max": max(lons),
         }
 
         # Conflict thresholds for textual state
@@ -92,6 +94,7 @@ class BlueSkyMARLEnv(ParallelEnv):
 
         # Flow scheduler (optional, only active when config present)
         from bluesky_pettingzoo.flow.scheduler import FlowScheduler
+
         self._flow_scheduler = FlowScheduler(config)
 
         # Track per-agent sector for sector-change detection
@@ -110,7 +113,10 @@ class BlueSkyMARLEnv(ParallelEnv):
             if scenario is not None:
                 cont_dims = getattr(scenario, "continuous_action_dims", 3)
             self._act_space: spaces.MultiDiscrete | spaces.Box = spaces.Box(
-                low=-1.0, high=1.0, shape=(cont_dims,), dtype=np.float32,
+                low=-1.0,
+                high=1.0,
+                shape=(cont_dims,),
+                dtype=np.float32,
             )
         else:
             self._act_space = spaces.MultiDiscrete([5, 5, 5])
@@ -163,7 +169,7 @@ class BlueSkyMARLEnv(ParallelEnv):
     def observation_space(self, agent_id: str) -> spaces.Dict:
         return self._obs_space
 
-    def action_space(self, agent_id: str) -> spaces.MultiDiscrete:
+    def action_space(self, agent_id: str) -> spaces.MultiDiscrete | spaces.Box:
         return self._act_space
 
     @property
@@ -194,7 +200,12 @@ class BlueSkyMARLEnv(ParallelEnv):
         self._init_renderer()
 
         if self._scenario is not None:
-            self._scenario.reset()
+            self._scenario.reset(self._rng)
+            # Check if scenario supports dynamic aircraft count
+            ac_range = getattr(self._scenario, "num_aircraft_range", None)
+            if ac_range is not None:
+                self._num_aircraft = int(self._rng.randint(ac_range[0], ac_range[1] + 1))
+                self.possible_agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
             self.agents = self._scenario.setup(self._rng, self._airspace)
             spawn = self._scenario.get_spawn_config()
             initial_positions = (
@@ -206,10 +217,18 @@ class BlueSkyMARLEnv(ParallelEnv):
                 if initial_positions is not None and acid in initial_positions:
                     pos = initial_positions[acid]
                     lat, lon = pos[0], pos[1]
-                    alt = pos[2] if len(pos) >= 3 else self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
+                    alt = (
+                        pos[2]
+                        if len(pos) >= 3
+                        else self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
+                    )
                 else:
-                    lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
-                    lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
+                    lat = self._rng.uniform(
+                        self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05
+                    )
+                    lon = self._rng.uniform(
+                        self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05
+                    )
                     alt = self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
                 hdg = self._rng.uniform(spawn.heading_range[0], spawn.heading_range[1])
                 spd = self._rng.uniform(spawn.speed_range[0], spawn.speed_range[1])
@@ -249,8 +268,12 @@ class BlueSkyMARLEnv(ParallelEnv):
             spawn = self._spawn_cfg
             for i in range(self._num_aircraft):
                 acid = f"AC{i:03d}"
-                lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
-                lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
+                lat = self._rng.uniform(
+                    self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05
+                )
+                lon = self._rng.uniform(
+                    self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05
+                )
                 alt = self._rng.uniform(spawn["altitude_range"][0], spawn["altitude_range"][1])
                 hdg = self._rng.uniform(spawn["heading_range"][0], spawn["heading_range"][1])
                 spd = self._rng.uniform(spawn["speed_range"][0], spawn["speed_range"][1])
@@ -271,7 +294,7 @@ class BlueSkyMARLEnv(ParallelEnv):
     def step(
         self,
         actions: dict[str, Any],
-    ) -> tuple[dict, dict, dict, dict, dict]:
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
         self._step_count += 1
 
         # Translate actions to BlueSky commands
@@ -299,7 +322,7 @@ class BlueSkyMARLEnv(ParallelEnv):
                 if raw_action is None:
                     raw_action = [0.0, 0.0, 0.0]
                 commands.extend(
-                    self._action_translator.translate_continuous(agent_id, state, raw_action)
+                    self._action_translator.translate_continuous(agent_id, state, raw_action)  # type: ignore[arg-type]
                 )
             else:
                 if raw_action is None:
@@ -350,8 +373,12 @@ class BlueSkyMARLEnv(ParallelEnv):
             for new_id in new_agent_ids:
                 if new_id not in self.agents:
                     spawn = self._scenario.get_spawn_config()
-                    lat = self._rng.uniform(self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05)
-                    lon = self._rng.uniform(self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05)
+                    lat = self._rng.uniform(
+                        self._airspace["lat_min"] + 0.05, self._airspace["lat_max"] - 0.05
+                    )
+                    lon = self._rng.uniform(
+                        self._airspace["lon_min"] + 0.05, self._airspace["lon_max"] - 0.05
+                    )
                     alt = self._rng.uniform(spawn.altitude_range[0], spawn.altitude_range[1])
                     hdg = self._rng.uniform(spawn.heading_range[0], spawn.heading_range[1])
                     spd = self._rng.uniform(spawn.speed_range[0], spawn.speed_range[1])
@@ -435,7 +462,11 @@ class BlueSkyMARLEnv(ParallelEnv):
                     speed_idx=int(raw_action[2]),
                 )
             rewards[agent_id] = self._reward_calculator.compute(
-                agent_id, prev_st, raw_action, curr_st, reward_states,
+                agent_id,
+                prev_st,
+                raw_action,
+                curr_st,
+                reward_states,
                 step_count=self._step_count,
             )
 
@@ -559,16 +590,26 @@ class BlueSkyMARLEnv(ParallelEnv):
     def _get_aircraft_state(self, acid: str) -> AircraftState:
         raw = self._wrapper.get_aircraft_state(acid)
         return AircraftState(
-            id=raw["id"], lat=raw["lat"], lon=raw["lon"],
-            alt=raw["alt"], hdg=raw["hdg"], tas=raw["tas"], vs=raw["vs"],
+            id=raw["id"],
+            lat=raw["lat"],
+            lon=raw["lon"],
+            alt=raw["alt"],
+            hdg=raw["hdg"],
+            tas=raw["tas"],
+            vs=raw["vs"],
         )
 
     def _get_all_aircraft_states(self) -> dict[str, AircraftState]:
         raw = self._wrapper.get_all_aircraft_states()
         return {
             acid: AircraftState(
-                id=v["id"], lat=v["lat"], lon=v["lon"],
-                alt=v["alt"], hdg=v["hdg"], tas=v["tas"], vs=v["vs"],
+                id=v["id"],
+                lat=v["lat"],
+                lon=v["lon"],
+                alt=v["alt"],
+                hdg=v["hdg"],
+                tas=v["tas"],
+                vs=v["vs"],
             )
             for acid, v in raw.items()
         }
@@ -669,7 +710,7 @@ class BlueSkyMARLEnv(ParallelEnv):
         """Get obstacle polygons from the ObstacleIntrusion component."""
         comp = self._find_obstacle_intrusion_component()
         if comp is not None and hasattr(comp, "_obstacles"):
-            return comp._obstacles
+            return comp._obstacles  # type: ignore[no-any-return]
         return None
 
     def _compute_conflict_status(
@@ -684,7 +725,7 @@ class BlueSkyMARLEnv(ParallelEnv):
         """
         conflict_comp = self._find_conflict_component()
         if conflict_comp is not None:
-            return conflict_comp.get_conflict_status(own, others)
+            return conflict_comp.get_conflict_status(own, others)  # type: ignore[no-any-return]
 
         # Fallback: local implementation
         for other in others:

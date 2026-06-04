@@ -13,8 +13,13 @@ from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 def make_state(lat: float = 39.25, lon: float = 116.25, alt: float = 35000.0) -> AircraftState:
     return AircraftState(
-        id="AC001", lat=lat, lon=lon, alt=alt,
-        hdg=90.0, tas=450.0, vs=0.0,
+        id="AC001",
+        lat=lat,
+        lon=lon,
+        alt=alt,
+        hdg=90.0,
+        tas=450.0,
+        vs=0.0,
     )
 
 
@@ -37,7 +42,7 @@ def config() -> dict:
                     "nmac_vertical_ft": 1000,
                     "warning_horizontal_nm": 10,
                     "warning_vertical_ft": 2000,
-                }
+                },
             }
         }
     }
@@ -51,8 +56,13 @@ class TestNMACPenalty:
         own = make_state(lat=39.25, lon=116.25, alt=35000.0)
         # Within NMAC threshold: <5nm horizontal, <1000ft vertical
         intruder = AircraftState(
-            id="AC002", lat=39.25, lon=116.26, alt=35000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC002",
+            lat=39.25,
+            lon=116.26,
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         action = make_action()
 
@@ -65,17 +75,30 @@ class TestNMACPenalty:
         comp = ConflictPenalty(config)
         own = make_state(lat=39.25, lon=116.25, alt=35000.0)
         intruder1 = AircraftState(
-            id="AC002", lat=39.25, lon=116.26, alt=35000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC002",
+            lat=39.25,
+            lon=116.26,
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         intruder2 = AircraftState(
-            id="AC003", lat=39.26, lon=116.25, alt=35000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC003",
+            lat=39.26,
+            lon=116.25,
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         action = make_action()
 
         result = comp.compute(
-            "AC001", own, action, own,
+            "AC001",
+            own,
+            action,
+            own,
             {"AC001": own, "AC002": intruder1, "AC003": intruder2},
         )
 
@@ -90,8 +113,13 @@ class TestWarningPenalty:
         own = make_state(lat=39.25, lon=116.25, alt=35000.0)
         # Within warning but outside NMAC: 5-10nm horizontal, <2000ft vertical
         other = AircraftState(
-            id="AC002", lat=39.25, lon=116.40, alt=35000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC002",
+            lat=39.25,
+            lon=116.40,
+            alt=35000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         action = make_action()
 
@@ -108,8 +136,13 @@ class TestSeparationPenalty:
         own = make_state(lat=39.25, lon=116.25, alt=35000.0)
         # Within NMAC horizontal but large vertical separation
         other = AircraftState(
-            id="AC002", lat=39.25, lon=116.26, alt=38000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC002",
+            lat=39.25,
+            lon=116.26,
+            alt=38000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         action = make_action()
 
@@ -126,8 +159,13 @@ class TestNoConflict:
         own = make_state(lat=39.25, lon=116.25, alt=35000.0)
         # Far away: >10nm horizontal, >2000ft vertical
         other = AircraftState(
-            id="AC002", lat=39.50, lon=116.50, alt=38000.0,
-            hdg=90.0, tas=450.0, vs=0.0,
+            id="AC002",
+            lat=39.50,
+            lon=116.50,
+            alt=38000.0,
+            hdg=90.0,
+            tas=450.0,
+            vs=0.0,
         )
         action = make_action()
 

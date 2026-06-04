@@ -18,13 +18,9 @@ Additional scenarios:
 from __future__ import annotations
 
 import math
-import re
-from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pytest
-import yaml
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.envs.parallel_env import BlueSkyMARLEnv
@@ -33,8 +29,6 @@ from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.rewards.components.conflict import ConflictPenalty
 from bluesky_pettingzoo.rewards.components.efficiency import EfficiencyReward
 from bluesky_pettingzoo.rewards.components.smoothness import SmoothnessPenalty
-from bluesky_pettingzoo.utils.types import AircraftState
-
 
 # ---------------------------------------------------------------------------
 # Enhanced Fake BlueSkyWrapper — processes HDG/ALT/SPD commands
@@ -53,11 +47,17 @@ class EnhancedBlueSkyWrapper:
 
         bounds_list = config.get("airspace", {}).get("sectors", [])
         if bounds_list:
-            lats = [b["bounds"][0][0] for b in bounds_list] + [b["bounds"][1][0] for b in bounds_list]
-            lons = [b["bounds"][0][1] for b in bounds_list] + [b["bounds"][1][1] for b in bounds_list]
+            lats = [b["bounds"][0][0] for b in bounds_list] + [
+                b["bounds"][1][0] for b in bounds_list
+            ]
+            lons = [b["bounds"][0][1] for b in bounds_list] + [
+                b["bounds"][1][1] for b in bounds_list
+            ]
             self._bounds = {
-                "lat_min": min(lats), "lat_max": max(lats),
-                "lon_min": min(lons), "lon_max": max(lons),
+                "lat_min": min(lats),
+                "lat_max": max(lats),
+                "lon_min": min(lons),
+                "lon_max": max(lons),
             }
         else:
             self._bounds = {}
@@ -75,8 +75,11 @@ class EnhancedBlueSkyWrapper:
                 spd_nm_s = st["tas"] / 3600.0
                 hdg_rad = math.radians(st["hdg"])
                 st["lat"] += math.cos(hdg_rad) * spd_nm_s * self.dt / 60.0
-                st["lon"] += math.sin(hdg_rad) * spd_nm_s * self.dt / (
-                    60.0 * math.cos(math.radians(st["lat"]))
+                st["lon"] += (
+                    math.sin(hdg_rad)
+                    * spd_nm_s
+                    * self.dt
+                    / (60.0 * math.cos(math.radians(st["lat"])))
                 )
             if on_substep is not None and not on_substep(i):
                 break
@@ -87,12 +90,23 @@ class EnhancedBlueSkyWrapper:
         self._simt = 0.0
 
     def create_aircraft(
-        self, acid: str, actype: str, lat: float, lon: float,
-        alt: float, hdg: float, spd: float,
+        self,
+        acid: str,
+        actype: str,
+        lat: float,
+        lon: float,
+        alt: float,
+        hdg: float,
+        spd: float,
     ) -> None:
         self._aircraft[acid] = {
-            "id": acid, "lat": lat, "lon": lon, "alt": alt,
-            "hdg": hdg, "tas": spd, "vs": 0.0,
+            "id": acid,
+            "lat": lat,
+            "lon": lon,
+            "alt": alt,
+            "hdg": hdg,
+            "tas": spd,
+            "vs": 0.0,
         }
 
     def remove_aircraft(self, acid: str) -> None:
@@ -166,7 +180,13 @@ def _make_config(
         "airspace": {
             "name": "test_sector",
             "sectors": [
-                {"id": "s1", "bounds": [[lat_range[0], lon_range[0]], [lat_range[1], lon_range[1]]]},
+                {
+                    "id": "s1",
+                    "bounds": [
+                        [lat_range[0], lon_range[0]],
+                        [lat_range[1], lon_range[1]],
+                    ],
+                },
             ],
         },
         "aircraft": {
@@ -288,10 +308,13 @@ class TestNoConflictScenario:
         env.reset(seed=42)
 
         # Place aircraft far apart on parallel eastbound tracks
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.40, "lon": 116.10, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.40, "lon": 116.10, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         # Straight flight — no adjustments
         for _ in range(5):
@@ -309,10 +332,13 @@ class TestNoConflictScenario:
         env = _make_env(initial_count=2, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.40, "lon": 116.10, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.40, "lon": 116.10, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, _, _, infos = env.step(actions)
@@ -335,10 +361,13 @@ class TestSingleConflictScenario:
         env.reset(seed=42)
 
         # ~8NM apart horizontally, same altitude
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.20, "lon": 116.33, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.20, "lon": 116.33, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, _, _, infos = env.step(actions)
@@ -355,10 +384,13 @@ class TestSingleConflictScenario:
         env.reset(seed=42)
 
         # ~2NM apart, same altitude
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.28, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.28, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, _, _, infos = env.step(actions)
@@ -373,10 +405,13 @@ class TestSingleConflictScenario:
         env = _make_env(initial_count=2, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.40, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.40, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
 
         # AC000 turns right (+20°), AC001 goes straight
         actions = {"AC000": [4, 2, 2], "AC001": [2, 2, 2]}
@@ -391,20 +426,26 @@ class TestSingleConflictScenario:
         # Conflict env
         env_c = _make_env(initial_count=2, max_steps=2)
         env_c.reset(seed=42)
-        _place_aircraft(env_c, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.28, "alt": 35000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env_c,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.28, "alt": 35000, "hdg": 270, "tas": 450},
+            },
+        )
         actions_c = {a: [2, 2, 2] for a in env_c.agents}
         _, rewards_c, _, _, _ = env_c.step(actions_c)
 
         # Safe env
         env_s = _make_env(initial_count=2, max_steps=2)
         env_s.reset(seed=42)
-        _place_aircraft(env_s, {
-            "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env_s,
+            {
+                "AC000": {"lat": 39.10, "lon": 116.10, "alt": 30000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.40, "lon": 116.40, "alt": 36000, "hdg": 270, "tas": 450},
+            },
+        )
         actions_s = {a: [2, 2, 2] for a in env_s.agents}
         _, rewards_s, _, _, _ = env_s.step(actions_s)
 
@@ -427,13 +468,16 @@ class TestMultiConflictScenario:
         env.reset(seed=42)
 
         # Place 5 aircraft heading toward the center
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.10, "alt": 33000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.40, "alt": 33000, "hdg": 270, "tas": 450},
-            "AC002": {"lat": 39.10, "lon": 116.25, "alt": 34000, "hdg": 0, "tas": 450},
-            "AC003": {"lat": 39.40, "lon": 116.25, "alt": 32000, "hdg": 180, "tas": 450},
-            "AC004": {"lat": 39.20, "lon": 116.20, "alt": 33000, "hdg": 45, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.10, "alt": 33000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.40, "alt": 33000, "hdg": 270, "tas": 450},
+                "AC002": {"lat": 39.10, "lon": 116.25, "alt": 34000, "hdg": 0, "tas": 450},
+                "AC003": {"lat": 39.40, "lon": 116.25, "alt": 32000, "hdg": 180, "tas": 450},
+                "AC004": {"lat": 39.20, "lon": 116.20, "alt": 33000, "hdg": 45, "tas": 450},
+            },
+        )
 
         total_reward = {a: 0.0 for a in env.agents}
         for _ in range(5):
@@ -452,13 +496,16 @@ class TestMultiConflictScenario:
         env = _make_env(initial_count=5, max_steps=3)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.20, "lon": 116.20, "alt": 33000, "hdg": 45, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 135, "tas": 440},
-            "AC002": {"lat": 39.30, "lon": 116.30, "alt": 35000, "hdg": 225, "tas": 460},
-            "AC003": {"lat": 39.35, "lon": 116.35, "alt": 32000, "hdg": 315, "tas": 430},
-            "AC004": {"lat": 39.15, "lon": 116.15, "alt": 31000, "hdg": 0, "tas": 470},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.20, "lon": 116.20, "alt": 33000, "hdg": 45, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 135, "tas": 440},
+                "AC002": {"lat": 39.30, "lon": 116.30, "alt": 35000, "hdg": 225, "tas": 460},
+                "AC003": {"lat": 39.35, "lon": 116.35, "alt": 32000, "hdg": 315, "tas": 430},
+                "AC004": {"lat": 39.15, "lon": 116.15, "alt": 31000, "hdg": 0, "tas": 470},
+            },
+        )
 
         # Different actions for each agent
         actions = {
@@ -482,11 +529,14 @@ class TestMultiConflictScenario:
         env.reset(seed=42)
 
         # Three aircraft close together
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.26, "lon": 116.26, "alt": 35000, "hdg": 180, "tas": 450},
-            "AC002": {"lat": 39.24, "lon": 116.24, "alt": 34500, "hdg": 0, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.26, "lon": 116.26, "alt": 35000, "hdg": 180, "tas": 450},
+                "AC002": {"lat": 39.24, "lon": 116.24, "alt": 34500, "hdg": 0, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, _, _, infos = env.step(actions)
@@ -510,10 +560,13 @@ class TestBoundaryConditions:
         env.reset(seed=42)
 
         # Place aircraft heading toward the boundary
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.05, "lon": 116.05, "alt": 35000, "hdg": 225, "tas": 500},
-            "AC001": {"lat": 39.45, "lon": 116.45, "alt": 35000, "hdg": 45, "tas": 500},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.05, "lon": 116.05, "alt": 35000, "hdg": 225, "tas": 500},
+                "AC001": {"lat": 39.45, "lon": 116.45, "alt": 35000, "hdg": 45, "tas": 500},
+            },
+        )
 
         initial_agents = set(env.agents)
         for _ in range(200):
@@ -532,10 +585,13 @@ class TestBoundaryConditions:
         env = _make_env(initial_count=2, max_steps=200)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.01, "lon": 116.01, "alt": 35000, "hdg": 225, "tas": 500},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.01, "lon": 116.01, "alt": 35000, "hdg": 225, "tas": 500},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         for _ in range(200):
             if len(env.agents) < 2:
@@ -556,11 +612,14 @@ class TestBoundaryConditions:
         env = _make_env(initial_count=3, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         _, rewards, _, _, _ = env.step(actions)
@@ -574,9 +633,12 @@ class TestBoundaryConditions:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 350, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 350, "tas": 450},
+            },
+        )
 
         actions = {"AC000": [4, 2, 2]}  # +20° heading
         env.step(actions)
@@ -588,9 +650,12 @@ class TestBoundaryConditions:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 60000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 60000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {"AC000": [2, 2, 2]}
         obs, rewards, _, _, _ = env.step(actions)
@@ -612,10 +677,13 @@ class TestFullEpisodeLifecycle:
         env = _make_env(initial_count=2, max_steps=10)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.30, "lon": 116.30, "alt": 34000, "hdg": 270, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.30, "lon": 116.30, "alt": 34000, "hdg": 270, "tas": 450},
+            },
+        )
 
         total_rewards: dict[str, float] = {a: 0.0 for a in env.agents}
         for _ in range(10):
@@ -645,11 +713,14 @@ class TestFullEpisodeLifecycle:
         env = _make_env(initial_count=3, max_steps=5)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 180, "tas": 440},
-            "AC002": {"lat": 39.30, "lon": 116.30, "alt": 36000, "hdg": 270, "tas": 460},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 180, "tas": 440},
+                "AC002": {"lat": 39.30, "lon": 116.30, "alt": 36000, "hdg": 270, "tas": 460},
+            },
+        )
 
         prev_agents = set(env.agents)
         for _ in range(5):
@@ -674,9 +745,12 @@ class TestFullEpisodeLifecycle:
         env = _make_env(initial_count=1, max_steps=3)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         prev_lat = 39.25
         for _ in range(3):
@@ -733,16 +807,18 @@ class TestAgentInteraction:
 
     def test_mixed_agent_actions(self) -> None:
         """Some agents fly straight, others take random actions."""
-        from bluesky_pettingzoo.agents.random_agent import RandomAgent
 
         env = _make_env(initial_count=3, max_steps=5)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 180, "tas": 440},
-            "AC002": {"lat": 39.30, "lon": 116.30, "alt": 36000, "hdg": 270, "tas": 460},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.20, "lon": 116.20, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.25, "lon": 116.25, "alt": 34000, "hdg": 180, "tas": 440},
+                "AC002": {"lat": 39.30, "lon": 116.30, "alt": 36000, "hdg": 270, "tas": 460},
+            },
+        )
 
         rng = np.random.RandomState(42)
         for _ in range(5):
@@ -817,9 +893,12 @@ class TestActionEffects:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         # heading_idx=3 → +10°
         actions = {"AC000": [3, 2, 2]}
@@ -832,9 +911,12 @@ class TestActionEffects:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         # altitude_idx=4 → +2000ft
         actions = {"AC000": [2, 4, 2]}
@@ -847,9 +929,12 @@ class TestActionEffects:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         # speed_idx=0 → -20kt
         actions = {"AC000": [2, 2, 0]}
@@ -862,9 +947,12 @@ class TestActionEffects:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 180, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 180, "tas": 450},
+            },
+        )
 
         # heading_idx=0 → -20, altitude_idx=3 → +1000, speed_idx=4 → +20
         actions = {"AC000": [0, 3, 4]}
@@ -880,9 +968,12 @@ class TestActionEffects:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         before = dict(env._wrapper._aircraft["AC000"])
         actions = {"AC000": [2, 2, 2]}
@@ -908,18 +999,24 @@ class TestRewardIntegration:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         # No-op action
         _, rewards_noop, _, _, _ = env.step({"AC000": [2, 2, 2]})
 
         # Reset and take action
         env.reset(seed=42)
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
         _, rewards_action, _, _, _ = env.step({"AC000": [3, 2, 2]})
 
         # Action version should have smoothness penalty (-0.1 * 0.5 = -0.05)
@@ -930,9 +1027,12 @@ class TestRewardIntegration:
         env = _make_env(initial_count=1, max_steps=2)
         env.reset(seed=42)
 
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {"AC000": [2, 2, 2]}
         _, rewards, _, _, _ = env.step(actions)
@@ -987,9 +1087,7 @@ class TestObservationIntegration:
             obs, _, _, _, _ = env.step(actions)
             for agent_id in obs:
                 space = env.observation_space(agent_id)
-                assert space.contains(obs[agent_id]), (
-                    f"Observation for {agent_id} not in space"
-                )
+                assert space.contains(obs[agent_id]), f"Observation for {agent_id} not in space"
 
     def test_mask_reflects_observable_aircraft(self) -> None:
         """other_aircraft_mask should have correct number of 1s."""
@@ -997,11 +1095,14 @@ class TestObservationIntegration:
         env.reset(seed=42)
 
         # Place two aircraft close, one far
-        _place_aircraft(env, {
-            "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC001": {"lat": 39.27, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
-            "AC002": {"lat": 39.45, "lon": 116.45, "alt": 36000, "hdg": 90, "tas": 450},
-        })
+        _place_aircraft(
+            env,
+            {
+                "AC000": {"lat": 39.25, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC001": {"lat": 39.27, "lon": 116.25, "alt": 35000, "hdg": 90, "tas": 450},
+                "AC002": {"lat": 39.45, "lon": 116.45, "alt": 36000, "hdg": 90, "tas": 450},
+            },
+        )
 
         actions = {a: [2, 2, 2] for a in env.agents}
         obs, _, _, _, _ = env.step(actions)
@@ -1020,8 +1121,16 @@ class TestObservationIntegration:
         actions = {a: [2, 2, 2] for a in env.agents}
         _, _, _, _, infos = env.step(actions)
 
-        required = ["agent_id", "position", "heading", "altitude", "speed",
-                     "observable_aircraft", "conflict_status", "text"]
+        required = [
+            "agent_id",
+            "position",
+            "heading",
+            "altitude",
+            "speed",
+            "observable_aircraft",
+            "conflict_status",
+            "text",
+        ]
         for agent_id in infos:
             ts = infos[agent_id]["textual_state"]
             for field in required:
