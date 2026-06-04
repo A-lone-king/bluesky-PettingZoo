@@ -95,6 +95,12 @@ class BlueSkyWrapper:
             bs.sim.reset()
         bs.stack.stack(f"DT {self.dt};FF")
         bs.stack.stack("reso off")
+
+        # Activate performance model (openap, bada, or off)
+        perf_model = self.config.get("simulation", {}).get("performance_model", "openap")
+        if perf_model and perf_model.lower() != "off":
+            bs.stack.stack(f"PERF {perf_model}")
+
         self._initialized = True
         self._step_count = 0
         self._simt = 0.0
@@ -495,6 +501,26 @@ class BlueSkyWrapper:
             self._airspace_bounds["lat_min"] <= lat <= self._airspace_bounds["lat_max"]
             and self._airspace_bounds["lon_min"] <= lon <= self._airspace_bounds["lon_max"]
         )
+
+    def set_performance_model(self, model: str) -> None:
+        """Switch performance model at runtime.
+
+        Sends ``PERF {model}`` to the BlueSky stack.  Valid values are
+        ``"openap"``, ``"bada"``, and ``"off"``.
+
+        Args:
+            model: Performance model name (``"openap"``, ``"bada"``, or ``"off"``).
+
+        Raises:
+            RuntimeError: If simulation has not been initialized.
+            ValueError: If model name is not recognized.
+        """
+        if not self._initialized:
+            raise RuntimeError("Simulation not initialized. Call init_simulation() first.")
+        valid = {"openap", "bada", "off"}
+        if model.lower() not in valid:
+            raise ValueError(f"Invalid performance model '{model}'. Must be one of: {valid}")
+        bs.stack.stack(f"PERF {model}")
 
     def close(self) -> None:
         """Close the simulator by removing managed aircraft."""

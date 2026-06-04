@@ -36,11 +36,13 @@
 2. **LNAV 航路跟随集成** ✅ — wrapper 5 个 LNAV 方法 + RouteNav/WaypointNav configure_npc_navigation，7 个测试通过
 3. **N-nearest neighbors 观测** — 使用 kwikdist_matrix 替代 O(n²) 遍历
 
-### Phase 2-4（后续）
+### Phase 3
 
-- 过程式场景随机生成
-- LNAV/VNAV 航路/垂直导航集成
-- BADA 性能模型
+1. **性能模型集成** ✅ — OpenAP 激活（PERF OpenAP），set_performance_model() 运行时切换，10 个测试通过
+
+### Phase 3-4（后续）
+
+- N-nearest neighbors 观测优化
 - parallel_env.py 架构拆分
 
 ## 失败分类

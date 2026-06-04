@@ -41,9 +41,7 @@ class TestNumAircraftRange:
             (PlanWaypointScenario, 1),
         ],
     )
-    def test_default_range_is_none(
-        self, scenario_cls: type, default_n: int
-    ) -> None:
+    def test_default_range_is_none(self, scenario_cls: type, default_n: int) -> None:
         """Without num_aircraft_range, property returns None."""
         scenario = scenario_cls(num_aircraft=default_n)
         assert scenario.num_aircraft_range is None
@@ -94,9 +92,7 @@ class TestProceduralReset:
             (PlanWaypointScenario, 1, 3),
         ],
     )
-    def test_reset_randomizes_aircraft_count(
-        self, scenario_cls: type, lo: int, hi: int
-    ) -> None:
+    def test_reset_randomizes_aircraft_count(self, scenario_cls: type, lo: int, hi: int) -> None:
         """With num_aircraft_range, reset() samples new count in [lo, hi]."""
         scenario = scenario_cls(num_aircraft=5, num_aircraft_range=(lo, hi))
         counts = set()

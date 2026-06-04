@@ -81,10 +81,12 @@ class MergeScenario(BaseScenario):
     def reset(self, rng: np.random.RandomState) -> None:
         """Randomize aircraft count and clear state for procedural generation."""
         if self._num_aircraft_range is not None:
-            self._num_aircraft = int(rng.randint(
-                self._num_aircraft_range[0],
-                self._num_aircraft_range[1] + 1,
-            ))
+            self._num_aircraft = int(
+                rng.randint(
+                    self._num_aircraft_range[0],
+                    self._num_aircraft_range[1] + 1,
+                )
+            )
         self._agents = []
         self._controllable = []
         self._background = []

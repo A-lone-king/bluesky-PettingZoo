@@ -3,6 +3,7 @@ simulation:
   max_episode_steps: 360     # 最大步数（30分钟）
   headless: true
   action_frequency: 10       # 每个 RL step 执行的仿真步数
+  performance_model: "openap"  # 性能模型: openap, bada, off
 
 airspace:
   name: "two_sector_crossing"

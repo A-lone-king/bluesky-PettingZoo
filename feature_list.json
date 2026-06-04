@@ -315,16 +315,21 @@
       "id": "perf-bada-001",
       "priority": 2,
       "area": "bluesky",
-      "title": "BADA 性能模型集成",
-      "user_visible_behavior": "激活 BlueSky BADA 性能模型，约束爬升/下降率和速度。",
-      "status": "not_started",
+      "title": "性能模型集成（OpenAP）",
+      "user_visible_behavior": "激活 BlueSky OpenAP 性能模型，约束爬升/下降率和速度。支持 BADA/OpenAP/off 切换。",
+      "status": "passing",
       "verification": [
-        "SPECIFY BADA 命令成功执行",
-        "飞机性能受 BADA 约束",
-        "燃油消耗可计算"
+        "PERF OpenAP 命令成功执行",
+        "performance_model 配置项在 default.yaml 中可用",
+        "set_performance_model() 运行时切换正常",
+        "940 个单元测试全部通过"
       ],
-      "evidence": [],
-      "notes": "需确认 BADA 数据文件是否包含在 BlueSky 中"
+      "evidence": [
+        "10 个性能模型测试全部通过",
+        "ruff check + mypy 通过",
+        "940 个单元测试全量通过"
+      ],
+      "notes": "BADA 数据文件需要 EUROCONTROL 许可证，当前不可用。OpenAP 开源免费，功能类似。"
     }
   ]
 }

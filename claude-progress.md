@@ -146,3 +146,25 @@
 - 更新过的文件或工件：wrapper.py, route_nav.py, waypoint_nav.py, test_lnav_integration.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：开始 BADA 性能模型集成（perf-bada-001）或 N-nearest neighbors 观测优化
+
+### Session 007
+
+- 日期：2026-06-04
+- 本轮目标：修复测试失败 + 实施 perf-bada-001 性能模型集成
+- 已完成：
+  - 修复 test_distance_matrix.py 容差问题（BlueSky kwikdist vs 自实现 haversine 差异）
+  - 修复 geometry.py mypy 错误（unused type: ignore, object→Any）
+  - 修复 test_lnav_integration.py ruff 未使用导入
+  - 实施 perf-bada-001：config/default.yaml 添加 performance_model 配置
+  - wrapper.py 添加 PERF 命令激活 + set_performance_model() 运行时切换
+  - 编写 10 个性能模型测试（test_performance_model.py）
+- 运行过的验证：
+  - ruff check: All checks passed
+  - ruff format: All files formatted correctly
+  - mypy: Success, no issues found in 71 source files
+  - pytest: 940 passed, 0 failed
+- 已记录证据：perf-bada-001 标记为 passing
+- 提交记录：待提交
+- 更新过的文件或工件：geometry.py, test_distance_matrix.py, test_lnav_integration.py, default.yaml, wrapper.py, test_performance_model.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：BADA 数据文件需 EUROCONTROL 许可证，当前使用 OpenAP 作为替代
+- 下一步最佳动作：N-nearest neighbors 观测优化或其他未完成功能

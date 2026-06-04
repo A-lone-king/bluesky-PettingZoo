@@ -9,7 +9,7 @@ tests that mock the engine).
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 _bs_geo_available = False
 try:
-    from bluesky.tools import geo as _bs_geo  # type: ignore[import-untyped]
+    from bluesky.tools import geo as _bs_geo
 
     _bs_geo_available = True
 except ImportError:
@@ -32,14 +32,14 @@ except ImportError:
 # ---------------------------------------------------------------------------
 _bs_areafilter_available = False
 try:
-    from bluesky.tools.areafilter import shapes as _bs_shapes  # type: ignore[import-untyped]
+    from bluesky.tools.areafilter import shapes as _bs_shapes
 
     _bs_areafilter_available = True
 except ImportError:
     _bs_areafilter_available = False
 
 # Cache for BlueSky Poly objects keyed by polygon vertex hash
-_poly_cache: dict[str, object] = {}
+_poly_cache: dict[str, Any] = {}
 
 
 def is_blueky_geo_available() -> bool:
@@ -282,11 +282,9 @@ def point_in_polygon(
                 flat_coords = []
                 for v_lat, v_lon in polygon:
                     flat_coords.extend([v_lat, v_lon])
-                _poly_cache[key] = _bs_shapes.Poly("tmp", flat_coords)  # type: ignore[attr-defined]
+                _poly_cache[key] = _bs_shapes.Poly("tmp", flat_coords)
             poly = _poly_cache[key]
-            result = poly.checkInside(
-                np.array([lat]), np.array([lon]), np.array([0.0])
-            )
+            result = poly.checkInside(np.array([lat]), np.array([lon]), np.array([0.0]))
             return bool(result[0])
         except Exception:
             pass  # fall through to self-implemented

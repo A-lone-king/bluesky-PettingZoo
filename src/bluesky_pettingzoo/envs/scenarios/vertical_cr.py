@@ -58,10 +58,12 @@ class VerticalCRScenario(BaseScenario):
     def reset(self, rng: np.random.RandomState) -> None:
         """Randomize aircraft count for procedural generation."""
         if self._num_aircraft_range is not None:
-            self._num_aircraft = int(rng.randint(
-                self._num_aircraft_range[0],
-                self._num_aircraft_range[1] + 1,
-            ))
+            self._num_aircraft = int(
+                rng.randint(
+                    self._num_aircraft_range[0],
+                    self._num_aircraft_range[1] + 1,
+                )
+            )
         self._agents = []
         self._waypoints = {}
 
