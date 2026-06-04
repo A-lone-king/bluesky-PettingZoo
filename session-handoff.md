@@ -43,8 +43,9 @@
 
 ### Phase 3-4（后续）
 
-- N-nearest neighbors 观测优化
-- parallel_env.py 架构拆分
+- N-nearest neighbors 观测优化 ✅ — haversine_distance_matrix 向量化计算
+- parallel_env.py 架构拆分 ✅ — ObservationBuilder 提取，783→641 行
+- Phase 4.2 Protocol 接口 — 待实施
 
 ## 失败分类
 

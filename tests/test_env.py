@@ -631,7 +631,7 @@ class TestSubstepMidTermination:
         env.reset(seed=42)
 
         nmac_detected = {"value": False}
-        original_check = env._compute_conflict_status
+        original_check = env._obs_builder.compute_conflict_status
 
         def tracking_check(own, others):
             result = original_check(own, others)
@@ -639,7 +639,7 @@ class TestSubstepMidTermination:
                 nmac_detected["value"] = True
             return result
 
-        env._compute_conflict_status = tracking_check
+        env._obs_builder.compute_conflict_status = tracking_check
 
         # The callback should be wired; we verify it's not None
         assert env._action_frequency >= 1

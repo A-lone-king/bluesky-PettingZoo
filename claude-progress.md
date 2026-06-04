@@ -202,3 +202,33 @@
 - 更新过的文件或工件：wrapper.py, test_performance_model.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：N-nearest neighbors 观测优化或其他未完成功能
+
+### Session 010
+
+- 日期：2026-06-03
+- 本轮目标：N-nearest neighbors 观测优化
+- 已完成：
+  - PerceptionFilter 使用 haversine_distance_matrix 向量化距离计算
+  - 添加 _filter_vectorized() 和 _filter_scalar() 私有方法
+  - 修复 mypy 类型错误（geometry.py _poly_cache 类型）
+- 运行过的验证：38 个观测测试全部通过，ruff + mypy 通过
+- 已记录证据：vectorized distance matrix 优化完成
+- 提交记录：perf(observations): optimize PerceptionFilter with vectorized distance matrix
+
+### Session 011
+
+- 日期：2026-06-04
+- 本轮目标：Phase 4.1 parallel_env.py 架构拆分
+- 已完成：
+  - 创建 observation_builder.py（204 行）：提取观测构建逻辑
+  - parallel_env.py 从 783 行降至 641 行（减少 142 行）
+  - 更新 test_env.py 中 monkeypatch 路径
+- 运行过的验证：
+  - ruff check: All checks passed
+  - mypy: No issues found
+  - pytest test_env.py + test_env_action_dispatch.py: 30 passed
+- 已记录证据：架构拆分完成，环境测试通过
+- 提交记录：待提交
+- 更新过的文件或工件：parallel_env.py, observation_builder.py, test_env.py, feature_list.json
+- 已知风险或未解决问题：完整测试套件未跑完，预存的 18 个失败（非本次引入）
+- 下一步最佳动作：Phase 4.2 Protocol 接口替换 hasattr duck-typing

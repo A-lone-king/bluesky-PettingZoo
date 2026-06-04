@@ -10,6 +10,7 @@ from pettingzoo import ParallelEnv
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+from bluesky_pettingzoo.envs.observation_builder import ObservationBuilder
 from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
@@ -63,15 +64,8 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             "lon_max": max(lons),
         }
 
-        # Conflict thresholds for textual state
-        comp = rewards_config.get("components", {})
-        thr = comp.get("conflict", {}).get("thresholds", {})
-        self._nmac_h = thr.get("nmac_horizontal_nm", 5)
-        self._nmac_v = thr.get("nmac_vertical_ft", 1000)
-        self._warn_h = thr.get("warning_horizontal_nm", 10)
-        self._warn_v = thr.get("warning_vertical_ft", 2000)
-
         # Arrival threshold for termination
+        comp = rewards_config.get("components", {})
         eff_comp = comp.get("efficiency", {})
         self._arrival_threshold: float = eff_comp.get("arrival_threshold_nm", 2)
 
@@ -83,6 +77,15 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         self._prev_states: dict[str, AircraftState] = {}
         self._rng = np.random.RandomState()
         self._airspace_cfg = config.get("airspace", {})
+
+        # Observation builder (extracted from this class)
+        self._obs_builder = ObservationBuilder(
+            obs_manager=observation_manager,
+            reward_calculator=reward_calculator,
+            rewards_config=rewards_config,
+            airspace=self._airspace,
+            airspace_cfg=self._airspace_cfg,
+        )
 
         # Dynamic entry configuration
         de = config.get("dynamic_entry", {})
@@ -235,14 +238,14 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                 self._wrapper.create_aircraft(acid, _AIRCRAFT_TYPE, lat, lon, alt, hdg, spd)
 
             # Set goals from scenario waypoints
-            eff = self._find_efficiency_component()
+            eff = self._obs_builder.find_efficiency_component()
             if eff is not None:
                 for acid in self.agents:
                     wp = self._scenario.get_waypoint(acid)
                     eff.set_goal(acid, wp["lat"], wp["lon"])
 
             # Set delay goals (expected arrival time)
-            delay_comp = self._find_delay_component()
+            delay_comp = self._obs_builder.find_delay_component()
             if delay_comp is not None:
                 dt = self.config.get("simulation", {}).get("dt", 5.0)
                 for acid in self.agents:
@@ -255,7 +258,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     delay_comp.set_goal(acid, dist, speed, dt)
 
             # Set obstacles on ObstacleIntrusion component if present
-            obs_intrusion = self._find_obstacle_intrusion_component()
+            obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
             if obs_intrusion is not None and hasattr(self._scenario, "get_obstacles"):
                 obs_intrusion.set_obstacles(self._scenario.get_obstacles())
 
@@ -288,7 +291,9 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         # Generate initial observations
         all_states = self._get_all_aircraft_states()
         self._prev_states = dict(all_states)
-        observations, infos = self._build_obs_and_infos(all_states)
+        observations, infos = self._obs_builder.build(
+            all_states, self.agents, scenario=self._scenario
+        )
         return observations, infos
 
     def step(
@@ -347,14 +352,14 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     continue
                 # NMAC check
                 others = [s for aid, s in substep_states.items() if aid != agent_id]
-                conflict = self._compute_conflict_status(own, others)
+                conflict = self._obs_builder.compute_conflict_status(own, others)
                 if conflict == "nmac":
                     self._substep_terminated.add(agent_id)
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
                     continue
                 # Obstacle intrusion check
-                obs_intrusion = self._find_obstacle_intrusion_component()
+                obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
                 if obs_intrusion is not None and obs_intrusion.is_intruded(own):
                     self._substep_terminated.add(agent_id)
                     self.agents.remove(agent_id)
@@ -384,7 +389,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     spd = self._rng.uniform(spawn.speed_range[0], spawn.speed_range[1])
                     self._wrapper.create_aircraft(new_id, _AIRCRAFT_TYPE, lat, lon, alt, hdg, spd)
                     self.agents.append(new_id)
-                    eff = self._find_efficiency_component()
+                    eff = self._obs_builder.find_efficiency_component()
                     if eff is not None:
                         wp = self._scenario.get_waypoint(new_id)
                         eff.set_goal(new_id, wp["lat"], wp["lon"])
@@ -414,7 +419,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         # Sector change detection — notify FlowEfficiencyReward and FlowScheduler
         sectors_cfg = self._airspace_cfg.get("sectors", [])
         if sectors_cfg:
-            flow_eff = self._find_flow_efficiency_component()
+            flow_eff = self._obs_builder.find_flow_efficiency_component()
             for agent_id in self.agents:
                 st = new_states.get(agent_id)
                 if st is None:
@@ -428,7 +433,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                 self._agent_sectors[agent_id] = curr_sector
 
             # Feed handoff delays to FairnessReward
-            fairness = self._find_fairness_component()
+            fairness = self._obs_builder.find_fairness_component()
             if fairness is not None:
                 fairness.set_delays(self._flow_scheduler.get_handoff_delays())
 
@@ -480,10 +485,12 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         for aid in self._substep_terminated:
             if aid not in all_agent_states and aid in self._prev_states:
                 all_agent_states[aid] = self._prev_states[aid]
-        observations, infos = self._build_obs_and_infos(all_agent_states)
+        observations, infos = self._obs_builder.build(
+            all_agent_states, self.agents, scenario=self._scenario
+        )
 
         # Remove NMAC, arrived, and departed aircraft
-        eff = self._find_efficiency_component()
+        eff = self._obs_builder.find_efficiency_component()
         scenario_truncated: set[str] = set()
         for agent_id in agents_snapshot:
             if agent_id not in self.agents:
@@ -491,7 +498,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             own = new_states.get(agent_id)
             if own is not None:
                 others = [s for aid, s in new_states.items() if aid != agent_id]
-                conflict = self._compute_conflict_status(own, others)
+                conflict = self._obs_builder.compute_conflict_status(own, others)
                 if conflict == "nmac":
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
@@ -514,7 +521,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                             self._wrapper.remove_aircraft(agent_id)
                             continue
                 # Obstacle intrusion termination
-                obs_intrusion = self._find_obstacle_intrusion_component()
+                obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
                 if obs_intrusion is not None and obs_intrusion.is_intruded(own):
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
@@ -544,7 +551,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         # Fill in rewards/terms/truncs for removed agents that have no observation
         for agent_id in agents_snapshot:
             if agent_id not in observations:
-                observations[agent_id] = self._default_observation()
+                observations[agent_id] = self._obs_builder.default_observation()
             if agent_id not in infos:
                 infos[agent_id] = {}
 
@@ -554,7 +561,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         if self._renderer is not None:
             self._renderer.render_frame(
                 states=new_states,
-                waypoints=self._get_waypoints_for_render(),
+                waypoints=self._obs_builder.get_waypoints_for_render(self.agents),
                 step=self._step_count,
             )
 
@@ -565,23 +572,6 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             self._renderer.close()
             self._renderer = None
         self._wrapper.close()
-
-    def _get_waypoints_for_render(self) -> dict[str, dict[str, float]] | None:
-        """Get waypoints for rendering."""
-        eff = self._find_efficiency_component()
-        if eff is None or not hasattr(eff, "_goals"):
-            return None
-        waypoints: dict[str, dict[str, float]] = {}
-        for agent_id in self.agents:
-            goal = eff._goals.get(agent_id)
-            if goal is not None:
-                waypoints[agent_id] = {
-                    "lat": goal[0],
-                    "lon": goal[1],
-                    "alt": 35000.0,
-                    "hdg": 0.0,
-                }
-        return waypoints if waypoints else None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -614,132 +604,9 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             for acid, v in raw.items()
         }
 
-    def _build_obs_and_infos(
-        self,
-        all_states: dict[str, AircraftState],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        observations: dict[str, Any] = {}
-        infos: dict[str, Any] = {}
-        obstacle_polygons = self._get_obstacle_polygons()
-
-        # Compute priorities for all agents
-        priorities: dict[str, float] = {}
-        if self._scenario is not None and hasattr(self._scenario, "get_priority"):
-            for aid, st in all_states.items():
-                priorities[aid] = self._scenario.get_priority(aid, st)
-
-        for agent_id in all_states:
-            own = all_states.get(agent_id)
-            if own is None:
-                continue
-
-            others = [s for aid, s in all_states.items() if aid != agent_id]
-            conflict_status = self._compute_conflict_status(own, others)
-
-            goal = self._make_goal(agent_id, own)
-            result = self._obs_manager.generate(
-                own_state=own,
-                other_states=others,
-                goal=goal,
-                conflict_status=conflict_status,
-                airspace=self._airspace_cfg,
-                obstacle_polygons=obstacle_polygons,
-                agent_priorities=priorities,
-            )
-            observations[agent_id] = result["observation"]
-            infos[agent_id] = {
-                "textual_state": result["textual_state"],
-                "airspace_snapshot": result["airspace_snapshot"],
-            }
-
-        return observations, infos
-
-    def _make_goal(self, agent_id: str, own: AircraftState) -> dict[str, float]:
-        eff = self._find_efficiency_component()
-        if eff is not None and hasattr(eff, "_goals"):
-            goal_tuple = eff._goals.get(agent_id)
-            if goal_tuple is not None:
-                return {"lat": goal_tuple[0], "lon": goal_tuple[1], "alt": own.alt, "hdg": own.hdg}
-        mid_lat = (self._airspace["lat_min"] + self._airspace["lat_max"]) / 2
-        mid_lon = (self._airspace["lon_min"] + self._airspace["lon_max"]) / 2
-        return {
-            "lat": self._airspace["lat_max"] if own.lat < mid_lat else self._airspace["lat_min"],
-            "lon": self._airspace["lon_max"] if own.lon < mid_lon else self._airspace["lon_min"],
-            "alt": own.alt,
-            "hdg": own.hdg,
-        }
-
-    def _find_efficiency_component(self) -> Any:
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "set_goal") and hasattr(comp, "_goals"):
-                return comp
-        return None
-
-    def _find_conflict_component(self) -> Any:
-        """Find the ConflictPenalty component in the reward calculator."""
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "get_conflict_status"):
-                return comp
-        return None
-
-    def _find_delay_component(self) -> Any:
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "set_goal") and hasattr(comp, "_expected_steps"):
-                return comp
-        return None
-
-    def _find_obstacle_intrusion_component(self) -> Any:
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "set_obstacles"):
-                return comp
-        return None
-
-    def _find_flow_efficiency_component(self) -> Any:
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "notify_sector_entry"):
-                return comp
-        return None
-
-    def _find_fairness_component(self) -> Any:
-        for comp, _ in self._reward_calculator.components:
-            if hasattr(comp, "set_delays") and hasattr(comp, "_delays"):
-                return comp
-        return None
-
-    def _get_obstacle_polygons(self) -> list[list[tuple[float, float]]] | None:
-        """Get obstacle polygons from the ObstacleIntrusion component."""
-        comp = self._find_obstacle_intrusion_component()
-        if comp is not None and hasattr(comp, "_obstacles"):
-            return comp._obstacles  # type: ignore[no-any-return]
-        return None
-
-    def _compute_conflict_status(
-        self,
-        own: AircraftState,
-        others: list[AircraftState],
-    ) -> str:
-        """Compute conflict status for an aircraft.
-
-        Uses ConflictPenalty component if available, otherwise falls back
-        to local implementation.
-        """
-        conflict_comp = self._find_conflict_component()
-        if conflict_comp is not None:
-            return conflict_comp.get_conflict_status(own, others)  # type: ignore[no-any-return]
-
-        # Fallback: local implementation
-        for other in others:
-            h_dist = haversine_distance(own.lat, own.lon, other.lat, other.lon)
-            v_dist = abs(own.alt - other.alt)
-            if h_dist < self._nmac_h and v_dist < self._nmac_v:
-                return "nmac"
-            if h_dist < self._warn_h and v_dist < self._warn_v:
-                return "warning"
-        return "safe"
-
     def _set_default_goal(self, agent_id: str, lat: float, lon: float) -> None:
         """Set efficiency goal to the opposite corner from the given position."""
-        eff = self._find_efficiency_component()
+        eff = self._obs_builder.find_efficiency_component()
         if eff is None:
             return
         mid_lat = (self._airspace["lat_min"] + self._airspace["lat_max"]) / 2
@@ -776,7 +643,3 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             hdg = self._rng.uniform(200, 340)  # westward
 
         return lat, lon, hdg
-
-    def _default_observation(self) -> dict[str, Any]:
-        obs_space = self._obs_manager.observation_space()
-        return obs_space.sample()
