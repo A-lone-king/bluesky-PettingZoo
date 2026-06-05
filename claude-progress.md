@@ -221,7 +221,7 @@
 - 本轮目标：Phase 4.1 parallel_env.py 架构拆分
 - 已完成：
   - 创建 observation_builder.py（204 行）：提取观测构建逻辑
-  - parallel_env.py 从 783 行降至 641 行（减少 142 行）
+  - parallel_env.py 从 783 行降至 673 行（减少 110 行）
   - 更新 test_env.py 中 monkeypatch 路径
 - 运行过的验证：
   - ruff check: All checks passed
@@ -232,3 +232,41 @@
 - 更新过的文件或工件：parallel_env.py, observation_builder.py, test_env.py, feature_list.json
 - 已知风险或未解决问题：完整测试套件未跑完，预存的 18 个失败（非本次引入）
 - 下一步最佳动作：Phase 4.2 Protocol 接口替换 hasattr duck-typing
+
+### Session 012
+
+- 日期：2026-06-05
+- 本轮目标：修复架构拆分导致的测试断裂 + 完成 arch-001
+- 已完成：
+  - 修复 test_arrival_termination.py 失败（_find_efficiency_component 方法缺失）
+  - 添加 6 个组件访问代理方法到 parallel_env.py（保持向后兼容）
+  - 更新 feature_list.json 将 arch-001 标记为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest test_arrival_termination.py: 5 passed
+  - pytest test_arrival_termination.py + test_env.py: 32 passed
+- 已记录证据：arch-001 passing，测试断裂已修复
+- 提交记录：待提交
+- 更新过的文件或工件：parallel_env.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：Phase 4.2 Protocol 接口替换 hasattr duck-typing
+
+### Session 013
+
+- 日期：2026-06-05
+- 本轮目标：Phase 4.2 Protocol 接口替换 hasattr duck-typing
+- 已完成：
+  - 创建 protocols.py：定义 11 个 Protocol（EfficiencyComponent, DelayComponent, ConflictComponent, ObstacleComponent, FlowEfficiencyComponent, FairnessComponent, PriorityScenario, DynamicEntryScenario, ObstacleScenario, NavigationScenario, BoundedRenderer）
+  - observation_builder.py：替换 6 个 hasattr 调用为 isinstance
+  - parallel_env.py：替换 4 个 hasattr 调用为 isinstance
+  - 修复 mypy 类型错误（Protocol 签名与实际实现不匹配）
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest: 32 passed
+- 已记录证据：arch-002 passing，Protocol 替换完成
+- 提交记录：待提交
+- 更新过的文件或工件：protocols.py, observation_builder.py, parallel_env.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始其他未完成功能

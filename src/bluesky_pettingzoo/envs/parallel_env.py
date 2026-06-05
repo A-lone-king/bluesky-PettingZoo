@@ -15,6 +15,12 @@ from bluesky_pettingzoo.envs.scenarios.base import BaseScenario
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.utils.geometry import assign_sector, haversine_distance
+from bluesky_pettingzoo.utils.protocols import (
+    BoundedRenderer,
+    DynamicEntryScenario,
+    NavigationScenario,
+    ObstacleScenario,
+)
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 _AIRCRAFT_TYPE = "B737"
@@ -162,8 +168,36 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         renderer_cls = renderer_map.get(scenario_name, HorizontalCRRenderer)
         self._renderer = renderer_cls(width=800, height=600)
         self._renderer.display()
-        if hasattr(self._renderer, "set_bounds"):
+        if isinstance(self._renderer, BoundedRenderer):
             self._renderer.set_bounds(self._airspace)
+
+    # ------------------------------------------------------------------
+    # Component accessors (delegated to ObservationBuilder)
+    # ------------------------------------------------------------------
+
+    def _find_efficiency_component(self) -> Any:  # noqa: ANN401
+        """Find the EfficiencyReward component (has set_goal + _goals)."""
+        return self._obs_builder.find_efficiency_component()
+
+    def _find_conflict_component(self) -> Any:  # noqa: ANN401
+        """Find the ConflictPenalty component (has get_conflict_status)."""
+        return self._obs_builder.find_conflict_component()
+
+    def _find_delay_component(self) -> Any:  # noqa: ANN401
+        """Find the DelayPenalty component (has set_goal + _expected_steps)."""
+        return self._obs_builder.find_delay_component()
+
+    def _find_obstacle_intrusion_component(self) -> Any:  # noqa: ANN401
+        """Find the ObstacleIntrusion component (has set_obstacles)."""
+        return self._obs_builder.find_obstacle_intrusion_component()
+
+    def _find_flow_efficiency_component(self) -> Any:  # noqa: ANN401
+        """Find the FlowEfficiencyReward component (has notify_sector_entry)."""
+        return self._obs_builder.find_flow_efficiency_component()
+
+    def _find_fairness_component(self) -> Any:  # noqa: ANN401
+        """Find the FairnessReward component (has set_delays + _delays)."""
+        return self._obs_builder.find_fairness_component()
 
     # ------------------------------------------------------------------
     # PettingZoo ParallelEnv interface
@@ -213,7 +247,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             spawn = self._scenario.get_spawn_config()
             initial_positions = (
                 self._scenario.get_initial_positions()
-                if hasattr(self._scenario, "get_initial_positions")
+                if isinstance(self._scenario, DynamicEntryScenario)
                 else None
             )
             for acid in self.agents:
@@ -259,11 +293,11 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
 
             # Set obstacles on ObstacleIntrusion component if present
             obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
-            if obs_intrusion is not None and hasattr(self._scenario, "get_obstacles"):
+            if obs_intrusion is not None and isinstance(self._scenario, ObstacleScenario):
                 obs_intrusion.set_obstacles(self._scenario.get_obstacles())
 
             # Configure NPC navigation (e.g. reso off, heading commands)
-            if hasattr(self._scenario, "configure_npc_navigation"):
+            if isinstance(self._scenario, NavigationScenario):
                 self._scenario.configure_npc_navigation(self._wrapper)
         else:
             # V1.0 default: spawn aircraft at deterministic positions
@@ -504,7 +538,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     self._wrapper.remove_aircraft(agent_id)
                     continue
                 # Arrival detection — stream new waypoint or terminate
-                if eff is not None and hasattr(eff, "_goals"):
+                if eff is not None:
                     goal = eff._goals.get(agent_id)
                     if goal is not None:
                         dist = haversine_distance(own.lat, own.lon, goal[0], goal[1])

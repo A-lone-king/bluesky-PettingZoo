@@ -7,6 +7,15 @@ from typing import Any
 from bluesky_pettingzoo.observations.manager import ObservationManager
 from bluesky_pettingzoo.rewards.calculator import RewardCalculator
 from bluesky_pettingzoo.utils.geometry import haversine_distance
+from bluesky_pettingzoo.utils.protocols import (
+    ConflictComponent,
+    DelayComponent,
+    EfficiencyComponent,
+    FairnessComponent,
+    FlowEfficiencyComponent,
+    ObstacleComponent,
+    PriorityScenario,
+)
 from bluesky_pettingzoo.utils.types import AircraftState
 
 # Conflict thresholds (defaults matching rewards.yaml)
@@ -41,39 +50,39 @@ class ObservationBuilder:
         self._warn_v: float = thr.get("warning_vertical_ft", _DEFAULT_WARN_V)
 
     # ------------------------------------------------------------------
-    # Component finders
+    # Component finders (Protocol-based detection)
     # ------------------------------------------------------------------
 
-    def _find_component(self, *attrs: str) -> Any:
-        """Find the first reward component exposing all given attributes."""
+    def _find_component(self, protocol_type: type) -> Any:  # noqa: ANN401
+        """Find the first reward component matching the given Protocol."""
         for comp, _ in self._reward_calculator.components:
-            if all(hasattr(comp, a) for a in attrs):
+            if isinstance(comp, protocol_type):
                 return comp
         return None
 
-    def find_efficiency_component(self) -> Any:
-        """Find the EfficiencyReward component (has set_goal + _goals)."""
-        return self._find_component("set_goal", "_goals")
+    def find_efficiency_component(self) -> Any:  # noqa: ANN401
+        """Find the EfficiencyReward component."""
+        return self._find_component(EfficiencyComponent)
 
-    def find_conflict_component(self) -> Any:
-        """Find the ConflictPenalty component (has get_conflict_status)."""
-        return self._find_component("get_conflict_status")
+    def find_conflict_component(self) -> Any:  # noqa: ANN401
+        """Find the ConflictPenalty component."""
+        return self._find_component(ConflictComponent)
 
-    def find_delay_component(self) -> Any:
-        """Find the DelayPenalty component (has set_goal + _expected_steps)."""
-        return self._find_component("set_goal", "_expected_steps")
+    def find_delay_component(self) -> Any:  # noqa: ANN401
+        """Find the DelayPenalty component."""
+        return self._find_component(DelayComponent)
 
-    def find_obstacle_intrusion_component(self) -> Any:
-        """Find the ObstacleIntrusion component (has set_obstacles)."""
-        return self._find_component("set_obstacles")
+    def find_obstacle_intrusion_component(self) -> Any:  # noqa: ANN401
+        """Find the ObstacleIntrusion component."""
+        return self._find_component(ObstacleComponent)
 
-    def find_flow_efficiency_component(self) -> Any:
-        """Find the FlowEfficiencyReward component (has notify_sector_entry)."""
-        return self._find_component("notify_sector_entry")
+    def find_flow_efficiency_component(self) -> Any:  # noqa: ANN401
+        """Find the FlowEfficiencyReward component."""
+        return self._find_component(FlowEfficiencyComponent)
 
-    def find_fairness_component(self) -> Any:
-        """Find the FairnessReward component (has set_delays + _delays)."""
-        return self._find_component("set_delays", "_delays")
+    def find_fairness_component(self) -> Any:  # noqa: ANN401
+        """Find the FairnessReward component."""
+        return self._find_component(FairnessComponent)
 
     # ------------------------------------------------------------------
     # Observation construction
@@ -98,7 +107,7 @@ class ObservationBuilder:
 
         # Compute priorities
         priorities: dict[str, float] = {}
-        if scenario is not None and hasattr(scenario, "get_priority"):
+        if scenario is not None and isinstance(scenario, PriorityScenario):
             for aid, st in all_states.items():
                 priorities[aid] = scenario.get_priority(aid, st)
 
@@ -131,7 +140,7 @@ class ObservationBuilder:
     def make_goal(self, agent_id: str, own: AircraftState) -> dict[str, float]:
         """Get the goal for an agent, falling back to opposite-corner default."""
         eff = self.find_efficiency_component()
-        if eff is not None and hasattr(eff, "_goals"):
+        if eff is not None:
             goal_tuple = eff._goals.get(agent_id)
             if goal_tuple is not None:
                 return {"lat": goal_tuple[0], "lon": goal_tuple[1], "alt": own.alt, "hdg": own.hdg}
@@ -150,7 +159,7 @@ class ObservationBuilder:
     ) -> dict[str, dict[str, float]] | None:
         """Get waypoints dict for the renderer."""
         eff = self.find_efficiency_component()
-        if eff is None or not hasattr(eff, "_goals"):
+        if eff is None:
             return None
         waypoints: dict[str, dict[str, float]] = {}
         for agent_id in agents:
@@ -199,6 +208,6 @@ class ObservationBuilder:
     def _get_obstacle_polygons(self) -> list[list[tuple[float, float]]] | None:
         """Get obstacle polygons from the ObstacleIntrusion component."""
         comp = self.find_obstacle_intrusion_component()
-        if comp is not None and hasattr(comp, "_obstacles"):
+        if comp is not None:
             return comp._obstacles  # type: ignore[no-any-return]
         return None
