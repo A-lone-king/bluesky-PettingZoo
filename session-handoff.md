@@ -13,13 +13,13 @@
 - **环境包装器**：SingleAgentGymWrapper, NoisyObservationWrapper, WindFieldWrapper
 - **测试体系**：~83 单元测试 + ~16 集成测试 + ~2 性能测试，覆盖率 >= 90%
 
-## 本轮改动 (Session 003)
+## 本轮改动 (Session 013)
 
-- 修复全部 108 个 mypy 类型错误（108→0），涉及 ~25 个源文件
-- 完成 bluesky-gym 架构对比分析
-- 创建 BLUE_SKY_INTEGRATION_PLAN.md 实施计划（4 个 Phase）
-- 更新 feature_list.json 添加 7 个新功能
-- 用户确认改造方向：垂直控制(selalt/selvs)、面积系统(areafilter)、几何计算(geo)
+- 创建 protocols.py：定义 11 个 Protocol（EfficiencyComponent, DelayComponent, ConflictComponent, ObstacleComponent, FlowEfficiencyComponent, FairnessComponent, PriorityScenario, DynamicEntryScenario, ObstacleScenario, NavigationScenario, BoundedRenderer）
+- observation_builder.py：替换 6 个 hasattr 调用为 isinstance
+- parallel_env.py：替换 4 个 hasattr 调用为 isinstance
+- 修复 mypy 类型错误（Protocol 签名与实际实现不匹配）
+- arch-001（架构拆分）和 arch-002（Protocol 接口）均标记为 passing
 
 ## 下一步：BlueSky 深度集成
 
@@ -44,8 +44,8 @@
 ### Phase 3-4（后续）
 
 - N-nearest neighbors 观测优化 ✅ — haversine_distance_matrix 向量化计算
-- parallel_env.py 架构拆分 ✅ — ObservationBuilder 提取，783→641 行
-- Phase 4.2 Protocol 接口 — 待实施
+- parallel_env.py 架构拆分 ✅ — ObservationBuilder 提取，783→673 行
+- Protocol 接口替换 ✅ — 11 个 Protocol 定义，替换 hasattr duck-typing
 
 ## 失败分类
 
