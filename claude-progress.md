@@ -308,3 +308,25 @@
 - 更新过的文件或工件：star_approach.py, star_approach.yaml, StarApproachRenderer, __init__.py, base.py, test_scenario_registry.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始 P1 航班计划导入场景
+
+### Session 016
+
+- 日期：2026-06-05
+- 本轮目标：实现 Phase 5 P1 — 航班计划导入场景
+- 已完成：
+  - 创建 flight_plan_parser.py：CSV/JSON 航班计划解析器
+  - 创建 FlightPlanScenario：航班计划导入场景类
+  - 创建 flight_plan.yaml：场景配置文件
+  - 创建 sample_flight_plans.json：示例数据文件
+  - 注册场景到 __init__.py 和 base.py（12 个场景）
+  - 更新 test_scenario_registry.py（12 个场景）
+  - 更新 feature_list.json：scenario-flightplan-001 标记为 passing
+  - 更新 session-handoff.md：Phase 5 P1 标记为完成
+- 运行过的验证：
+  - pytest 83 passed（场景注册、配置、YAML 测试）
+  - FlightPlanScenario 导入测试通过
+- 已记录证据：scenario-flightplan-001 passing，航班计划导入场景实现完成
+- 提交记录：待提交
+- 更新过的文件或工件：flight_plan_parser.py, flight_plan.py, flight_plan.yaml, sample_flight_plans.json, __init__.py, base.py, test_scenario_registry.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 P3 数据记录与分析

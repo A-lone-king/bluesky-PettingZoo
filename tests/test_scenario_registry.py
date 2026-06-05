@@ -1,4 +1,4 @@
-"""Tests for scenario registry — all 11 scenarios registered."""
+"""Tests for scenario registry — all 12 scenarios registered."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ EXPECTED_SCENARIOS = {
     "SectorCR": "SectorCRScenario",
     "PlanWaypoint": "PlanWaypointScenario",
     "Descent": "DescentScenario",
+    "FlightPlan": "FlightPlanScenario",
     "Merge": "MergeScenario",
     "RouteNav": "RouteNavScenario",
     "SectorCapacity": "SectorCapacityScenario",
@@ -22,7 +23,7 @@ EXPECTED_SCENARIOS = {
 
 
 class TestScenarioRegistry:
-    """Verify all 11 scenarios are registered."""
+    """Verify all 12 scenarios are registered."""
 
     @pytest.mark.parametrize("name", list(EXPECTED_SCENARIOS.keys()))
     def test_scenario_in_registry(self, name: str):
@@ -32,8 +33,8 @@ class TestScenarioRegistry:
     def test_scenario_class_name(self, name: str, cls_name: str):
         assert _SCENARIO_REGISTRY[name] == cls_name
 
-    def test_registry_has_exactly_11_entries(self):
-        assert len(_SCENARIO_REGISTRY) == 11
+    def test_registry_has_exactly_12_entries(self):
+        assert len(_SCENARIO_REGISTRY) == 12
 
 
 class TestScenarioImportable:

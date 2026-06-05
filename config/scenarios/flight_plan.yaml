@@ -1,0 +1,12 @@
+scenario: FlightPlan
+num_aircraft: 3
+seed: 42
+control_mode: SINGLE_RL
+
+reward_overrides:
+  arrival:
+    weight: 1.0
+  conflict:
+    weight: 0.5
+  efficiency:
+    weight: 0.3

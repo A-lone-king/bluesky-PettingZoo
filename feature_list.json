@@ -404,7 +404,7 @@
       "area": "envs",
       "title": "航班计划导入场景",
       "user_visible_behavior": "支持从 CSV/JSON 文件导入真实航班计划，使训练环境更接近真实运行。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "支持 CSV 格式航班计划导入",
         "支持 JSON 格式航班计划导入",
@@ -412,7 +412,13 @@
         "航班计划验证逻辑正确",
         "提供示例数据文件"
       ],
-      "evidence": [],
+      "evidence": [
+        "flight_plan_parser.py 创建并实现 CSV/JSON 解析",
+        "FlightPlanScenario 场景类创建",
+        "flight_plan.yaml 配置文件创建",
+        "sample_flight_plans.json 示例数据创建",
+        "pytest 83 passed"
+      ],
       "notes": "数据格式包含 flight_id, aircraft_type, origin, destination, entry_time, waypoints 等字段。参考 ROADMAP.md 方向 2。"
     },
     {

@@ -21,6 +21,7 @@ _SCENARIO_REGISTRY: dict[str, str] = {
     "SectorCR": "SectorCRScenario",
     "PlanWaypoint": "PlanWaypointScenario",
     "Descent": "DescentScenario",
+    "FlightPlan": "FlightPlanScenario",
     "Merge": "MergeScenario",
     "RouteNav": "RouteNavScenario",
     "SectorCapacity": "SectorCapacityScenario",
@@ -384,6 +385,7 @@ class BaseScenario(ABC):
 
         from bluesky_pettingzoo.envs.scenarios import (
             descent,
+            flight_plan,
             horizontal_cr,
             merge,
             plan_waypoint,
@@ -402,6 +404,7 @@ class BaseScenario(ABC):
             "SectorCRScenario": sector_cr,
             "PlanWaypointScenario": plan_waypoint,
             "DescentScenario": descent,
+            "FlightPlanScenario": flight_plan,
             "MergeScenario": merge,
             "RouteNavScenario": route_nav,
             "SectorCapacityScenario": sector_capacity,

@@ -1,0 +1,47 @@
+[
+  {
+    "flight_id": "FL001",
+    "aircraft_type": "B738",
+    "origin": "EHAM",
+    "destination": "EBBR",
+    "entry_time": 0.0,
+    "cruise_alt": 35000,
+    "cruise_speed": 450,
+    "waypoints": [
+      {"name": "ARTIP", "lat": 52.8, "lon": 5.5, "alt": 35000},
+      {"name": "SULEG", "lat": 52.6, "lon": 5.0, "alt": 35000},
+      {"name": "AUDIK", "lat": 52.4, "lon": 4.8, "alt": 35000},
+      {"name": "EBBR", "lat": 50.9, "lon": 4.5, "alt": 0}
+    ]
+  },
+  {
+    "flight_id": "FL002",
+    "aircraft_type": "A320",
+    "origin": "EGLL",
+    "destination": "EHAM",
+    "entry_time": 30.0,
+    "cruise_alt": 33000,
+    "cruise_speed": 430,
+    "waypoints": [
+      {"name": "BASVO", "lat": 51.5, "lon": -1.0, "alt": 33000},
+      {"name": "RIVER", "lat": 51.5, "lon": 4.8, "alt": 33000},
+      {"name": "VEDON", "lat": 51.7, "lon": 4.6, "alt": 33000},
+      {"name": "EHAM", "lat": 52.3, "lon": 4.8, "alt": 0}
+    ]
+  },
+  {
+    "flight_id": "FL003",
+    "aircraft_type": "B77W",
+    "origin": "LFPG",
+    "destination": "EHAM",
+    "entry_time": 60.0,
+    "cruise_alt": 37000,
+    "cruise_speed": 480,
+    "waypoints": [
+      {"name": "SOBTU", "lat": 49.0, "lon": 2.5, "alt": 37000},
+      {"name": "IMDIK", "lat": 50.5, "lon": 3.5, "alt": 37000},
+      {"name": "NEKNU", "lat": 51.5, "lon": 4.2, "alt": 37000},
+      {"name": "EHAM", "lat": 52.3, "lon": 4.8, "alt": 0}
+    ]
+  }
+]
