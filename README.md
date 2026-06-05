@@ -7,13 +7,17 @@ BlueSky 是底层仿真引擎，负责飞行动力学、冲突检测和空域管
 ## 特性
 
 - **BlueSky 多智能体扩展** — 基于 PettingZoo ParallelEnv，将 BlueSky 从单智能体扩展为多智能体，原生支持主流 MARL 框架
+- **BlueSky 深度集成** — 使用原生 `bs.tools.geo`、`bs.tools.areafilter`、`selalt/selvs`，与 bluesky-gym 一致
+- **LNAV 航路跟随** — 支持 BlueSky LNAV 模式，飞机可自动跟随航路点序列
+- **性能模型** — 集成 OpenAP 性能模型，约束爬升/下降率和速度（支持 BADA/OpenAP/off 切换）
+- **过程式场景生成** — 每次 reset() 随机化飞机数量、位置、航路点，防止过拟合
 - **10 个场景** — 水平/垂直冲突解脱、扇区冲突、航路导航、进近汇合、下降阶段、禁飞区规避、扇区容量、航路网络、顺序航路点
 - **模块化奖励函数** — 冲突惩罚、效率奖励、平滑惩罚，支持动态注册和权重配置
 - **SB3 集成** — 通过 `SingleAgentGymWrapper` 无缝对接 Stable-Baselines3
 - **配置驱动** — YAML 管理环境参数、奖励函数、观测空间
-- **1026 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
+- **943 个测试** — 严格的 TDD 开发流程，覆盖率 >90%
 - **真实 BlueSky 集成** — 支持 headless 模式运行真实仿真器
-- **模块化架构** — 通过 Mixin 和基类消除重复代码，提供统一的扩展接口
+- **模块化架构** — 通过 Protocol、Mixin 和基类消除重复代码，提供统一的扩展接口
 
 ## 安装
 
@@ -77,25 +81,25 @@ model.learn(total_timesteps=50_000)
 
 ```bash
 # PPO 训练（默认 HorizontalCR，50k timesteps）
-rtk python scripts/train_ppo_scenarios.py
+python scripts/train_ppo_scenarios.py
 
 # 指定场景和训练步数
-rtk python scripts/train_ppo_scenarios.py --scenario WaypointNav --timesteps 100000
+python scripts/train_ppo_scenarios.py --scenario WaypointNav --timesteps 100000
 
 # 可视化训练（启用 Pygame 渲染）
-rtk python scripts/train_ppo_scenarios.py --scenario HorizontalCR --render
+python scripts/train_ppo_scenarios.py --scenario HorizontalCR --render
 
 # 基线评估（Random + RuleBased）
-rtk python scripts/evaluate_baselines.py --scenario HorizontalCR --episodes 20
+python scripts/evaluate_baselines.py --scenario HorizontalCR --episodes 20
 
 # 训练模型评估
-rtk python scripts/evaluate_baselines.py --scenario HorizontalCR --model models/ppo_HorizontalCR.zip
+python scripts/evaluate_baselines.py --scenario HorizontalCR --model models/ppo_HorizontalCR.zip
 
 # 训练 smoke test（快速验证，约 1 分钟）
-rtk python scripts/train_smoke_test.py
+python scripts/train_smoke_test.py
 
 # 性能基准
-rtk python scripts/benchmark_performance.py
+python scripts/benchmark_performance.py
 ```
 
 **可用场景**：HorizontalCR, VerticalCR, SectorCR, WaypointNav, Merge, Descent, StaticObstacle, SectorCapacity, RouteNav, PlanWaypoint
@@ -124,6 +128,62 @@ rtk python scripts/benchmark_performance.py
 - `get_spawn_config()` — 生成参数（高度、速度、航向范围）
 - `should_truncate()` — 自定义截断条件
 - `get_initial_positions()` — 指定初始位置（如多边形内）
+- `reset(rng)` — 过程式随机生成，每次 reset 生成不同场景
+- `num_aircraft_range` — 动态飞机数量范围
+
+## BlueSky 深度集成
+
+本项目深度集成 BlueSky 原生工具，与 [bluesky-gym](https://github.com/jfink87/bluesky-gym) 保持一致：
+
+### 几何计算 (`bs.tools.geo`)
+
+```python
+from bluesky_pettingzoo.utils.geometry import haversine_distance, bearing, point_at_distance
+
+# 自动使用 BlueSky 原生函数，不可用时 fallback 到自实现
+dist = haversine_distance(lat1, lon1, lat2, lon2)  # NM
+brg = bearing(lat1, lon1, lat2, lon2)  # degrees
+lat, lon = point_at_distance(lat1, lon1, dist, brg)
+```
+
+### 面积检测 (`bs.tools.areafilter`)
+
+```python
+from bluesky_pettingzoo.utils.geometry import point_in_polygon
+
+# 自动使用 BlueSky 原生 Poly.checkInside
+inside = point_in_polygon(points, polygon)  # bool array
+```
+
+### 垂直控制 (`selalt/selvs`)
+
+```python
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+
+# 直接写入垂直状态，绕过 ALT stack 命令
+wrapper.set_vertical_control(ac_id, vs_ft_min=2000.0, target_alt_ft=35000)
+```
+
+### LNAV 航路跟随
+
+```python
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+
+# 配置航路点并启用 LNAV
+wrapper.set_origin(ac_id, lat, lon)
+wrapper.set_destination(ac_id, lat, lon)
+wrapper.add_waypoint(ac_id, name="WPT1", lat=lat, lon=lon)
+wrapper.enable_lnav(ac_id)
+```
+
+### 性能模型
+
+```python
+from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
+
+# 激活 OpenAP 性能模型
+wrapper.set_performance_model("OpenAP")  # 或 "BADA", "off"
+```
 
 ## 项目结构
 
@@ -135,6 +195,8 @@ bluesky-PettingZoo/
 │   ├── bluesky/          # BlueSky wrapper
 │   ├── envs/
 │   │   ├── parallel_env.py    # PettingZoo ParallelEnv 核心
+│   │   ├── observation_builder.py  # 观测构建器
+│   │   ├── protocols.py       # Protocol 类型定义
 │   │   └── scenarios/         # 10 个场景实现（继承 BaseScenario）
 │   ├── observations/     # 观测管理器
 │   ├── rewards/
@@ -149,7 +211,7 @@ bluesky-PettingZoo/
 │   ├── utils/
 │   │   ├── types.py           # 类型定义（DictBackedMixin）
 │   │   ├── mixin.py           # DictBackedMixin 基类
-│   │   └── geometry.py        # 几何工具
+│   │   └── geometry.py        # 几何工具（BlueSky 集成）
 │   └── wrappers/
 │       ├── base.py            # EnvWrapperMixin（统一委托）
 │       ├── single_agent.py    # SB3 单智能体包装
@@ -157,7 +219,7 @@ bluesky-PettingZoo/
 │       └── wind_field.py
 ├── config/               # YAML 配置文件
 ├── scripts/              # 训练和评估脚本
-└── tests/                # 1026 个测试用例
+└── tests/                # 943 个测试用例
     └── helpers/
         └── state_factory.py   # 共享测试工厂函数
 ```
@@ -172,6 +234,7 @@ simulation:
   dt: 5.0
   max_episode_steps: 50
   headless: true
+  action_frequency: 10  # 每个 RL step 执行 N 个 sim.step()
 
 aircraft:
   initial_count: 5
@@ -179,6 +242,8 @@ aircraft:
     altitude_range: [29000, 37000]
     speed_range: [400, 500]
     heading_range: [0, 360]
+
+performance_model: OpenAP  # BADA, OpenAP, off
 
 # config/rewards.yaml
 components:
@@ -213,6 +278,9 @@ ruff format src/ tests/
 
 # 类型检查
 mypy src/bluesky_pettingzoo/
+
+# 一键验证
+ruff check src/ tests/ && ruff format --check src/ tests/ && mypy src/bluesky_pettingzoo/ && pytest tests/ --ignore=tests/integration -v
 ```
 
 ## 训练结果
@@ -259,10 +327,10 @@ python scripts/train_ppo_scenarios.py \
     --timesteps 10000000 \
     --num-aircraft 3 \
     --device cuda \
-    --n-steps 8192 \      # 增加 rollout 长度
-    --batch-size 512 \    # 增大 mini-batch
-    --n-epochs 10 \       # 增加 epoch 数
-    --norm-reward         # 启用奖励归一化
+    --n-steps 8192 \
+    --batch-size 512 \
+    --n-epochs 10 \
+    --norm-reward
 ```
 
 ### 训练时间参考

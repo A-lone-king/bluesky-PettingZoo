@@ -85,11 +85,17 @@ desktop.ini
 # ========== 工具目录 ==========
 .claude/
 .rtk/
-.understand-anything/intermediate/
-.understand-anything/tmp/
 .understand-anything/
 
 # ========== 临时规划/实验 ==========
 spec3/
 spec4/
 models_test/
+
+# ========== 会话/计划文件 ==========
+session-handoff.md
+clean-state-checklist.md
+evaluator-rubric.md
+quality-document.md
+claude-progress.md
+BLUE_SKY_INTEGRATION_PLAN.md
