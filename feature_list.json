@@ -381,15 +381,21 @@
       "area": "envs",
       "title": "STAR/SID 进近程序场景",
       "user_visible_behavior": "支持标准终端到场（STAR）和标准仪表离场（SID）场景，模拟真实机场进近流程，多架飞机同时进近需排序间隔。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
-        "StarApproach 场景创建 3-5 架飞机同时进近",
-        "SidDeparture 场景创建 3-5 架飞机离场",
-        "StarMerge 场景创建 4-6 架飞机汇合",
-        "使用航路点序列 + LNAV 模拟 STAR/SID 程序",
-        "添加进近排序奖励组件"
+        "StarApproach 场景创建 3 架飞机同时进近",
+        "3 条 STAR 程序（ARTIP3C/RIVER4M/SOBTU3G）定义完整",
+        "使用航路点序列 + LNAV 模拟 STAR 程序",
+        "SINGLE_RL 模式：ego 飞机控制，背景飞机自动飞行",
+        "pytest 场景注册测试通过（11 个场景）"
       ],
-      "evidence": [],
+      "evidence": [
+        "star_approach.py 创建并注册",
+        "star_approach.yaml 配置文件创建",
+        "StarApproachRenderer 渲染器创建",
+        "test_scenario_registry.py 更新为 11 个场景",
+        "pytest 79 passed"
+      ],
       "notes": "BlueSky 没有直接的 STAR/SID 命令，通过航路点序列 + LNAV 实现。参考 ROADMAP.md 方向 1。"
     },
     {

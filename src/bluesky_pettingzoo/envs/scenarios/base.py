@@ -25,6 +25,7 @@ _SCENARIO_REGISTRY: dict[str, str] = {
     "RouteNav": "RouteNavScenario",
     "SectorCapacity": "SectorCapacityScenario",
     "StaticObstacle": "StaticObstacleScenario",
+    "StarApproach": "StarApproachScenario",
     "WaypointNav": "WaypointNavScenario",
 }
 
@@ -389,6 +390,7 @@ class BaseScenario(ABC):
             route_nav,
             sector_capacity,
             sector_cr,
+            star_approach,
             static_obstacle,
             vertical_cr,
             waypoint_nav,
@@ -404,6 +406,7 @@ class BaseScenario(ABC):
             "RouteNavScenario": route_nav,
             "SectorCapacityScenario": sector_capacity,
             "StaticObstacleScenario": static_obstacle,
+            "StarApproachScenario": star_approach,
             "WaypointNavScenario": waypoint_nav,
         }
         mod = module_map[cls_name]

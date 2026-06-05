@@ -8,6 +8,7 @@ from bluesky_pettingzoo.envs.scenarios.plan_waypoint import PlanWaypointScenario
 from bluesky_pettingzoo.envs.scenarios.route_nav import RouteNavScenario
 from bluesky_pettingzoo.envs.scenarios.sector_capacity import SectorCapacityScenario
 from bluesky_pettingzoo.envs.scenarios.sector_cr import SectorCRScenario
+from bluesky_pettingzoo.envs.scenarios.star_approach import StarApproachScenario
 from bluesky_pettingzoo.envs.scenarios.static_obstacle import StaticObstacleScenario
 from bluesky_pettingzoo.envs.scenarios.vertical_cr import VerticalCRScenario
 from bluesky_pettingzoo.envs.scenarios.waypoint_nav import WaypointNavScenario
@@ -21,6 +22,7 @@ __all__ = [
     "RouteNavScenario",
     "SectorCapacityScenario",
     "SectorCRScenario",
+    "StarApproachScenario",
     "StaticObstacleScenario",
     "VerticalCRScenario",
     "WaypointNavScenario",

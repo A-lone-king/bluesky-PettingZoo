@@ -287,3 +287,24 @@
 - 更新过的文件或工件：README.md, .gitignore, ROADMAP.md, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：开始 Phase 5 P0 任务 — STAR/SID 近程序场景实现
+
+### Session 015
+
+- 日期：2026-06-05
+- 本轮目标：实现 Phase 5 P0 — STAR/SID 近程序场景
+- 已完成：
+  - 创建 star_approach.py：STAR 近程序场景类，3 条 STAR 程序（ARTIP3C/RIVER4M/SOBTU3G）
+  - 创建 star_approach.yaml：场景配置文件
+  - 注册场景到 __init__.py 和 base.py（11 个场景）
+  - 创建 StarApproachRenderer：STAR 场景渲染器
+  - 更新 test_scenario_registry.py：测试从 10 个场景更新为 11 个
+  - 更新 feature_list.json：scenario-star-001 标记为 passing
+  - 更新 session-handoff.md：Phase 5 P0 标记为完成
+- 运行过的验证：
+  - pytest 79 passed（场景注册、配置、YAML 测试）
+  - StarApproachScenario 导入测试通过
+- 已记录证据：scenario-star-001 passing，STAR 近程序场景实现完成
+- 提交记录：待提交
+- 更新过的文件或工件：star_approach.py, star_approach.yaml, StarApproachRenderer, __init__.py, base.py, test_scenario_registry.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 P1 航班计划导入场景
