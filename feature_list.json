@@ -1,6 +1,6 @@
 {
   "project": "bluesky-pettingzoo",
-  "last_updated": "2026-06-03",
+  "last_updated": "2026-06-05",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -374,6 +374,57 @@
         "pytest: 32 passed"
       ],
       "notes": "Phase 4.2 完成：定义 EfficiencyComponent, DelayComponent, ConflictComponent, ObstacleComponent, FlowEfficiencyComponent, FairnessComponent, PriorityScenario, DynamicEntryScenario, ObstacleScenario, NavigationScenario, BoundedRenderer Protocol"
+    },
+    {
+      "id": "scenario-star-001",
+      "priority": 5,
+      "area": "envs",
+      "title": "STAR/SID 进近程序场景",
+      "user_visible_behavior": "支持标准终端到场（STAR）和标准仪表离场（SID）场景，模拟真实机场进近流程，多架飞机同时进近需排序间隔。",
+      "status": "not_started",
+      "verification": [
+        "StarApproach 场景创建 3-5 架飞机同时进近",
+        "SidDeparture 场景创建 3-5 架飞机离场",
+        "StarMerge 场景创建 4-6 架飞机汇合",
+        "使用航路点序列 + LNAV 模拟 STAR/SID 程序",
+        "添加进近排序奖励组件"
+      ],
+      "evidence": [],
+      "notes": "BlueSky 没有直接的 STAR/SID 命令，通过航路点序列 + LNAV 实现。参考 ROADMAP.md 方向 1。"
+    },
+    {
+      "id": "scenario-flightplan-001",
+      "priority": 5,
+      "area": "envs",
+      "title": "航班计划导入场景",
+      "user_visible_behavior": "支持从 CSV/JSON 文件导入真实航班计划，使训练环境更接近真实运行。",
+      "status": "not_started",
+      "verification": [
+        "支持 CSV 格式航班计划导入",
+        "支持 JSON 格式航班计划导入",
+        "FlightPlanScenario 类正确解析航班数据",
+        "航班计划验证逻辑正确",
+        "提供示例数据文件"
+      ],
+      "evidence": [],
+      "notes": "数据格式包含 flight_id, aircraft_type, origin, destination, entry_time, waypoints 等字段。参考 ROADMAP.md 方向 2。"
+    },
+    {
+      "id": "data-recording-001",
+      "priority": 6,
+      "area": "training",
+      "title": "数据记录与分析",
+      "user_visible_behavior": "记录训练和评估过程中的详细数据，支持离线分析，包括飞行轨迹、冲突事件、奖励分解、回放功能。",
+      "status": "not_started",
+      "verification": [
+        "飞行轨迹记录功能正常",
+        "冲突事件记录功能正常",
+        "奖励分解记录功能正常",
+        "回放功能正常",
+        "数据格式符合设计规范"
+      ],
+      "evidence": [],
+      "notes": "数据格式包含 episode_id, timestamp, scenario, duration, aircraft trajectories, conflicts, rewards 等。参考 ROADMAP.md 方向 4。"
     }
   ]
 }

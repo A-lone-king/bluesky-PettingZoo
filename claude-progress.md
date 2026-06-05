@@ -270,3 +270,20 @@
 - 更新过的文件或工件：protocols.py, observation_builder.py, parallel_env.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始其他未完成功能
+
+### Session 014
+
+- 日期：2026-06-05
+- 本轮目标：更新项目文档 + 制定下一阶段优化计划
+- 已完成：
+  - 更新 README.md：添加 BlueSky 深度集成章节（bs.tools.geo、areafilter、selalt/selvs、LNAV、性能模型）
+  - 更新 .gitignore：添加会话/计划文件忽略规则
+  - 创建 ROADMAP.md：制定下一阶段优化路线图（STAR/SID 近程序、航班计划导入、数据记录）
+  - 更新 feature_list.json：添加 3 个新功能条目（scenario-star-001、scenario-flightplan-001、data-recording-001）
+  - 更新 session-handoff.md：添加 Phase 5 下一阶段优化计划
+- 运行过的验证：复用 Session 013 结果（943 passed）
+- 已记录证据：文档更新完成，优化路线图已制定
+- 提交记录：docs: update README.md and .gitignore
+- 更新过的文件或工件：README.md, .gitignore, ROADMAP.md, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：开始 Phase 5 P0 任务 — STAR/SID 近程序场景实现

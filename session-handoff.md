@@ -30,22 +30,51 @@
 3. **垂直控制改用 selalt/selvs** ✅ — wrapper.set_vertical_control() + translator.translate_vertical()
 4. **动作频率配置** ✅ — default.yaml action_frequency: 10，step_n() 已实现
 
-### Phase 2 待办
+### Phase 2（已完成 ✅）
 
 1. **过程式场景随机生成** ✅ — reset(rng) 随机化飞机数量，num_aircraft_range 属性，36 个测试通过
 2. **LNAV 航路跟随集成** ✅ — wrapper 5 个 LNAV 方法 + RouteNav/WaypointNav configure_npc_navigation，7 个测试通过
-3. **N-nearest neighbors 观测** — 使用 kwikdist_matrix 替代 O(n²) 遍历
 
-### Phase 3
+### Phase 3（已完成 ✅）
 
 1. **性能模型集成** ✅ — OpenAP 激活（PERF OpenAP），set_performance_model() 运行时切换，13 个测试通过
 2. **BADA 运行时检测** ✅ — 验证 bs.settings.performance_model，失败时 warnings.warn()，3 个测试通过
 
-### Phase 3-4（后续）
+### Phase 4（已完成 ✅）
 
 - N-nearest neighbors 观测优化 ✅ — haversine_distance_matrix 向量化计算
 - parallel_env.py 架构拆分 ✅ — ObservationBuilder 提取，783→673 行
 - Protocol 接口替换 ✅ — 11 个 Protocol 定义，替换 hasattr duck-typing
+
+### Phase 5：下一阶段优化（待开始）
+
+**参考 ROADMAP.md 获取详细计划**
+
+| 优先级 | 功能 | 价值 | 工作量 | 状态 |
+|--------|------|------|--------|------|
+| P0 | STAR/SID 近程序场景 | 高 | 3-5 天 | not_started |
+| P1 | 航班计划导入场景 | 高 | 2-3 天 | not_started |
+| P2 | 增强现有场景 | 中 | 5-7 天 | not_started |
+| P3 | 数据记录与分析 | 中 | 3-4 天 | not_started |
+
+**推荐执行顺序**：P0 → P1 → P3 → P2
+
+**P0 详细计划**：
+
+1. 创建 `src/bluesky_pettingzoo/envs/scenarios/star_approach.py`
+2. 实现 STAR 程序航路点生成逻辑（使用航路点序列 + LNAV）
+3. 添加进近排序奖励组件
+4. 编写单元测试和集成测试
+5. 添加 Pygame 渲染器
+
+**P1 详细计划**：
+
+1. 创建 `src/bluesky_pettingzoo/envs/scenarios/flight_plan.py`
+2. 实现 CSV/JSON 解析器
+3. 创建 `FlightPlanScenario` 类
+4. 添加航班计划验证逻辑
+5. 编写测试用例
+6. 提供示例数据文件
 
 ## 失败分类
 
