@@ -330,3 +330,23 @@
 - 更新过的文件或工件：flight_plan_parser.py, flight_plan.py, flight_plan.yaml, sample_flight_plans.json, __init__.py, base.py, test_scenario_registry.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始 P3 数据记录与分析
+
+### Session 017
+
+- 日期：2026-06-06
+- 本轮目标：完成 Phase 5 P3 — 数据记录与分析（data-recording-001）
+- 已完成：
+  - types.py：5 个数据类型（TrajectoryPoint, ConflictRecord, RewardDecomposition, AgentRecord, EpisodeRecord），全部 frozen dataclass
+  - recorder.py：DataRecorder 类，record_step/finalize/to_json 方法，支持轨迹、奖励、冲突、奖励分解记录
+  - wrapper.py：DataRecordingWrapper，透明包装 ParallelEnv，reset/step 自动记录 episode 数据
+  - calculator.py：新增 compute_detailed() 方法，返回 (total, breakdown) 支持奖励分解
+  - 编写 25 个测试（test_data_recording.py），覆盖 types/recorder/wrapper 全部功能
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest: 25 passed（types 5 + recorder 5 + wrapper 15）
+- 已记录证据：data-recording-001 passing，数据记录模块实现完成
+- 提交记录：待提交
+- 更新过的文件或工件：types.py, recorder.py, wrapper.py, calculator.py, test_data_recording.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码

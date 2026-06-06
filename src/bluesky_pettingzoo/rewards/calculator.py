@@ -68,6 +68,37 @@ class RewardCalculator:
             )
         return total
 
+    def compute_detailed(
+        self,
+        agent_id: str,
+        prev_state: AircraftState,
+        action: DiscreteAction | list[Any] | np.ndarray,
+        curr_state: AircraftState,
+        all_states: dict[str, AircraftState],
+        step_count: int = 0,
+    ) -> tuple[float, list[tuple[str, float, float, float]]]:
+        """Compute total reward and per-component breakdown.
+
+        Returns:
+            (total, breakdown) where breakdown is a list of
+            (component_name, weight, raw_value, weighted_value) tuples.
+        """
+        total = 0.0
+        breakdown: list[tuple[str, float, float, float]] = []
+        for component, weight in self._components:
+            raw = component.compute(
+                agent_id,
+                prev_state,
+                action,
+                curr_state,
+                all_states,
+                step_count=step_count,
+            )
+            weighted = weight * raw
+            total += weighted
+            breakdown.append((component.component_name, weight, raw, weighted))
+        return total, breakdown
+
     def reset(self) -> None:
         """Reset all registered components."""
         for component, _ in self._components:

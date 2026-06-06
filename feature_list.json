@@ -427,16 +427,27 @@
       "area": "training",
       "title": "数据记录与分析",
       "user_visible_behavior": "记录训练和评估过程中的详细数据，支持离线分析，包括飞行轨迹、冲突事件、奖励分解、回放功能。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
-        "飞行轨迹记录功能正常",
-        "冲突事件记录功能正常",
-        "奖励分解记录功能正常",
-        "回放功能正常",
-        "数据格式符合设计规范"
+        "TrajectoryPoint/ConflictRecord/RewardDecomposition 数据类型定义完整且 frozen",
+        "DataRecorder 正确累积轨迹、奖励、冲突数据",
+        "DataRecorder.finalize() 返回完整 EpisodeRecord",
+        "DataRecorder.to_json() 正确序列化为 JSON",
+        "DataRecordingWrapper 透明包装 ParallelEnv，自动记录 episode 数据",
+        "多 episode 连续记录正确",
+        "支持 reward_decomposition 和 conflicts 从 infos 中提取",
+        "ruff check + mypy + pytest 25 passed"
       ],
-      "evidence": [],
-      "notes": "数据格式包含 episode_id, timestamp, scenario, duration, aircraft trajectories, conflicts, rewards 等。参考 ROADMAP.md 方向 4。"
+      "evidence": [
+        "types.py: 5 个数据类型（TrajectoryPoint, ConflictRecord, RewardDecomposition, AgentRecord, EpisodeRecord）",
+        "recorder.py: DataRecorder 类，record_step/finalize/to_json 方法",
+        "wrapper.py: DataRecordingWrapper，reset/step 自动记录，get_records/get_last_episode 查询",
+        "calculator.py: compute_detailed() 返回 (total, breakdown) 支持奖励分解",
+        "test_data_recording.py: 25 个测试全部通过",
+        "ruff check: No issues found",
+        "mypy: No issues found"
+      ],
+      "notes": "数据格式包含 episode_id, scenario, total_steps, aircraft trajectories, conflicts, reward_totals。参考 ROADMAP.md 方向 4。"
     }
   ]
 }
