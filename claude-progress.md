@@ -350,3 +350,19 @@
 - 更新过的文件或工件：types.py, recorder.py, wrapper.py, calculator.py, test_data_recording.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码
+
+### Session 018
+
+- 日期：2026-06-06
+- 本轮目标：提交代码 + 制定 V2.0 改进计划
+- 已完成：
+  - 提交 Session 017 数据记录模块代码（feat(training): add data recording and analysis module (P3)）
+  - 分析项目现状，识别 5 个改进方向（端到端验证、场景复杂度、观测空间、动作空间、CI/CD）
+  - 制定 V2.0 改进计划（5 个 Phase，预估 9-14 天）
+  - 更新 ROADMAP.md 添加 V2.0 改进计划章节
+- 运行过的验证：复用 Session 017 结果（943 passed）
+- 已记录证据：V2.0 改进计划已制定，ROADMAP.md 已更新
+- 提交记录：2026-06-06 feat(training): add data recording and analysis module (P3)
+- 更新过的文件或工件：ROADMAP.md, claude-progress.md, session-handoff.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：开始 Phase 1 端到端训练验证

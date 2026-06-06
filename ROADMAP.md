@@ -225,7 +225,71 @@ AC002,A320,ZBAA,ZSPD,08:05,40.10,116.60,33000,175,440,"WPT1:40.2,116.6,28000;WPT
 
 ---
 
-## 六、参考资源
+## 七、V2.0 改进计划（2026-06-06 制定）
+
+V1.0 基础框架已完成（19 个功能全部 passing，943 个单元测试通过）。以下为面向论文发表和严肃研究的改进计划。
+
+### Phase 1: 端到端训练验证（优先级最高，1-2 天）
+
+**目标**：确保完整训练流程可运行，训练能产生学习信号。
+
+| 任务 | 描述 | 文件 |
+|------|------|------|
+| 1.1 增强 E2E 测试 | 添加 test_full_episode_training、test_multi_scenario_training、test_reward_signal_exists | tests/test_e2e_training.py |
+| 1.2 增强 Smoke Test | 添加多场景验证、训练曲线 CSV 输出 | scripts/train_smoke_test.py |
+
+**验证标准**：
+- 3 个核心场景（HorizontalCR、SectorCR、WaypointNav）训练后奖励有提升
+- 完整 episode 从 reset 到终止正常运行
+
+### Phase 2: 场景复杂度增强（P2 方向，3-5 天）
+
+**目标**：将简单场景升级为更接近真实的复杂场景。
+
+| 场景 | 当前问题 | 改进方案 |
+|------|----------|----------|
+| HorizontalCR | 同高度对头冲突 | 多高度层（3-4 层），每层 2-3 架飞机 |
+| VerticalCR | 简单爬升/下降 | 真实进近剖面（3° 下滑道、速度约束） |
+| SectorCR | 静态容量 | 动态容量变化（模拟高峰/低谷） |
+
+### Phase 3: 观测空间增强（2-3 天）
+
+**目标**：丰富观测信息，提升 RL 训练效果。
+
+| 任务 | 描述 | 新建/修改文件 |
+|------|------|---------------|
+| 3.1 历史帧堆叠 | 堆叠最近 N 帧观测，提供时间维度 | wrappers/frame_stack.py（新建） |
+| 3.2 冲突预测特征 | 添加 time_to_conflict、closure_rate | observations/manager.py |
+| 3.3 地速计算改进 | 计算真实地速（考虑风场） | observations/manager.py |
+
+### Phase 4: 动作空间验证（2-3 天）
+
+**目标**：验证动作空间设计对训练效果的影响。
+
+| 实验 | 配置 | 对比维度 |
+|------|------|----------|
+| 消融实验 | heading_only / heading_speed / heading_altitude / full | 动作维度数量 |
+| 离散 vs 连续 | MultiDiscrete(5,5,5) vs Box(-1,1,3) | 离散/连续 |
+
+### Phase 5: CI/CD（1 天）
+
+**目标**：建立自动化测试和代码质量检查。
+
+| 任务 | 描述 | 文件 |
+|------|------|------|
+| 5.1 GitHub Actions CI | 自动运行 lint + type check + test | .github/workflows/ci.yml（新建） |
+| 5.2 pytest markers | 添加 slow/integration/e2e 标记 | pyproject.toml |
+| 5.3 coverage threshold | 设置最低覆盖率 80% | pyproject.toml |
+
+### V2.0 实施顺序
+
+1. Phase 1（端到端验证）→ 2. Phase 5（CI/CD）→ 3. Phase 2（场景复杂度）→ 4. Phase 3（观测空间）→ 5. Phase 4（动作空间验证）
+
+**总预估工作量**：9-14 天
+
+---
+
+## 八、参考资源
 
 - BlueSky 文档：https://github.com/TUDelft-CNS-ATM/bluesky
 - PettingZoo 文档：https://pettingzoo.farama.org/

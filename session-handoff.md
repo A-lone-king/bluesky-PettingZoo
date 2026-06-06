@@ -68,14 +68,36 @@
 5. ✅ 创建 `StarApproachRenderer` 渲染器
 6. ✅ 更新测试（pytest 79 passed）
 
-**P1 详细计划**：
+**P1 完成情况**：
 
-1. 创建 `src/bluesky_pettingzoo/envs/scenarios/flight_plan.py`
-2. 实现 CSV/JSON 解析器
-3. 创建 `FlightPlanScenario` 类
-4. 添加航班计划验证逻辑
-5. 编写测试用例
-6. 提供示例数据文件
+1. ✅ 创建 `src/bluesky_pettingzoo/envs/scenarios/flight_plan.py`
+2. ✅ 实现 CSV/JSON 解析器（flight_plan_parser.py）
+3. ✅ 创建 `FlightPlanScenario` 类
+4. ✅ 添加航班计划验证逻辑
+5. ✅ 编写测试用例（pytest 83 passed）
+6. ✅ 提供示例数据文件（sample_flight_plans.json）
+
+**P3 完成情况**：
+
+1. ✅ 创建 `src/bluesky_pettingzoo/recording/types.py`（5 个 frozen dataclass）
+2. ✅ 创建 `src/bluesky_pettingzoo/recording/recorder.py`（DataRecorder 类）
+3. ✅ 创建 `src/bluesky_pettingzoo/recording/wrapper.py`（DataRecordingWrapper）
+4. ✅ 增强 `calculator.py` 添加 compute_detailed() 方法
+5. ✅ 编写 25 个测试（test_data_recording.py）
+
+## V2.0 改进计划（2026-06-06 制定）
+
+**参考 ROADMAP.md 第七章获取详细计划**
+
+| Phase | 目标 | 工作量 | 状态 |
+|-------|------|--------|------|
+| Phase 1 | 端到端训练验证 | 1-2 天 | not_started |
+| Phase 2 | 场景复杂度增强 | 3-5 天 | not_started |
+| Phase 3 | 观测空间增强 | 2-3 天 | not_started |
+| Phase 4 | 动作空间验证 | 2-3 天 | not_started |
+| Phase 5 | CI/CD | 1 天 | not_started |
+
+**推荐执行顺序**：Phase 1 → Phase 5 → Phase 2 → Phase 3 → Phase 4
 
 ## 失败分类
 
