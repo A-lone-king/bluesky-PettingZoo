@@ -1,6 +1,6 @@
 {
   "project": "bluesky-pettingzoo",
-  "last_updated": "2026-06-05",
+  "last_updated": "2026-06-06",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -448,6 +448,82 @@
         "mypy: No issues found"
       ],
       "notes": "数据格式包含 episode_id, scenario, total_steps, aircraft trajectories, conflicts, reward_totals。参考 ROADMAP.md 方向 4。"
+    },
+    {
+      "id": "e2e-training-001",
+      "priority": 7,
+      "area": "training",
+      "title": "端到端训练验证",
+      "user_visible_behavior": "完整训练流程可运行：env.reset() → agent 选择动作 → env.step() → 训练循环，训练能产生学习信号（final_reward > initial_reward）。",
+      "status": "not_started",
+      "verification": [
+        "test_full_episode_training 完整 episode 训练通过",
+        "test_multi_scenario_training 3 个核心场景训练通过",
+        "test_reward_signal_exists 训练后奖励有提升",
+        "train_smoke_test.py --multi-scenario 多场景验证通过"
+      ],
+      "evidence": [],
+      "notes": "V2.0 Phase 1 优先级最高，确保训练流程可用。参考 ROADMAP.md 第七章。"
+    },
+    {
+      "id": "scenario-enhance-001",
+      "priority": 8,
+      "area": "envs",
+      "title": "场景复杂度增强",
+      "user_visible_behavior": "HorizontalCR 支持多高度层冲突、VerticalCR 支持真实进近剖面、SectorCR 支持动态容量变化。",
+      "status": "not_started",
+      "verification": [
+        "HorizontalCR 多高度层测试通过",
+        "VerticalCR 真实进近剖面测试通过",
+        "SectorCR 动态容量测试通过"
+      ],
+      "evidence": [],
+      "notes": "V2.0 Phase 2，将简单场景升级为更接近真实的复杂场景。参考 ROADMAP.md 第七章。"
+    },
+    {
+      "id": "obs-enhance-001",
+      "priority": 9,
+      "area": "observations",
+      "title": "观测空间增强",
+      "user_visible_behavior": "支持历史帧堆叠、冲突预测特征（time_to_conflict、closure_rate）、真实地速计算。",
+      "status": "not_started",
+      "verification": [
+        "FrameStackWrapper 历史帧堆叠测试通过",
+        "time_to_conflict/closure_rate 特征测试通过",
+        "ground_speed 真实地速计算测试通过"
+      ],
+      "evidence": [],
+      "notes": "V2.0 Phase 3，丰富观测信息提升 RL 训练效果。参考 ROADMAP.md 第七章。"
+    },
+    {
+      "id": "action-validation-001",
+      "priority": 10,
+      "area": "actions",
+      "title": "动作空间验证",
+      "user_visible_behavior": "消融实验验证不同动作维度对训练效果的影响，离散 vs 连续动作对比。",
+      "status": "not_started",
+      "verification": [
+        "消融实验（heading_only/speed/altitude/full）完成",
+        "离散 vs 连续动作对比完成",
+        "训练效果对比报告生成"
+      ],
+      "evidence": [],
+      "notes": "V2.0 Phase 4，验证动作空间设计对训练收敛性的影响。参考 ROADMAP.md 第七章。"
+    },
+    {
+      "id": "cicd-001",
+      "priority": 11,
+      "area": "devops",
+      "title": "CI/CD 配置",
+      "user_visible_behavior": "GitHub Actions 自动运行 lint + type check + test，pytest markers 支持 slow/integration/e2e 标记，coverage threshold 80%。",
+      "status": "not_started",
+      "verification": [
+        ".github/workflows/ci.yml 创建并可运行",
+        "pytest markers 配置正确",
+        "coverage threshold 80% 生效"
+      ],
+      "evidence": [],
+      "notes": "V2.0 Phase 5，建立自动化测试和代码质量检查。参考 ROADMAP.md 第七章。"
     }
   ]
 }
