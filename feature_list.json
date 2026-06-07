@@ -561,6 +561,29 @@
         "CI 流程: ruff check + ruff format + mypy + pytest + coverage"
       ],
       "notes": "V2.0 Phase 5，建立自动化测试和代码质量检查。参考 ROADMAP.md 第七章。"
+    },
+    {
+      "id": "render-enhance-001",
+      "priority": 12,
+      "area": "rendering",
+      "title": "渲染效果增强",
+      "user_visible_behavior": "参考 bluesky-gym 的渲染风格，改进渲染效果，添加天空渐变、地面、跑道、障碍物、汇合线等视觉元素。",
+      "status": "in_progress",
+      "verification": [
+        "天空渐变背景渲染测试通过",
+        "地面和跑道渲染测试通过",
+        "场景特定元素（障碍物、汇合线等）渲染测试通过"
+      ],
+      "evidence": [
+        "Phase 1 完成: draw_sky_gradient, draw_ground, draw_runway 函数已添加",
+        "Phase 2 部分完成: draw_altitude_box, draw_obstacle_triangle, draw_merge_line, draw_waypoint_circle 函数已添加",
+        "base_renderer.py: 默认使用天空渐变背景",
+        "descent_renderer.py: 添加地面和跑道渲染",
+        "vertical_cr_renderer.py: 添加高度层方框",
+        "ruff check: No issues found",
+        "mypy: No issues found"
+      ],
+      "notes": "参考 bluesky-gym 的 7 个环境渲染图片，分 3 个 Phase 实现。Phase 1 和 Phase 2 的基础函数已完成。"
     }
   ]
 }

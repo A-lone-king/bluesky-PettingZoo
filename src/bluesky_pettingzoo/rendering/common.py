@@ -227,3 +227,177 @@ def draw_sector_polygon(
         return
     pixel_points = [latlon_to_pixel(lat, lon, bounds, width, height) for lat, lon in vertices]
     pygame.draw.polygon(screen, color, pixel_points, line_width)
+
+
+def draw_sky_gradient(
+    screen: Any,
+    width: int,
+    height: int,
+    top_color: tuple[int, int, int] = (135, 206, 235),
+    bottom_color: tuple[int, int, int] = (176, 224, 230),
+) -> None:
+    """Draw a vertical sky gradient background.
+
+    Args:
+        screen: Pygame surface.
+        width: Screen width.
+        height: Screen height.
+        top_color: RGB color at the top.
+        bottom_color: RGB color at the bottom.
+    """
+    if pygame is None:
+        return
+    for y in range(height):
+        ratio = y / height
+        r = int(top_color[0] + (bottom_color[0] - top_color[0]) * ratio)
+        g = int(top_color[1] + (bottom_color[1] - top_color[1]) * ratio)
+        b = int(top_color[2] + (bottom_color[2] - top_color[2]) * ratio)
+        pygame.draw.line(screen, (r, g, b), (0, y), (width, y))
+
+
+def draw_ground(
+    screen: Any,
+    width: int,
+    height: int,
+    ground_ratio: float = 0.15,
+    ground_color: tuple[int, int, int] = (124, 179, 66),
+) -> None:
+    """Draw ground area at the bottom of the screen.
+
+    Args:
+        screen: Pygame surface.
+        width: Screen width.
+        height: Screen height.
+        ground_ratio: Ratio of screen height for ground (0.0-1.0).
+        ground_color: RGB color for ground.
+    """
+    if pygame is None:
+        return
+    ground_height = int(height * ground_ratio)
+    ground_y = height - ground_height
+    pygame.draw.rect(screen, ground_color, (0, ground_y, width, ground_height))
+
+
+def draw_runway(
+    screen: Any,
+    x: int,
+    y: int,
+    length: int = 200,
+    width: int = 20,
+    color: tuple[int, int, int] = (169, 169, 169),
+) -> None:
+    """Draw a runway as a gray rectangle.
+
+    Args:
+        screen: Pygame surface.
+        x: Center x coordinate.
+        y: Center y coordinate.
+        length: Runway length in pixels.
+        width: Runway width in pixels.
+        color: RGB color for runway.
+    """
+    if pygame is None:
+        return
+    rect = pygame.Rect(x - length // 2, y - width // 2, length, width)
+    pygame.draw.rect(screen, color, rect)
+    # Draw center line
+    line_y = y
+    pygame.draw.line(
+        screen, (255, 255, 255),
+        (x - length // 2 + 10, line_y),
+        (x + length // 2 - 10, line_y),
+        2,
+    )
+
+
+def draw_obstacle_triangle(
+    screen: Any,
+    vertices: list[tuple[int, int]],
+    color: tuple[int, int, int] = (0, 0, 0),
+    filled: bool = True,
+) -> None:
+    """Draw a triangular obstacle.
+
+    Args:
+        screen: Pygame surface.
+        vertices: List of 3 (x, y) pixel coordinates.
+        color: RGB color for obstacle.
+        filled: Whether to fill the triangle.
+    """
+    if pygame is None or len(vertices) < 3:
+        return
+    width = 0 if filled else 2
+    pygame.draw.polygon(screen, color, vertices[:3], width)
+
+
+def draw_merge_line(
+    screen: Any,
+    start: tuple[int, int],
+    end: tuple[int, int],
+    color: tuple[int, int, int] = (255, 255, 255),
+    width: int = 2,
+) -> None:
+    """Draw a merge line between two points.
+
+    Args:
+        screen: Pygame surface.
+        start: (x, y) start coordinates.
+        end: (x, y) end coordinates.
+        color: RGB color for line.
+        width: Line width in pixels.
+    """
+    if pygame is None:
+        return
+    pygame.draw.line(screen, color, start, end, width)
+
+
+def draw_altitude_box(
+    screen: Any,
+    x: int,
+    y: int,
+    width: int = 60,
+    height: int = 40,
+    color: tuple[int, int, int] = (30, 30, 30),
+    line_width: int = 1,
+) -> None:
+    """Draw an altitude box around an aircraft.
+
+    Args:
+        screen: Pygame surface.
+        x: Center x coordinate.
+        y: Center y coordinate.
+        width: Box width in pixels.
+        height: Box height in pixels.
+        color: RGB color for box.
+        line_width: Line width.
+    """
+    if pygame is None:
+        return
+    rect = pygame.Rect(x - width // 2, y - height // 2, width, height)
+    pygame.draw.rect(screen, color, rect, line_width)
+
+
+def draw_waypoint_circle(
+    screen: Any,
+    x: int,
+    y: int,
+    outer_radius: int = 12,
+    inner_radius: int = 6,
+    outer_color: tuple[int, int, int] = (255, 255, 255),
+    inner_color: tuple[int, int, int] = (135, 206, 235),
+) -> None:
+    """Draw a waypoint as concentric circles (bluesky-gym style).
+
+    Args:
+        screen: Pygame surface.
+        x: Pixel x coordinate.
+        y: Pixel y coordinate.
+        outer_radius: Outer circle radius.
+        inner_radius: Inner circle radius.
+        outer_color: RGB color for outer circle.
+        inner_color: RGB color for inner circle.
+    """
+    if pygame is None:
+        return
+    pygame.draw.circle(screen, outer_color, (x, y), outer_radius, 2)
+    pygame.draw.circle(screen, inner_color, (x, y), inner_radius)

@@ -7,7 +7,10 @@ from typing import Any
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft,
+    draw_ground,
     draw_nmac_circle,
+    draw_runway,
+    draw_sky_gradient,
     draw_waypoint,
     latlon_to_pixel,
 )
@@ -43,7 +46,6 @@ class DescentRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        self._screen.fill((0, 0, 0))
         bounds = self._bounds or {
             "lat_min": 39.0,
             "lat_max": 41.0,
@@ -51,27 +53,20 @@ class DescentRenderer(BaseRenderer):
             "lon_max": 118.0,
         }
 
-        # Draw runway marker at center
-        if pygame is not None:
-            center_x = self._width // 2
-            center_y = self._height // 2
-            pygame.draw.line(
-                self._screen,
-                (255, 255, 255),
-                (center_x - 20, center_y),
-                (center_x + 20, center_y),
-                3,
-            )
-            pygame.draw.line(
-                self._screen,
-                (255, 255, 255),
-                (center_x, center_y - 5),
-                (center_x, center_y + 5),
-                2,
-            )
-            if self._font is not None:
-                rwy_text = self._font.render("RWY", True, (255, 255, 255))
-                self._screen.blit(rwy_text, (center_x + 22, center_y - 8))
+        # Draw sky gradient background
+        draw_sky_gradient(self._screen, self._width, self._height)
+
+        # Draw ground
+        draw_ground(self._screen, self._width, self._height, ground_ratio=0.2)
+
+        # Draw runway
+        draw_runway(
+            self._screen,
+            x=self._width // 2,
+            y=int(self._height * 0.85),
+            length=200,
+            width=15,
+        )
 
         for acid, state in states.items():
             x, y = latlon_to_pixel(state.lat, state.lon, bounds, self._width, self._height)

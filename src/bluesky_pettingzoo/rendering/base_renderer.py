@@ -12,6 +12,7 @@ except ImportError:
 from bluesky_pettingzoo.rendering.common import (
     compute_pixels_per_nm,
     draw_aircraft,
+    draw_sky_gradient,
     draw_waypoint,
     latlon_to_pixel,
 )
@@ -111,8 +112,14 @@ class BaseRenderer:
         if not self._initialized:
             return
 
-        # Clear screen
-        self._screen.fill(self._background_color)
+        # Clear screen with sky gradient
+        draw_sky_gradient(
+            self._screen,
+            self._width,
+            self._height,
+            top_color=(135, 206, 235),
+            bottom_color=(176, 224, 230),
+        )
 
         # Draw aircraft
         for agent_id, state in states.items():
