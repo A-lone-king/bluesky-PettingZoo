@@ -8,7 +8,8 @@ from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft,
     draw_nmac_circle,
-    draw_sector_polygon,
+    draw_obstacle_triangle,
+    draw_sky_gradient,
     draw_waypoint,
     latlon_to_pixel,
 )
@@ -39,7 +40,9 @@ class StaticObstacleRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        self._screen.fill((0, 0, 0))
+        # Draw sky gradient background
+        draw_sky_gradient(self._screen, self._width, self._height)
+
         bounds = self._bounds or {
             "lat_min": 39.0,
             "lat_max": 41.0,
@@ -47,18 +50,21 @@ class StaticObstacleRenderer(BaseRenderer):
             "lon_max": 118.0,
         }
 
-        # Draw obstacle polygons (red no-fly zones)
+        # Draw obstacle polygons (black filled triangles - bluesky-gym style)
         obstacles = info.get("obstacles", []) if info else []
         for polygon in obstacles:
-            if polygon:
-                draw_sector_polygon(
+            if polygon and len(polygon) >= 3:
+                # Convert lat/lon vertices to pixel coordinates
+                pixel_vertices = [
+                    latlon_to_pixel(lat, lon, bounds, self._width, self._height)
+                    for lat, lon in polygon
+                ]
+                # Draw as filled black triangle
+                draw_obstacle_triangle(
                     self._screen,
-                    polygon,
-                    bounds,
-                    self._width,
-                    self._height,
-                    color=(255, 50, 50),
-                    line_width=2,
+                    pixel_vertices,
+                    color=(0, 0, 0),
+                    filled=True,
                 )
 
         for acid, state in states.items():

@@ -8,7 +8,8 @@ from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft,
     draw_nmac_circle,
-    draw_waypoint,
+    draw_sky_gradient,
+    draw_waypoint_circle,
     latlon_to_pixel,
 )
 
@@ -21,7 +22,7 @@ except ImportError:
 class PlanWaypointRenderer(BaseRenderer):
     """Renderer for PlanWaypoint scenario.
 
-    Draws an ordered chain of waypoints with reached (green) vs pending (yellow)
+    Draws an ordered chain of waypoints with reached (green) vs pending (white)
     color coding, connected by lines.
     """
 
@@ -43,7 +44,9 @@ class PlanWaypointRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        self._screen.fill((0, 0, 0))
+        # Draw sky gradient background
+        draw_sky_gradient(self._screen, self._width, self._height)
+
         bounds = self._bounds or {
             "lat_min": 39.0,
             "lat_max": 41.0,
@@ -63,8 +66,19 @@ class PlanWaypointRenderer(BaseRenderer):
                 wx, wy = latlon_to_pixel(wp["lat"], wp["lon"], bounds, self._width, self._height)
                 pixel_points.append((wx, wy))
                 reached = wp.get("reached", False)
-                color = (0, 200, 0) if reached else (255, 255, 0)
-                draw_waypoint(self._screen, wx, wy, color=color)
+                # Use bluesky-gym style concentric circles for waypoints
+                if reached:
+                    draw_waypoint_circle(
+                        self._screen, wx, wy,
+                        outer_color=(0, 200, 0),
+                        inner_color=(0, 150, 0),
+                    )
+                else:
+                    draw_waypoint_circle(
+                        self._screen, wx, wy,
+                        outer_color=(255, 255, 255),
+                        inner_color=(135, 206, 235),
+                    )
 
             # Connect waypoints with lines
             if len(pixel_points) >= 2:

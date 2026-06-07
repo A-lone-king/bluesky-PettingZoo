@@ -7,7 +7,9 @@ from typing import Any
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft,
+    draw_merge_line,
     draw_nmac_circle,
+    draw_sky_gradient,
     draw_waypoint,
     latlon_to_pixel,
 )
@@ -43,7 +45,9 @@ class MergeRenderer(BaseRenderer):
         if not self._initialized or self._screen is None:
             return
 
-        self._screen.fill((0, 0, 0))
+        # Draw sky gradient background
+        draw_sky_gradient(self._screen, self._width, self._height)
+
         bounds = self._bounds or {
             "lat_min": 39.0,
             "lat_max": 41.0,
@@ -54,27 +58,9 @@ class MergeRenderer(BaseRenderer):
         controllable = info.get("controllable", []) if info else []
         background = info.get("background", []) if info else []
 
-        # Draw background aircraft first (semi-transparent gray)
-        for acid in background:
-            if acid not in states:
-                continue
-            state = states[acid]
-            x, y = latlon_to_pixel(state.lat, state.lon, bounds, self._width, self._height)
-            draw_aircraft(self._screen, x, y, state.hdg, color=(120, 120, 120))
-            draw_nmac_circle(self._screen, x, y)
-
-        # Draw controllable aircraft (green, on top)
-        for acid in controllable:
-            if acid not in states:
-                continue
-            state = states[acid]
-            x, y = latlon_to_pixel(state.lat, state.lon, bounds, self._width, self._height)
-            draw_aircraft(self._screen, x, y, state.hdg, color=(0, 255, 0))
-            draw_nmac_circle(self._screen, x, y)
-
-        # Draw FAF waypoint (shared convergence point)
+        # Draw FAF waypoint first (shared convergence point)
+        faf_pos = None
         if waypoints and isinstance(waypoints, dict):
-            # Use first waypoint as FAF
             first_wp = next(iter(waypoints.values()), None)
             if first_wp and isinstance(first_wp, dict) and "lat" in first_wp:
                 fx, fy = latlon_to_pixel(
@@ -84,11 +70,36 @@ class MergeRenderer(BaseRenderer):
                     self._width,
                     self._height,
                 )
+                faf_pos = (fx, fy)
                 draw_waypoint(self._screen, fx, fy, color=(255, 100, 0), radius=8)
                 # Draw FAF label
                 if self._font is not None:
                     faf_text = self._font.render("FAF", True, (255, 100, 0))
                     self._screen.blit(faf_text, (fx + 10, fy - 10))
+
+        # Draw background aircraft first (semi-transparent gray)
+        for acid in background:
+            if acid not in states:
+                continue
+            state = states[acid]
+            x, y = latlon_to_pixel(state.lat, state.lon, bounds, self._width, self._height)
+            draw_aircraft(self._screen, x, y, state.hdg, color=(120, 120, 120))
+            draw_nmac_circle(self._screen, x, y)
+            # Draw merge line to FAF
+            if faf_pos:
+                draw_merge_line(self._screen, (x, y), faf_pos, color=(180, 180, 180), width=1)
+
+        # Draw controllable aircraft (green, on top)
+        for acid in controllable:
+            if acid not in states:
+                continue
+            state = states[acid]
+            x, y = latlon_to_pixel(state.lat, state.lon, bounds, self._width, self._height)
+            draw_aircraft(self._screen, x, y, state.hdg, color=(0, 255, 0))
+            draw_nmac_circle(self._screen, x, y)
+            # Draw merge line to FAF
+            if faf_pos:
+                draw_merge_line(self._screen, (x, y), faf_pos, color=(255, 255, 255), width=2)
 
         self._draw_hud(step=step, info=info)
         self.flip()
