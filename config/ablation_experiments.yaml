@@ -1,0 +1,122 @@
+# 动作空间消融实验配置
+# action-validation-001
+
+experiments:
+  # 离散动作空间消融实验
+  discrete_heading_only:
+    name: "Discrete - Heading Only"
+    action_type: "discrete"
+    action_dims: [5]  # 仅航向
+    action_labels: ["heading"]
+    description: "仅控制航向，测试航向维度对训练的影响"
+
+  discrete_speed_only:
+    name: "Discrete - Speed Only"
+    action_type: "discrete"
+    action_dims: [5]  # 仅速度
+    action_labels: ["speed"]
+    description: "仅控制速度，测试速度维度对训练的影响"
+
+  discrete_altitude_only:
+    name: "Discrete - Altitude Only"
+    action_type: "discrete"
+    action_dims: [5]  # 仅高度
+    action_labels: ["altitude"]
+    description: "仅控制高度，测试高度维度对训练的影响"
+
+  discrete_heading_speed:
+    name: "Discrete - Heading + Speed"
+    action_type: "discrete"
+    action_dims: [5, 5]  # 航向 + 速度
+    action_labels: ["heading", "speed"]
+    description: "控制航向和速度，测试二维动作空间"
+
+  discrete_heading_altitude:
+    name: "Discrete - Heading + Altitude"
+    action_type: "discrete"
+    action_dims: [5, 5]  # 航向 + 高度
+    action_labels: ["heading", "altitude"]
+    description: "控制航向和高度，测试二维动作空间"
+
+  discrete_speed_altitude:
+    name: "Discrete - Speed + Altitude"
+    action_type: "discrete"
+    action_dims: [5, 5]  # 速度 + 高度
+    action_labels: ["speed", "altitude"]
+    description: "控制速度和高度，测试二维动作空间"
+
+  discrete_full:
+    name: "Discrete - Full (Heading + Altitude + Speed)"
+    action_type: "discrete"
+    action_dims: [5, 5, 5]  # 航向 + 高度 + 速度
+    action_labels: ["heading", "altitude", "speed"]
+    description: "完整离散动作空间，3 维控制"
+
+  # 连续动作空间消融实验
+  continuous_heading_only:
+    name: "Continuous - Heading Only"
+    action_type: "continuous"
+    action_dims: 1
+    action_labels: ["heading"]
+    heading_scale: 45.0
+    description: "仅控制航向，连续动作"
+
+  continuous_speed_only:
+    name: "Continuous - Speed Only"
+    action_type: "continuous"
+    action_dims: 1
+    action_labels: ["speed"]
+    speed_scale: 30.0
+    description: "仅控制速度，连续动作"
+
+  continuous_altitude_only:
+    name: "Continuous - Altitude Only"
+    action_type: "continuous"
+    action_dims: 1
+    action_labels: ["altitude"]
+    altitude_scale: 2500.0
+    description: "仅控制高度，连续动作"
+
+  continuous_heading_speed:
+    name: "Continuous - Heading + Speed"
+    action_type: "continuous"
+    action_dims: 2
+    action_labels: ["heading", "speed"]
+    description: "控制航向和速度，连续动作"
+
+  continuous_heading_altitude:
+    name: "Continuous - Heading + Altitude"
+    action_type: "continuous"
+    action_dims: 2
+    action_labels: ["heading", "altitude"]
+    description: "控制航向和高度，连续动作"
+
+  continuous_speed_altitude:
+    name: "Continuous - Speed + Altitude"
+    action_type: "continuous"
+    action_dims: 2
+    action_labels: ["speed", "altitude"]
+    description: "控制速度和高度，连续动作"
+
+  continuous_full:
+    name: "Continuous - Full (Heading + Altitude + Speed)"
+    action_type: "continuous"
+    action_dims: 3
+    action_labels: ["heading", "altitude", "speed"]
+    description: "完整连续动作空间，3 维控制"
+
+# 训练配置
+training:
+  total_timesteps: 50000
+  eval_episodes: 10
+  scenarios:
+    - "HorizontalCR"
+    - "VerticalCR"
+    - "SectorCR"
+
+# 输出配置
+output:
+  results_dir: "results/ablation"
+  report_format: "markdown"
+  plot_training_curves: true
+  plot_comparison: true

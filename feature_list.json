@@ -524,13 +524,22 @@
       "area": "actions",
       "title": "动作空间验证",
       "user_visible_behavior": "消融实验验证不同动作维度对训练效果的影响，离散 vs 连续动作对比。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "消融实验（heading_only/speed/altitude/full）完成",
         "离散 vs 连续动作对比完成",
         "训练效果对比报告生成"
       ],
-      "evidence": [],
+      "evidence": [
+        "test_ablation.py: 18 个测试全部通过",
+        "ablation.py: AblationResult/AblationRunner/AblationReporter 实现完成",
+        "config/ablation_experiments.yaml: 14 个消融实验配置",
+        "scripts/run_ablation.py: 消融实验运行脚本",
+        "支持 7 种离散 + 7 种连续动作空间配置",
+        "Markdown 和 JSON 报告生成",
+        "ruff check: No issues found",
+        "mypy: No issues found"
+      ],
       "notes": "V2.0 Phase 4，验证动作空间设计对训练收敛性的影响。参考 ROADMAP.md 第七章。"
     },
     {
