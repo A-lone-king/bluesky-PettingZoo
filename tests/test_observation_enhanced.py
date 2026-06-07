@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import math
+from typing import Any
 
+import numpy as np
 import pytest
+from gymnasium import spaces
 
 from bluesky_pettingzoo.observations.normalizer import Normalizer
+from bluesky_pettingzoo.wrappers.frame_stack import FrameStackWrapper
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -224,13 +228,13 @@ class TestRelativeSpeed:
         assert abs(rel_speed_y) > 0.01
 
     def test_other_aircraft_shape(self) -> None:
-        """other_aircraft should have 9 columns (including relative speed)."""
+        """other_aircraft should have 12 columns (including conflict prediction)."""
         from bluesky_pettingzoo.observations.manager import ObservationManager
 
         config = _make_config()
         mgr = ObservationManager(config)
         space = mgr.observation_space()
-        assert space["other_aircraft"].shape == (10, 10)
+        assert space["other_aircraft"].shape == (10, 12)
 
     def test_relative_speed_normalized(self) -> None:
         """Relative speed values should be in [-1, 1]."""
@@ -334,3 +338,286 @@ class TestLatLonVsNormalization:
         obs = mgr.generate(own, [], goal)["observation"]["self_state"]
         for i in range(9):
             assert -1.0 <= obs[i] <= 1.0, f"self_state[{i}] = {obs[i]} out of [-1, 1]"
+
+
+# ===========================================================================
+# obs-enhance-001: Conflict prediction features
+# ===========================================================================
+
+
+class TestConflictPredictionFeatures:
+    """Tests for time_to_conflict and closure_rate features."""
+
+    def test_other_aircraft_has_12_features(self) -> None:
+        """other_aircraft should have 12 columns (including conflict prediction)."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+        space = mgr.observation_space()
+        assert space["other_aircraft"].shape == (10, 12)
+
+    def test_closing_aircraft_positive_closure(self) -> None:
+        """Head-on conflict should have positive closure rate."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+
+        # Head-on: own heading north, other heading south
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=35000, hdg=0.0, tas=450, vs=0)
+        other = AircraftState(id="AC001", lat=39.05, lon=116.0, alt=35000, hdg=180.0, tas=450, vs=0)
+        goal = {"lat": 39.5, "lon": 116.0, "alt": 35000, "hdg": 0.0}
+
+        result = mgr.generate(own, [other], goal)
+        obs = result["observation"]
+        closure = obs["other_aircraft"][0, 11]  # closure_rate at index 11
+
+        # Head-on closure should be positive
+        assert closure > 0
+
+    def test_opening_aircraft_negative_closure(self) -> None:
+        """Same direction, other faster and ahead should have negative closure."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+
+        # Both heading north, other ahead and faster
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=35000, hdg=0.0, tas=400, vs=0)
+        other = AircraftState(id="AC001", lat=39.1, lon=116.0, alt=35000, hdg=0.0, tas=500, vs=0)
+        goal = {"lat": 39.5, "lon": 116.0, "alt": 35000, "hdg": 0.0}
+
+        result = mgr.generate(own, [other], goal)
+        obs = result["observation"]
+        closure = obs["other_aircraft"][0, 11]
+
+        # Other is faster and ahead, so opening
+        assert closure < 0
+
+    def test_conflict_features_in_range(self) -> None:
+        """time_to_conflict and closure_rate should be in [-1, 1]."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=35000, hdg=0.0, tas=450, vs=0)
+        other = AircraftState(id="AC001", lat=39.05, lon=116.0, alt=35000, hdg=180.0, tas=450, vs=0)
+        goal = {"lat": 39.5, "lon": 116.0, "alt": 35000, "hdg": 0.0}
+
+        result = mgr.generate(own, [other], goal)
+        obs = result["observation"]
+
+        ttc = obs["other_aircraft"][0, 10]  # time_to_conflict
+        closure = obs["other_aircraft"][0, 11]  # closure_rate
+
+        assert -1.0 <= ttc <= 1.0, f"time_to_conflict={ttc} out of range"
+        assert -1.0 <= closure <= 1.0, f"closure_rate={closure} out of range"
+
+
+# ===========================================================================
+# obs-enhance-001: Ground speed calculation
+# ===========================================================================
+
+
+class TestGroundSpeed:
+    """Tests for ground speed in self_state."""
+
+    def test_ground_speed_index(self) -> None:
+        """Ground speed should be at index 7 in self_state."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=35000, hdg=0.0, tas=450, vs=0)
+        goal = {"lat": 39.5, "lon": 116.0, "alt": 35000, "hdg": 0.0}
+
+        result = mgr.generate(own, [], goal)
+        self_state = result["observation"]["self_state"]
+
+        # self_state has 9 elements
+        assert self_state.shape == (9,)
+        # Ground speed at index 7 should be normalized
+        assert -1.0 <= self_state[7] <= 1.0
+
+    def test_ground_speed_matches_tas(self) -> None:
+        """Without wind, ground speed should equal TAS."""
+        from bluesky_pettingzoo.observations.manager import ObservationManager
+        from bluesky_pettingzoo.utils.types import AircraftState
+
+        config = _make_config()
+        mgr = ObservationManager(config)
+
+        own = AircraftState(id="AC000", lat=39.0, lon=116.0, alt=35000, hdg=0.0, tas=450, vs=0)
+        goal = {"lat": 39.5, "lon": 116.0, "alt": 35000, "hdg": 0.0}
+
+        result = mgr.generate(own, [], goal)
+        self_state = result["observation"]["self_state"]
+
+        # Speed (index 3) and ground speed (index 7) should be equal
+        np.testing.assert_allclose(self_state[3], self_state[7], rtol=1e-5)
+
+
+# ===========================================================================
+# obs-enhance-001: FrameStackWrapper
+# ===========================================================================
+
+
+class TestFrameStackWrapper:
+    """Tests for FrameStackWrapper."""
+
+    def _make_mock_env(self, num_agents: int = 2, obs_dim: int = 9) -> Any:
+        """Create a mock ParallelEnv for testing."""
+        from unittest.mock import MagicMock
+
+        env = MagicMock()
+        agents = [f"agent_{i}" for i in range(num_agents)]
+        env.possible_agents = agents
+        env.agents = agents
+
+        # Create observation space
+        obs_space = spaces.Dict(
+            {
+                "self_state": spaces.Box(
+                    low=-1.0, high=1.0, shape=(obs_dim,), dtype=np.float32
+                ),
+                "goal": spaces.Box(
+                    low=-1.0, high=1.0, shape=(4,), dtype=np.float32
+                ),
+            }
+        )
+        env.observation_space.return_value = obs_space
+
+        # Create mock reset/step
+        def mock_reset(**kwargs: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+            obs = {}
+            infos = {}
+            for agent in agents:
+                obs[agent] = {
+                    "self_state": np.random.randn(obs_dim).astype(np.float32),
+                    "goal": np.random.randn(4).astype(np.float32),
+                }
+                infos[agent] = {}
+            return obs, infos
+
+        def mock_step(
+            actions: dict[str, Any],
+        ) -> tuple[
+            dict[str, Any],
+            dict[str, Any],
+            dict[str, Any],
+            dict[str, Any],
+            dict[str, Any],
+        ]:
+            obs = {}
+            rewards = {}
+            terminations = {}
+            truncations = {}
+            infos = {}
+            for agent in agents:
+                obs[agent] = {
+                    "self_state": np.random.randn(obs_dim).astype(np.float32),
+                    "goal": np.random.randn(4).astype(np.float32),
+                }
+                rewards[agent] = 0.0
+                terminations[agent] = False
+                truncations[agent] = False
+                infos[agent] = {}
+            return obs, rewards, terminations, truncations, infos
+
+        env.reset.side_effect = mock_reset
+        env.step.side_effect = mock_step
+        return env
+
+    def test_init_invalid_stack_size(self) -> None:
+        """Test that invalid stack_size raises ValueError."""
+        env = self._make_mock_env()
+        with pytest.raises(ValueError, match="stack_size must be >= 1"):
+            FrameStackWrapper(env, stack_size=0)
+
+    def test_init_invalid_padding_type(self) -> None:
+        """Test that invalid padding_type raises ValueError."""
+        env = self._make_mock_env()
+        with pytest.raises(ValueError, match="padding_type must be"):
+            FrameStackWrapper(env, padding_type="invalid")
+
+    def test_observation_space_shape(self) -> None:
+        """Test that observation space has stacked dimensions."""
+        env = self._make_mock_env(obs_dim=9)
+        wrapper = FrameStackWrapper(env, stack_size=4)
+
+        space = wrapper.observation_space("agent_0")
+        assert isinstance(space, spaces.Dict)
+
+        # self_state should have shape (4, 9)
+        self_state_space = space.spaces["self_state"]
+        assert isinstance(self_state_space, spaces.Box)
+        assert self_state_space.shape == (4, 9)
+
+        # goal should have shape (4, 4)
+        goal_space = space.spaces["goal"]
+        assert isinstance(goal_space, spaces.Box)
+        assert goal_space.shape == (4, 4)
+
+    def test_reset_produces_stacked_obs(self) -> None:
+        """Test that reset produces stacked observations."""
+        env = self._make_mock_env(obs_dim=9)
+        wrapper = FrameStackWrapper(env, stack_size=4)
+
+        obs, infos = wrapper.reset()
+
+        assert "agent_0" in obs
+        assert "agent_1" in obs
+
+        # Check stacked shape
+        agent_obs = obs["agent_0"]
+        assert agent_obs["self_state"].shape == (4, 9)
+        assert agent_obs["goal"].shape == (4, 4)
+
+    def test_step_updates_frame_stack(self) -> None:
+        """Test that step updates the frame stack correctly."""
+        env = self._make_mock_env(obs_dim=9)
+        wrapper = FrameStackWrapper(env, stack_size=3)
+
+        # Reset
+        obs, _ = wrapper.reset()
+
+        # Step multiple times
+        for _ in range(5):
+            actions = {f"agent_{i}": 0 for i in range(2)}
+            obs, _, _, _, _ = wrapper.step(actions)
+
+        # The stack should contain the last 3 frames
+        assert obs["agent_0"]["self_state"].shape == (3, 9)
+
+    def test_zero_padding(self) -> None:
+        """Test zero padding on reset."""
+        env = self._make_mock_env(obs_dim=4)
+        wrapper = FrameStackWrapper(env, stack_size=3, padding_type="zero")
+
+        obs, _ = wrapper.reset()
+
+        # First two frames should be zeros (padding)
+        agent_obs = obs["agent_0"]["self_state"]
+        np.testing.assert_array_equal(agent_obs[0], np.zeros(4))
+        np.testing.assert_array_equal(agent_obs[1], np.zeros(4))
+        # Third frame should be the actual observation (not zero)
+        assert not np.allclose(agent_obs[2], np.zeros(4))
+
+    def test_repeat_padding(self) -> None:
+        """Test repeat padding on reset."""
+        env = self._make_mock_env(obs_dim=4)
+        wrapper = FrameStackWrapper(env, stack_size=3, padding_type="repeat")
+
+        obs, _ = wrapper.reset()
+
+        # All frames should be the same (repeat padding)
+        agent_obs = obs["agent_0"]["self_state"]
+        np.testing.assert_array_equal(agent_obs[0], agent_obs[1])
+        np.testing.assert_array_equal(agent_obs[1], agent_obs[2])

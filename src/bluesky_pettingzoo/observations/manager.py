@@ -39,13 +39,14 @@ class ObservationManager:
         self_state layout: [heading_cos, heading_sin, altitude, speed,
             lat, lon, vs, ground_speed, priority]
         other_aircraft layout: [heading, altitude, speed, distance, bearing_cos, bearing_sin,
-            relative_altitude, relative_speed_x, relative_speed_y, priority]
+            relative_altitude, relative_speed_x, relative_speed_y, priority,
+            time_to_conflict, closure_rate]
         obstacles layout (per obstacle): [distance, bearing_cos, bearing_sin, radius]
         """
         low = np.full(9, -1.0, dtype=np.float32)
         high = np.full(9, 1.0, dtype=np.float32)
-        other_low = np.full(10, -1.0, dtype=np.float32)
-        other_high = np.full(10, 1.0, dtype=np.float32)
+        other_low = np.full(12, -1.0, dtype=np.float32)
+        other_high = np.full(12, 1.0, dtype=np.float32)
         space_dict: dict[str, spaces.Space[Any]] = {
             "self_state": spaces.Box(low=low, high=high, dtype=np.float32),
             "other_aircraft": spaces.Box(
@@ -116,6 +117,14 @@ class ObservationManager:
         #     lat, lon, vs, ground_speed, priority]
         norm_self = self._normalizer.normalize_aircraft_state(own_state)  # type: ignore[arg-type]
         own_priority = float(np.clip((agent_priorities or {}).get(own_state.id, 0.0), -1.0, 1.0))
+
+        # Compute ground speed (TAS + wind effect)
+        # ground_speed = sqrt((tas*sin(hdg) + wind_east)^2 + (tas*cos(hdg) + wind_north)^2)
+        # For now, use TAS as ground speed (no wind field support)
+        # TODO: Integrate wind field data when available
+        ground_speed = own_state["tas"]
+        ground_speed_norm = self._normalizer.normalize_speed(ground_speed)
+
         self_state = np.array(
             [
                 self._normalizer.normalize_heading_cos(own_state["hdg"]),
@@ -125,15 +134,16 @@ class ObservationManager:
                 norm_self["lat"],
                 norm_self["lon"],
                 norm_self["vs"],
-                norm_self["speed"],  # ground_speed ≈ tas for now
+                ground_speed_norm,
                 own_priority,
             ],
             dtype=np.float32,
         )
 
         # Build other_aircraft array: [heading, altitude, speed, distance, bearing_cos,
-        # bearing_sin, relative_altitude, relative_speed_x, relative_speed_y, priority]
-        other_aircraft = np.zeros((self._max_obs, 10), dtype=np.float32)
+        # bearing_sin, relative_altitude, relative_speed_x, relative_speed_y, priority,
+        # time_to_conflict, closure_rate]
+        other_aircraft = np.zeros((self._max_obs, 12), dtype=np.float32)
         mask = np.zeros(self._max_obs, dtype=np.int8)
 
         # Own ship velocity components (north/east)
@@ -155,6 +165,32 @@ class ObservationManager:
             rel_speed_x = (other_vx - own_vx) / max_speed
             rel_speed_y = (other_vy - own_vy) / max_speed
 
+            # Compute conflict prediction features
+            # Closure rate: component of relative velocity along line-of-sight
+            # Positive closure = closing (distance decreasing), negative = opening
+            bear_rad = math.radians(entry["bearing_deg"])
+            # Unit vector from own to other (in north-east frame)
+            los_n = math.cos(bear_rad)
+            los_e = math.sin(bear_rad)
+            # Relative velocity of other wrt own in north-east frame
+            rel_vn = other_vy - own_vy  # north component
+            rel_ve = other_vx - own_vx  # east component
+            # Closure rate: projection of -relative_velocity onto line-of-sight
+            # (because closing means distance decreasing)
+            closure = -(rel_vn * los_n + rel_ve * los_e)
+            closure_normalized = float(np.clip(closure / max_speed, -1.0, 1.0))
+
+            # Time to conflict (CPA): distance / closure rate
+            # Positive closure means closing, negative means opening
+            if closure > 1.0:  # Closing (at least 1 NM/s)
+                ttc = entry["distance_nm"] / closure  # in seconds
+                # Normalize: 0 = immediate conflict, 1 = far future
+                # Use 300 seconds (5 min) as reference
+                ttc_normalized = float(np.clip(1.0 - ttc / 300.0, -1.0, 1.0))
+            else:
+                # Not closing or opening significantly
+                ttc_normalized = -1.0  # No conflict predicted
+
             priority = (agent_priorities or {}).get(st.id, 0.0)
             other_aircraft[i] = [
                 norm["heading"],
@@ -167,6 +203,8 @@ class ObservationManager:
                 float(np.clip(rel_speed_x, -1.0, 1.0)),
                 float(np.clip(rel_speed_y, -1.0, 1.0)),
                 float(np.clip(priority, -1.0, 1.0)),
+                ttc_normalized,
+                closure_normalized,
             ]
             mask[i] = 1
 
