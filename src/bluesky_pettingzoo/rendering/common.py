@@ -401,3 +401,96 @@ def draw_waypoint_circle(
         return
     pygame.draw.circle(screen, outer_color, (x, y), outer_radius, 2)
     pygame.draw.circle(screen, inner_color, (x, y), inner_radius)
+
+
+def draw_aircraft_trail(
+    screen: Any,
+    positions: list[tuple[int, int]],
+    color: tuple[int, int, int] = (100, 100, 100),
+    width: int = 1,
+    max_length: int = 20,
+) -> None:
+    """Draw an aircraft trail (tail) from recent positions.
+
+    Args:
+        screen: Pygame surface.
+        positions: List of (x, y) pixel coordinates (most recent last).
+        color: RGB color for trail.
+        width: Line width in pixels.
+        max_length: Maximum number of positions to draw.
+    """
+    if pygame is None or len(positions) < 2:
+        return
+    # Only draw the last max_length positions
+    trail_positions = positions[-max_length:]
+    for i in range(1, len(trail_positions)):
+        # Fade effect: older positions are more transparent
+        alpha = i / len(trail_positions)
+        r = int(color[0] * alpha)
+        g = int(color[1] * alpha)
+        b = int(color[2] * alpha)
+        pygame.draw.line(
+            screen,
+            (r, g, b),
+            trail_positions[i - 1],
+            trail_positions[i],
+            width,
+        )
+
+
+def draw_conflict_flash(
+    screen: Any,
+    x: int,
+    y: int,
+    radius: int = 20,
+    color: tuple[int, int, int] = (255, 0, 0),
+    flash_state: bool = True,
+) -> None:
+    """Draw a flashing conflict indicator.
+
+    Args:
+        screen: Pygame surface.
+        x: Pixel x coordinate.
+        y: Pixel y coordinate.
+        radius: Flash radius in pixels.
+        color: RGB color for flash.
+        flash_state: True for visible, False for hidden.
+    """
+    if pygame is None or not flash_state:
+        return
+    # Draw a glowing circle effect
+    for r in range(radius, radius - 5, -1):
+        alpha = (radius - r) / 5
+        c = (
+            int(color[0] * (1 - alpha * 0.5)),
+            int(color[1] * (1 - alpha * 0.5)),
+            int(color[2] * (1 - alpha * 0.5)),
+        )
+        pygame.draw.circle(screen, c, (x, y), r, 2)
+
+
+def draw_hud_panel(
+    screen: Any,
+    x: int,
+    y: int,
+    width: int = 200,
+    height: int = 100,
+    color: tuple[int, int, int] = (0, 0, 0),
+    alpha: int = 128,
+) -> None:
+    """Draw a semi-transparent HUD panel background.
+
+    Args:
+        screen: Pygame surface.
+        x: Top-left x coordinate.
+        y: Top-left y coordinate.
+        width: Panel width in pixels.
+        height: Panel height in pixels.
+        color: RGB color for panel.
+        alpha: Transparency (0-255).
+    """
+    if pygame is None:
+        return
+    panel_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+    panel_surface.fill((*color, alpha))
+    screen.blit(panel_surface, (x, y))

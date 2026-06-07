@@ -12,6 +12,7 @@ except ImportError:
 from bluesky_pettingzoo.rendering.common import (
     compute_pixels_per_nm,
     draw_aircraft,
+    draw_hud_panel,
     draw_sky_gradient,
     draw_waypoint,
     latlon_to_pixel,
@@ -147,15 +148,28 @@ class BaseRenderer:
         if not self._initialized or self._font is None:
             return
 
-        y_offset = 10
+        # Draw semi-transparent HUD panel
+        num_lines = 1 + (len(info) if info else 0)
+        panel_height = 30 + num_lines * 25
+        draw_hud_panel(
+            self._screen,
+            x=10,
+            y=10,
+            width=220,
+            height=panel_height,
+            color=(0, 0, 0),
+            alpha=128,
+        )
+
+        y_offset = 20
         step_text = self._font.render(f"Step: {step}", True, (255, 255, 255))
-        self._screen.blit(step_text, (10, y_offset))
+        self._screen.blit(step_text, (20, y_offset))
         y_offset += 25
 
         if info:
             for key, value in info.items():
                 text = self._font.render(f"{key}: {value}", True, (200, 200, 200))
-                self._screen.blit(text, (10, y_offset))
+                self._screen.blit(text, (20, y_offset))
                 y_offset += 25
 
     def flip(self) -> None:

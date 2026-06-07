@@ -7,6 +7,7 @@ from typing import Any
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft_dot,
+    draw_conflict_flash,
     draw_heading_line,
     draw_nmac_circle,
     draw_waypoint,
@@ -78,7 +79,7 @@ class HorizontalCRRenderer(BaseRenderer):
                 color=_PROTECTION_COLOR,
                 width=1,
             )
-            # Red conflict circle (overrides black for conflicting aircraft)
+            # Red conflict circle with flash effect (overrides black for conflicting aircraft)
             if acid in conflict_ids:
                 draw_nmac_circle(
                     self._screen,
@@ -88,6 +89,16 @@ class HorizontalCRRenderer(BaseRenderer):
                     pixels_per_nm=ppm,
                     color=_CONFLICT_COLOR,
                     width=2,
+                )
+                # Flash effect for conflicts
+                flash_state = (step % 2 == 0)  # Toggle every step
+                draw_conflict_flash(
+                    self._screen,
+                    x,
+                    y,
+                    radius=25,
+                    color=_CONFLICT_COLOR,
+                    flash_state=flash_state,
                 )
             # Heading line
             draw_heading_line(
