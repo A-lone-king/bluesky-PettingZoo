@@ -91,11 +91,28 @@
 
 | Phase | 目标 | 工作量 | 状态 |
 |-------|------|--------|------|
-| Phase 1 | 端到端训练验证 | 1-2 天 | not_started |
-| Phase 2 | 场景复杂度增强 | 3-5 天 | not_started |
-| Phase 3 | 观测空间增强 | 2-3 天 | not_started |
-| Phase 4 | 动作空间验证 | 2-3 天 | not_started |
-| Phase 5 | CI/CD | 1 天 | not_started |
+| Phase 1 | 端到端训练验证 | 1-2 天 | passing ✅ |
+| Phase 2 | 场景复杂度增强 | 3-5 天 | passing ✅ |
+| Phase 3 | 观测空间增强 | 2-3 天 | passing ✅ |
+| Phase 4 | 动作空间验证 | 2-3 天 | passing ✅ |
+| Phase 5 | CI/CD | 1 天 | passing ✅ |
+| Phase 6 | 渲染效果增强 | 3-5 天 | passing ✅ |
+
+**Phase 1 完成情况**（e2e-training-001）：
+
+1. ✅ 增强 test_e2e_training.py：添加 test_full_episode_training、test_multi_scenario_training、test_reward_signal_exists
+2. ✅ 增强 train_smoke_test.py：添加 --multi-scenario 支持、training_curve.csv 输出
+3. ✅ 修复 ruff 长行问题（5 个 E501）
+4. ✅ 修复 mypy 类型注解（_evaluate 函数）
+5. ✅ 更新 feature_list.json 标记 e2e-training-001 为 passing
+
+**Phase 2 完成情况**（scenario-enhance-001）：
+
+1. ✅ HorizontalCR 多高度层冲突：num_altitude_layers 参数，支持 3-4 层高度（29000-41000 ft）
+2. ✅ VerticalCR 真实进近剖面：use_approach_profile 参数，支持 3° 进近剖面和速度约束
+3. ✅ SectorCR 动态容量：use_dynamic_capacity 参数，支持动态容量调度（高峰/低谷）
+4. ✅ 编写 16 个测试（test_scenario_enhance.py），覆盖三个场景增强功能
+5. ✅ 修复 ruff 和 mypy 问题
 
 **推荐执行顺序**：Phase 1 → Phase 5 → Phase 2 → Phase 3 → Phase 4
 
