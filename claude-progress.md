@@ -366,3 +366,68 @@
 - 更新过的文件或工件：ROADMAP.md, claude-progress.md, session-handoff.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：开始 Phase 1 端到端训练验证
+
+### Session 019
+
+- 日期：2026-06-07
+- 本轮目标：完成 e2e-training-001 端到端训练验证
+- 已完成：
+  - 增强 test_e2e_training.py：添加 test_full_episode_training、test_multi_scenario_training、test_reward_signal_exists
+  - 增强 train_smoke_test.py：添加 --multi-scenario 支持、training_curve.csv 输出
+  - 修复 ruff 长行问题（5 个 E501）
+  - 修复 mypy 类型注解（_evaluate 函数）
+  - 更新 feature_list.json 标记 e2e-training-001 为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found in train_smoke_test.py
+  - pytest test_full_episode_training: 1 passed
+  - pytest test_multi_scenario_training: 1 passed
+  - pytest test_reward_signal_exists: 1 passed
+- 已记录证据：3 个新测试全部通过，train_smoke_test.py --multi-scenario 支持已添加
+- 提交记录：待提交
+- 更新过的文件或工件：test_e2e_training.py, train_smoke_test.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 scenario-enhance-001 场景复杂度增强
+
+### Session 020
+
+- 日期：2026-06-07
+- 本轮目标：完成 scenario-enhance-001 场景复杂度增强
+- 已完成：
+  - HorizontalCR 多高度层冲突：添加 num_altitude_layers 参数，支持 3-4 层高度（29000-41000 ft）
+  - VerticalCR 真实进近剖面：添加 use_approach_profile 参数，支持 3° 近剖面和速度约束
+  - SectorCR 动态容量：添加 use_dynamic_capacity 参数，支持动态容量调度（高峰/低谷）
+  - 编写 16 个测试（test_scenario_enhance.py），覆盖三个场景增强功能
+  - 修复 ruff 和 mypy 问题
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest test_scenario_enhance.py: 16 passed
+- 已记录证据：scenario-enhance-001 passing，场景复杂度增强完成
+- 提交记录：待提交
+- 更新过的文件或工件：horizontal_cr.py, vertical_cr.py, sector_cr.py, test_scenario_enhance.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 obs-enhance-001 观测空间增强
+
+### Session 021
+
+- 日期：2026-06-07
+- 本轮目标：完成 obs-enhance-001 观测空间增强
+- 已完成：
+  - 创建 FrameStackWrapper：支持 stack_size、padding_type（zero/repeat）配置
+  - 实现冲突预测特征：other_aircraft 从 10 维扩展到 12 维
+    - time_to_conflict：基于距离和闭合速率计算预计冲突时间
+    - closure_rate：相对速度在视线方向上的投影
+  - 实现 ground_speed 真实地速计算（当前无风时等于 TAS）
+  - 编写 33 个测试（test_observation_enhanced.py）
+  - 更新 test_observation_manager.py 适配新维度
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest test_observation_enhanced.py: 33 passed
+  - pytest test_observation_manager.py: 18 passed
+- 已记录证据：obs-enhance-001 passing，观测空间增强完成
+- 提交记录：待提交
+- 更新过的文件或工件：frame_stack.py, manager.py, __init__.py, test_observation_enhanced.py, test_observation_manager.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 action-validation-001 动作空间验证

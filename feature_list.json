@@ -455,14 +455,22 @@
       "area": "training",
       "title": "端到端训练验证",
       "user_visible_behavior": "完整训练流程可运行：env.reset() → agent 选择动作 → env.step() → 训练循环，训练能产生学习信号（final_reward > initial_reward）。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "test_full_episode_training 完整 episode 训练通过",
         "test_multi_scenario_training 3 个核心场景训练通过",
         "test_reward_signal_exists 训练后奖励有提升",
         "train_smoke_test.py --multi-scenario 多场景验证通过"
       ],
-      "evidence": [],
+      "evidence": [
+        "test_full_episode_training: 1 passed",
+        "test_multi_scenario_training: 1 passed",
+        "test_reward_signal_exists: 1 passed",
+        "ruff check: No issues found",
+        "mypy: No issues found in train_smoke_test.py",
+        "train_smoke_test.py --multi-scenario 支持已添加",
+        "training_curve.csv 输出已实现"
+      ],
       "notes": "V2.0 Phase 1 优先级最高，确保训练流程可用。参考 ROADMAP.md 第七章。"
     },
     {
@@ -471,13 +479,20 @@
       "area": "envs",
       "title": "场景复杂度增强",
       "user_visible_behavior": "HorizontalCR 支持多高度层冲突、VerticalCR 支持真实进近剖面、SectorCR 支持动态容量变化。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "HorizontalCR 多高度层测试通过",
         "VerticalCR 真实进近剖面测试通过",
         "SectorCR 动态容量测试通过"
       ],
-      "evidence": [],
+      "evidence": [
+        "test_scenario_enhance.py: 16 个测试全部通过",
+        "HorizontalCR: num_altitude_layers 参数支持多高度层（29000-41000 ft）",
+        "VerticalCR: use_approach_profile 参数支持 3° 进近剖面",
+        "SectorCR: use_dynamic_capacity 参数支持动态容量调度",
+        "ruff check: No issues found",
+        "mypy: No issues found"
+      ],
       "notes": "V2.0 Phase 2，将简单场景升级为更接近真实的复杂场景。参考 ROADMAP.md 第七章。"
     },
     {
@@ -486,13 +501,21 @@
       "area": "observations",
       "title": "观测空间增强",
       "user_visible_behavior": "支持历史帧堆叠、冲突预测特征（time_to_conflict、closure_rate）、真实地速计算。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "FrameStackWrapper 历史帧堆叠测试通过",
         "time_to_conflict/closure_rate 特征测试通过",
         "ground_speed 真实地速计算测试通过"
       ],
-      "evidence": [],
+      "evidence": [
+        "test_observation_enhanced.py: 33 个测试全部通过",
+        "test_observation_manager.py: 18 个测试全部通过",
+        "FrameStackWrapper: 支持 stack_size、padding_type 配置",
+        "other_aircraft: 从 10 维扩展到 12 维（新增 time_to_conflict、closure_rate）",
+        "self_state: ground_speed 在 index 7，无风时等于 TAS",
+        "ruff check: No issues found",
+        "mypy: No issues found"
+      ],
       "notes": "V2.0 Phase 3，丰富观测信息提升 RL 训练效果。参考 ROADMAP.md 第七章。"
     },
     {
