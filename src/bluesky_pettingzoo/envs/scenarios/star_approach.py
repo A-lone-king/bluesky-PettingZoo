@@ -405,7 +405,10 @@ class StarApproachScenario(BaseScenario):
         dlon_rad = math.radians(lon2 - lon1)
 
         x = math.sin(dlon_rad) * math.cos(lat2_rad)
-        y = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon_rad)
+        y = (
+            math.cos(lat1_rad) * math.sin(lat2_rad)
+            - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon_rad)
+        )
 
         bearing = math.degrees(math.atan2(x, y))
         return (bearing + 360) % 360

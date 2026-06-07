@@ -194,13 +194,15 @@ class FlightPlanParser:
             # Check altitude range
             if plan.cruise_alt < 1000 or plan.cruise_alt > 60000:
                 errors.append(
-                    f"Flight {plan.flight_id}: cruise_alt {plan.cruise_alt} out of range [1000, 60000]"
+                    f"Flight {plan.flight_id}: cruise_alt {plan.cruise_alt} "
+                    f"out of range [1000, 60000]"
                 )
 
             # Check speed range
             if plan.cruise_speed < 100 or plan.cruise_speed > 600:
                 errors.append(
-                    f"Flight {plan.flight_id}: cruise_speed {plan.cruise_speed} out of range [100, 600]"
+                    f"Flight {plan.flight_id}: cruise_speed {plan.cruise_speed} "
+                    f"out of range [100, 600]"
                 )
 
             # Check waypoint coordinates

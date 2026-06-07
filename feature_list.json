@@ -548,13 +548,18 @@
       "area": "devops",
       "title": "CI/CD 配置",
       "user_visible_behavior": "GitHub Actions 自动运行 lint + type check + test，pytest markers 支持 slow/integration/e2e 标记，coverage threshold 80%。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         ".github/workflows/ci.yml 创建并可运行",
         "pytest markers 配置正确",
         "coverage threshold 80% 生效"
       ],
-      "evidence": [],
+      "evidence": [
+        ".github/workflows/ci.yml: lint + test + integration 三个 job",
+        "pyproject.toml: pytest markers (slow/integration/e2e) 配置完成",
+        "pyproject.toml: --cov-fail-under=80 coverage threshold 配置完成",
+        "CI 流程: ruff check + ruff format + mypy + pytest + coverage"
+      ],
       "notes": "V2.0 Phase 5，建立自动化测试和代码质量检查。参考 ROADMAP.md 第七章。"
     }
   ]
