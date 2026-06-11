@@ -431,3 +431,93 @@
 - 更新过的文件或工件：frame_stack.py, manager.py, __init__.py, test_observation_enhanced.py, test_observation_manager.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始 action-validation-001 动作空间验证
+
+### Session 022
+
+- 日期：2026-06-11
+- 本轮目标：基于 env_comparison.md 评审，制定 V3.0 环境健壮性改进计划
+- 已完成：
+  - 深入阅读源码确认问题现状：parallel_env.py, observation_builder.py, observation_manager.py, normalizer.py, filters.py, efficiency.py, conflict.py, delay.py, translator.py, base.py
+  - 分析出 8 个环境实现缺陷（2 CRITICAL, 2 HIGH, 3 MEDIUM, 1 LOW）
+  - 创建 doc/v3_improvement_plan.md：完整改进计划，含 8 个 feature 的详细设计、影响文件、验证标准、风险评估
+  - 更新 feature_list.json：新增 8 个 V3.0 features（robust-001~002, reward-002~003, obs-002~003, arch-003, scenario-002）
+  - 更新 session-handoff.md：添加 V3.0 改进计划摘要表
+- 运行过的验证：
+  - 无代码改动，仅文档和配置更新
+- 已记录证据：V3.0 改进计划已制定，8 个 feature 已注册到 feature_list.json
+- 提交记录：待提交
+- 更新过的文件或工件：doc/v3_improvement_plan.md, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：
+  - F1（conflict_state）改动 observation space shape，需兼容模式避免现有模型失效
+  - F7（渲染器解耦）影响 10 个渲染器文件，工作量较大
+- 下一步最佳动作：开始 Phase 1 实现 robust-001（观测空间添加 conflict_state）
+
+### Session 023
+
+- 日期：2026-06-11
+- 本轮目标：实现 robust-001（观测空间添加 conflict_state）
+- 已完成：
+  - 修改 observation_manager.py：
+    - 添加 `_encode_conflict_status()` 方法：将 "nmac"/"warning"/"safe" 编码为 one-hot 向量 [is_nmac, is_warning, is_safe]
+    - 修改 `observation_space()`：新增 `conflict_state` Box(shape=(3,), dtype=float32)
+    - 修改 `generate()`：将 conflict_status 编码为 one-hot 加入 observation dict
+  - 修改 test_observation_manager.py：
+    - 更新 `test_observation_space_keys` 断言包含 conflict_state
+    - 添加 `test_conflict_state_shape` 测试
+    - 添加 `TestConflictState` 类（5 个测试）：safe/warning/nmac 编码、默认值、空间边界
+  - 更新 feature_list.json：robust-001 状态切换为 passing，添加证据
+  - 更新 session-handoff.md：robust-001 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest: 84 passed（test_observation_manager + test_observation_enhanced + test_env）
+- 已记录证据：robust-001 passing，观测空间添加 conflict_state 完成
+- 提交记录：待提交
+- 更新过的文件或工件：observation_manager.py, test_observation_manager.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：开始 Phase 1 实现 robust-002（step() 异常处理与安全回退）
+
+### Session 024
+
+- 日期：2026-06-11
+- 本轮目标：实现 robust-002（step() 异常处理与安全回退）
+- 已完成：
+  - 修改 parallel_env.py：
+    - 添加 `import logging`
+    - step() 中 `send_commands_batch` 和 `step_n` 调用包裹在 try-catch 中
+    - 新增 `_safe_termination_fallback()` 方法：异常时返回全负奖励 + terminated=True
+  - 创建 test_parallel_env_error_handling.py：
+    - TestSafeTerminationFallback 类（8 个测试）：结构、奖励、终止、截断、信息、观测、日志
+    - TestStepExceptionHandling 类（3 个测试）：wrapper 异常、step_n 异常、环境恢复
+  - 更新 feature_list.json：robust-002 状态切换为 passing，添加证据
+  - 更新 session-handoff.md：robust-002 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - mypy: No issues found
+  - pytest: 95 passed（含 11 个新异常处理测试）
+- 已记录证据：robust-002 passing，step() 异常处理与安全回退完成
+- 提交记录：待提交
+- 更新过的文件或工件：parallel_env.py, test_parallel_env_error_handling.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：开始 Phase 2 实现 reward-002（EfficiencyReward 高度维度）
+
+### Session 025
+
+- 日期：2026-06-11
+- 本轮目标：实现 reward-002（EfficiencyReward 高度维度）
+- 已完成：
+  - 修改 efficiency.py：
+    - set_goal() 添加可选 alt 参数
+    - compute() 添加高度偏差计算逻辑
+    - 新增配置项 max_alt_deviation_ft / alt_deviation_penalty_scale
+  - 创建 test_reward_efficiency_alt.py：5 个测试覆盖高度偏差功能
+  - 更新 feature_list.json：reward-002 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - pytest test_reward_efficiency_alt.py: 5 passed
+  - pytest test_reward_efficiency.py: 7 passed（现有测试不退化）
+- 已记录证据：reward-002 passing，EfficiencyReward 高度偏差计算完成
+- 提交记录：待提交
+- 更新过的文件或工件：efficiency.py, test_reward_efficiency_alt.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：开始 reward-003（DelayPenalty 动态预期步数）或其他未完成功能

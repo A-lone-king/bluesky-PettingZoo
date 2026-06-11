@@ -583,6 +583,152 @@
         "mypy: No issues found"
       ],
       "notes": "参考 bluesky-gym 的 7 个环境渲染图片，3 个 Phase 全部完成。"
+    },
+    {
+      "id": "robust-001",
+      "priority": 13,
+      "area": "observations",
+      "title": "观测空间添加 conflict_state",
+      "user_visible_behavior": "观测 dict 中包含 conflict_state one-hot 向量 [is_nmac, is_warning, is_safe]，agent 可直接观察冲突状态。",
+      "status": "passing",
+      "verification": [
+        "observation_space()['conflict_state'] shape 为 (3,)",
+        "NMAC 状态下 conflict_state[0] == 1.0",
+        "Warning 状态下 conflict_state[1] == 1.0",
+        "Safe 状态下 conflict_state[2] == 1.0",
+        "所有现有观测测试不退化"
+      ],
+      "evidence": [
+        "observation_manager.py: 添加 _encode_conflict_status() 方法",
+        "observation_manager.py: observation_space() 新增 conflict_state Box(3,)",
+        "observation_manager.py: generate() 将 conflict_status 编码为 one-hot 加入 observation dict",
+        "test_observation_manager.py: 添加 TestConflictState 类（5 个测试）",
+        "test_observation_manager.py: 更新 test_observation_space_keys 断言包含 conflict_state",
+        "ruff check: No issues found",
+        "mypy: No issues found",
+        "pytest: 84 passed（test_observation_manager + test_observation_enhanced + test_env）"
+      ],
+      "notes": "V3.0 Phase 1 CRITICAL。已完成。conflict_status 从 textual_state 扩展到 observation dict。"
+    },
+    {
+      "id": "robust-002",
+      "priority": 14,
+      "area": "envs",
+      "title": "step() 异常处理与安全回退",
+      "user_visible_behavior": "BlueSky 引擎崩溃时，step() 返回全负奖励 + terminated=True，不中断训练进程。",
+      "status": "passing",
+      "verification": [
+        "模拟 BlueSky 异常时 step() 返回正确结构",
+        "rewards 全部为 crash_penalty 负值",
+        "terms 全部为 True",
+        "日志记录完整 traceback"
+      ],
+      "evidence": [
+        "parallel_env.py: 添加 import logging",
+        "parallel_env.py: step() 中 send_commands_batch/step_n 调用包裹在 try-catch 中",
+        "parallel_env.py: 新增 _safe_termination_fallback() 方法",
+        "test_parallel_env_error_handling.py: TestSafeTerminationFallback 类（8 个测试）",
+        "test_parallel_env_error_handling.py: TestStepExceptionHandling 类（3 个测试）",
+        "ruff check: No issues found",
+        "mypy: No issues found",
+        "pytest: 95 passed（含 11 个新异常处理测试）"
+      ],
+      "notes": "V3.0 Phase 1 CRITICAL。已完成。BlueSky 引擎崩溃时安全回退，不中断训练。"
+    },
+    {
+      "id": "reward-002",
+      "priority": 15,
+      "area": "rewards",
+      "title": "EfficiencyReward 高度维度",
+      "user_visible_behavior": "效率奖励同时考虑水平偏差和高度偏差，垂直场景中高度进展被正确奖励。",
+      "status": "passing",
+      "verification": [
+        "有高度目标时高度偏差被计算和惩罚",
+        "无高度目标时行为与现有逻辑一致",
+        "配置项 max_alt_deviation_ft / alt_deviation_penalty_scale 可用"
+      ],
+      "evidence": [
+        "efficiency.py: set_goal() 添加可选 alt 参数",
+        "efficiency.py: compute() 添加高度偏差计算逻辑",
+        "test_reward_efficiency_alt.py: 5 个新测试全部通过",
+        "test_reward_efficiency.py: 7 个现有测试全部通过",
+        "ruff check: No issues found"
+      ],
+      "notes": "V3.0 Phase 2 HIGH。已完成。EfficiencyReward 现在支持高度偏差惩罚，通过 max_alt_deviation_ft 和 alt_deviation_penalty_scale 配置。"
+    },
+    {
+      "id": "reward-003",
+      "priority": 16,
+      "area": "rewards",
+      "title": "DelayPenalty 动态预期步数",
+      "user_visible_behavior": "延迟惩罚根据当前速度动态调整预期步数，agent 减速让行时不会产生不合理惩罚。",
+      "status": "not_started",
+      "verification": [
+        "agent 减速时预期步数按比例增加",
+        "agent 保持巡航速度时行为不变",
+        "所有现有延迟测试不退化"
+      ],
+      "evidence": [],
+      "notes": "V3.0 Phase 2 HIGH。当前 set_goal() 一次性计算预期步数，中途速度变化不被考虑。"
+    },
+    {
+      "id": "obs-002",
+      "priority": 17,
+      "area": "observations",
+      "title": "观测零填充文档说明",
+      "user_visible_behavior": "文档明确说明 other_aircraft_mask 机制，训练时正确使用 mask 忽略填充槽位。",
+      "status": "not_started",
+      "verification": [
+        "文档说明 mask 机制",
+        "现有测试不退化"
+      ],
+      "evidence": [],
+      "notes": "V3.0 Phase 3 MEDIUM。零填充 + mask 是 PettingZoo 标准做法，无需代码改动，仅需文档。"
+    },
+    {
+      "id": "obs-003",
+      "priority": 18,
+      "area": "observations",
+      "title": "max_observable_aircraft 动态配置",
+      "user_visible_behavior": "场景可覆盖 max_observable_aircraft，高密度场景自动增加可观测槽位。",
+      "status": "not_started",
+      "verification": [
+        "场景可覆盖 max_observable_aircraft",
+        "未覆盖时保持默认值 10",
+        "observation_space 随配置变化"
+      ],
+      "evidence": [],
+      "notes": "V3.0 Phase 3 MEDIUM。当前固定为 10，不适应不同密度场景。"
+    },
+    {
+      "id": "arch-003",
+      "priority": 19,
+      "area": "rendering",
+      "title": "渲染器接口解耦",
+      "user_visible_behavior": "渲染器通过 RendererDataSource Protocol 访问数据，不再直接访问 env.agents / env.pz_env。",
+      "status": "not_started",
+      "verification": [
+        "渲染器不直接访问 env.agents 或 env.pz_env",
+        "所有渲染测试通过",
+        "渲染效果不变"
+      ],
+      "evidence": [],
+      "notes": "V3.0 Phase 4 MEDIUM。当前渲染器通过 self.env.agents 直接访问内部状态，违反封装。"
+    },
+    {
+      "id": "scenario-002",
+      "priority": 20,
+      "area": "envs",
+      "title": "场景初始位置随机化",
+      "user_visible_behavior": "场景支持分布采样初始位置，每次 reset 生成不同构型，提升训练泛化性。",
+      "status": "not_started",
+      "verification": [
+        "每次 reset 生成不同初始位置",
+        "配置格式向后兼容",
+        "所有现有场景测试不退化"
+      ],
+      "evidence": [],
+      "notes": "V3.0 Phase 4 LOW。当前部分场景初始位置固定在 YAML 中。"
     }
   ]
 }
