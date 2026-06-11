@@ -662,14 +662,20 @@
       "area": "rewards",
       "title": "DelayPenalty 动态预期步数",
       "user_visible_behavior": "延迟惩罚根据当前速度动态调整预期步数，agent 减速让行时不会产生不合理惩罚。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "agent 减速时预期步数按比例增加",
         "agent 保持巡航速度时行为不变",
         "所有现有延迟测试不退化"
       ],
-      "evidence": [],
-      "notes": "V3.0 Phase 2 HIGH。当前 set_goal() 一次性计算预期步数，中途速度变化不被考虑。"
+      "evidence": [
+        "delay.py: set_goal() 保存初始距离、速度、dt",
+        "delay.py: compute() 根据当前速度动态调整预期步数",
+        "test_reward_delay_dynamic.py: 4 个新测试全部通过",
+        "test_reward_delay.py: 7 个现有测试全部通过",
+        "ruff check: No issues found"
+      ],
+      "notes": "V3.0 Phase 2 HIGH。已完成。DelayPenalty 现在根据当前速度动态调整预期步数，减速时 deadline 延长，加速时 deadline 缩短。"
     },
     {
       "id": "obs-002",

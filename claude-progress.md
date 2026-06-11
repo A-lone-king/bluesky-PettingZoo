@@ -521,3 +521,24 @@
 - 更新过的文件或工件：efficiency.py, test_reward_efficiency_alt.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：开始 reward-003（DelayPenalty 动态预期步数）或其他未完成功能
+
+### Session 026
+
+- 日期：2026-06-11
+- 本轮目标：实现 reward-003（DelayPenalty 动态预期步数）
+- 已完成：
+  - 修改 delay.py：
+    - set_goal() 保存初始距离、速度、dt
+    - compute() 根据当前速度动态调整预期步数
+    - 新增 _compute_expected_steps() 辅助方法
+  - 创建 test_reward_delay_dynamic.py：4 个测试覆盖动态预期步数功能
+  - 更新 feature_list.json：reward-003 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - pytest test_reward_delay_dynamic.py: 4 passed
+  - pytest test_reward_delay.py: 7 passed（现有测试不退化）
+- 已记录证据：reward-003 passing，DelayPenalty 动态预期步数完成
+- 提交记录：待提交
+- 更新过的文件或工件：delay.py, test_reward_delay_dynamic.py, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 obs-002（观测零填充文档说明）
