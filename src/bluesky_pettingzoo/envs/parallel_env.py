@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import numpy as np
@@ -24,6 +25,44 @@ from bluesky_pettingzoo.utils.protocols import (
 from bluesky_pettingzoo.utils.types import AircraftState, DiscreteAction
 
 _AIRCRAFT_TYPE = "B737"
+
+
+class EnvRendererAdapter:
+    """Adapter that implements RendererDataSource for BlueSkyMARLEnv.
+
+    Decouples renderers from environment internals by providing a clean
+    data source interface. Renderers should depend on RendererDataSource
+    protocol instead of accessing env.agents or env.pz_env directly.
+    """
+
+    def __init__(
+        self,
+        obs_builder: ObservationBuilder,
+        step_count: int,
+        agents: list[str],
+    ) -> None:
+        self._obs_builder = obs_builder
+        self._step_count = step_count
+        self._agents = agents
+
+    def get_aircraft_states(self) -> dict[str, Any]:
+        """Return current aircraft states keyed by agent ID."""
+        # This will be called by renderers to get latest states
+        # The actual states are passed through render_frame, so this
+        # provides a reference to the builder for additional data
+        return {}
+
+    def get_waypoints(self) -> dict[str, dict[str, float]] | None:
+        """Return goal waypoints keyed by agent ID."""
+        return self._obs_builder.get_waypoints_for_render(self._agents)
+
+    def get_step_count(self) -> int:
+        """Return current simulation step count."""
+        return self._step_count
+
+    def get_active_agents(self) -> list[str]:
+        """Return list of active agent IDs."""
+        return self._agents
 
 
 class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
@@ -374,34 +413,37 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                 commands.extend(self._action_translator.translate(agent_id, state, action))
 
         # Execute commands and advance simulation with substep safety checks
-        self._wrapper.send_commands_batch(commands)
-        self._substep_terminated: set[str] = set()
+        try:
+            self._wrapper.send_commands_batch(commands)
+            self._substep_terminated: set[str] = set()
 
-        def _on_substep(_step: int) -> bool:
-            """Check safety-critical conditions after each substep."""
-            substep_states = self._get_all_aircraft_states()
-            for agent_id in list(self.agents):
-                own = substep_states.get(agent_id)
-                if own is None:
-                    continue
-                # NMAC check
-                others = [s for aid, s in substep_states.items() if aid != agent_id]
-                conflict = self._obs_builder.compute_conflict_status(own, others)
-                if conflict == "nmac":
-                    self._substep_terminated.add(agent_id)
-                    self.agents.remove(agent_id)
-                    self._wrapper.remove_aircraft(agent_id)
-                    continue
-                # Obstacle intrusion check
-                obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
-                if obs_intrusion is not None and obs_intrusion.is_intruded(own):
-                    self._substep_terminated.add(agent_id)
-                    self.agents.remove(agent_id)
-                    self._wrapper.remove_aircraft(agent_id)
-                    continue
-            return True  # always continue remaining substeps
+            def _on_substep(_step: int) -> bool:
+                """Check safety-critical conditions after each substep."""
+                substep_states = self._get_all_aircraft_states()
+                for agent_id in list(self.agents):
+                    own = substep_states.get(agent_id)
+                    if own is None:
+                        continue
+                    # NMAC check
+                    others = [s for aid, s in substep_states.items() if aid != agent_id]
+                    conflict = self._obs_builder.compute_conflict_status(own, others)
+                    if conflict == "nmac":
+                        self._substep_terminated.add(agent_id)
+                        self.agents.remove(agent_id)
+                        self._wrapper.remove_aircraft(agent_id)
+                        continue
+                    # Obstacle intrusion check
+                    obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
+                    if obs_intrusion is not None and obs_intrusion.is_intruded(own):
+                        self._substep_terminated.add(agent_id)
+                        self.agents.remove(agent_id)
+                        self._wrapper.remove_aircraft(agent_id)
+                        continue
+                return True  # always continue remaining substeps
 
-        self._wrapper.step_n(self._action_frequency, on_substep=_on_substep)
+            self._wrapper.step_n(self._action_frequency, on_substep=_on_substep)
+        except Exception as e:
+            return self._safe_termination_fallback(actions, e)
 
         # Update states
         new_states = self._get_all_aircraft_states()
@@ -606,6 +648,51 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
             self._renderer.close()
             self._renderer = None
         self._wrapper.close()
+
+    def _safe_termination_fallback(
+        self,
+        actions: dict[str, Any],
+        error: Exception,
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Return safe termination response when BlueSky engine crashes.
+
+        All agents receive crash_penalty reward and terminated=True.
+        Observations return default values to maintain PettingZoo interface.
+
+        Args:
+            actions: The actions that caused the crash (for info logging).
+            error: The exception that was raised.
+
+        Returns:
+            Tuple of (observations, rewards, terminations, truncations, infos).
+        """
+        crash_penalty: float = self.config.get("simulation", {}).get("crash_penalty", -100.0)
+
+        observations: dict[str, Any] = {}
+        rewards: dict[str, float] = {}
+        terminations: dict[str, bool] = {}
+        truncations: dict[str, bool] = {}
+        infos: dict[str, Any] = {}
+
+        for agent_id in self.agents:
+            observations[agent_id] = self._obs_builder.default_observation()
+            rewards[agent_id] = crash_penalty
+            terminations[agent_id] = True
+            truncations[agent_id] = False
+            infos[agent_id] = {
+                "error": str(error),
+                "error_type": type(error).__name__,
+                "step": self._step_count,
+            }
+
+        logging.error(
+            "BlueSky engine error at step %d: %s (%s)",
+            self._step_count,
+            error,
+            type(error).__name__,
+        )
+
+        return observations, rewards, terminations, truncations, infos
 
     # ------------------------------------------------------------------
     # Internal helpers

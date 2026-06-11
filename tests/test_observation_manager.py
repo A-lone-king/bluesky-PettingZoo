@@ -39,13 +39,14 @@ class TestObservationSpaceShape:
         assert isinstance(space, spaces.Dict)
 
     def test_observation_space_keys(self, default_config: dict) -> None:
-        """Observation space should have self_state, other_aircraft, other_aircraft_mask, goal."""
+        """Observation space should have all required keys including conflict_state."""
         mgr = ObservationManager(default_config)
         space = mgr.observation_space()
         assert "self_state" in space.spaces
         assert "other_aircraft" in space.spaces
         assert "other_aircraft_mask" in space.spaces
         assert "goal" in space.spaces
+        assert "conflict_state" in space.spaces
 
     def test_self_state_shape(self, default_config: dict) -> None:
         """self_state should be shape (9,)."""
@@ -70,6 +71,13 @@ class TestObservationSpaceShape:
         mgr = ObservationManager(default_config)
         space = mgr.observation_space()
         assert space["goal"].shape == (4,)
+
+    def test_conflict_state_shape(self, default_config: dict) -> None:
+        """conflict_state should be shape (3,) with float32 dtype."""
+        mgr = ObservationManager(default_config)
+        space = mgr.observation_space()
+        assert space["conflict_state"].shape == (3,)
+        assert space["conflict_state"].dtype == np.float32
 
 
 class TestSelfStateFields:
@@ -274,3 +282,65 @@ class TestObservationConsistency:
             r2["observation"]["other_aircraft"],
         )
         assert r1["textual_state"]["text"] == r2["textual_state"]["text"]
+
+
+class TestConflictState:
+    """Test conflict_state one-hot encoding in observations."""
+
+    def test_conflict_state_safe(self, default_config: dict) -> None:
+        """Safe status should encode as [0, 0, 1]."""
+        mgr = ObservationManager(default_config)
+        own = make_state("OWN", 39.25, 116.25, 35000.0)
+        goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
+
+        result = mgr.generate(own, [], goal, conflict_status="safe")
+        cs = result["observation"]["conflict_state"]
+
+        assert cs.shape == (3,)
+        assert cs.dtype == np.float32
+        np.testing.assert_array_equal(cs, [0.0, 0.0, 1.0])
+
+    def test_conflict_state_warning(self, default_config: dict) -> None:
+        """Warning status should encode as [0, 1, 0]."""
+        mgr = ObservationManager(default_config)
+        own = make_state("OWN", 39.25, 116.25, 35000.0)
+        goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
+
+        result = mgr.generate(own, [], goal, conflict_status="warning")
+        cs = result["observation"]["conflict_state"]
+
+        np.testing.assert_array_equal(cs, [0.0, 1.0, 0.0])
+
+    def test_conflict_state_nmac(self, default_config: dict) -> None:
+        """NMAC status should encode as [1, 0, 0]."""
+        mgr = ObservationManager(default_config)
+        own = make_state("OWN", 39.25, 116.25, 35000.0)
+        goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
+
+        result = mgr.generate(own, [], goal, conflict_status="nmac")
+        cs = result["observation"]["conflict_state"]
+
+        np.testing.assert_array_equal(cs, [1.0, 0.0, 0.0])
+
+    def test_conflict_state_default_safe(self, default_config: dict) -> None:
+        """Default conflict_status (safe) should be used when not specified."""
+        mgr = ObservationManager(default_config)
+        own = make_state("OWN", 39.25, 116.25, 35000.0)
+        goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
+
+        result = mgr.generate(own, [], goal)
+        cs = result["observation"]["conflict_state"]
+
+        np.testing.assert_array_equal(cs, [0.0, 0.0, 1.0])
+
+    def test_conflict_state_in_observation_space(self, default_config: dict) -> None:
+        """conflict_state should be within observation space bounds."""
+        mgr = ObservationManager(default_config)
+        space = mgr.observation_space()
+        own = make_state("OWN", 39.25, 116.25, 35000.0)
+        goal = {"lat": 39.50, "lon": 116.50, "alt": 35000.0, "hdg": 90.0}
+
+        for status in ["safe", "warning", "nmac"]:
+            result = mgr.generate(own, [], goal, conflict_status=status)
+            cs = result["observation"]["conflict_state"]
+            assert space["conflict_state"].contains(cs), f"conflict_state not in space for {status}"

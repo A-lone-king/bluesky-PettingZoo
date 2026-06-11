@@ -7,7 +7,6 @@ from typing import Any
 from bluesky_pettingzoo.rendering.base_renderer import BaseRenderer
 from bluesky_pettingzoo.rendering.common import (
     draw_aircraft_dot,
-    draw_altitude_box,
     draw_heading_line,
     draw_nmac_circle,
     draw_sky_gradient,
@@ -76,16 +75,6 @@ class VerticalCRRenderer(BaseRenderer):
         # Draw aircraft with protection zones, heading lines, and altitude labels
         for acid, state in states.items():
             x, y = latlon_to_pixel(state.lat, state.lon, self._bounds, self._width, self._height)
-            # Altitude box (bluesky-gym style)
-            draw_altitude_box(
-                self._screen,
-                x,
-                y,
-                width=60,
-                height=40,
-                color=_PROTECTION_COLOR,
-                line_width=1,
-            )
             # Black protection zone
             draw_nmac_circle(
                 self._screen,

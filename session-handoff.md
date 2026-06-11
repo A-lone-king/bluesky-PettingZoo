@@ -128,10 +128,10 @@
 | robust-002 | step() 异常处理与安全回退 | P0 | Phase 1 | passing |
 | reward-002 | EfficiencyReward 高度维度 | P1 | Phase 2 | passing |
 | reward-003 | DelayPenalty 动态预期步数 | P1 | Phase 2 | passing |
-| obs-002 | 观测零填充文档说明 | P2 | Phase 3 | not_started |
-| obs-003 | max_observable 动态配置 | P2 | Phase 3 | not_started |
-| arch-003 | 渲染器接口解耦 | P2 | Phase 4 | not_started |
-| scenario-002 | 场景初始位置随机化 | P3 | Phase 4 | not_started |
+| obs-002 | 观测零填充文档说明 | P2 | Phase 3 | passing |
+| obs-003 | max_observable 动态配置 | P2 | Phase 3 | passing |
+| arch-003 | 渲染器接口解耦 | P2 | Phase 4 | passing |
+| scenario-002 | 场景初始位置随机化 | P3 | Phase 4 | passing |
 
 **总工作量**：7-11 天
 **推荐执行顺序**：Phase 1 → Phase 2 → Phase 3 → Phase 4

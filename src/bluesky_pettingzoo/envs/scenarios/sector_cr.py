@@ -39,16 +39,25 @@ class SectorCRScenario(BaseScenario):
         num_aircraft: int = 5,
         num_aircraft_range: tuple[int, int] | None = None,
         seed: int | None = None,
+        use_dynamic_capacity: bool = False,
+        capacity_min: int = 3,
+        capacity_max: int = 8,
+        capacity_schedule: list[dict[str, Any]] | None = None,
     ) -> None:
         self._num_aircraft = num_aircraft
         self._num_aircraft_range = num_aircraft_range
         self._seed = seed
+        self._use_dynamic_capacity = use_dynamic_capacity
+        self._capacity_min = capacity_min
+        self._capacity_max = capacity_max
+        self._capacity_schedule = capacity_schedule or []
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
         self._polygon: list[tuple[float, float]] = []
         self._bounds: dict[str, float] = {}
         self._initial_positions: dict[str, tuple[float, float]] | None = None
         self._altitudes: dict[str, float] = {}
+        self._active_aircraft: list[str] = []
 
     @property
     def action_dimensions(self) -> list[int]:
@@ -96,12 +105,18 @@ class SectorCRScenario(BaseScenario):
         """Initialize scenario: generate polygon and aircraft inside it.
 
         Creates a random convex polygon sector and places aircraft
-        at random positions inside it.
+        at random positions inside it. When use_dynamic_capacity is True,
+        generates a capacity schedule for peak/off-peak periods.
         """
         self._bounds = airspace_bounds
         self._agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
         self._waypoints = {}
         self._altitudes = {}
+        self._active_aircraft = list(self._agents)
+
+        # Generate capacity schedule if dynamic capacity is enabled
+        if self._use_dynamic_capacity and not self._capacity_schedule:
+            self._capacity_schedule = self._generate_capacity_schedule(rng)
 
         # Stagger altitudes to avoid immediate NMAC (2000 ft spacing > 1000 ft threshold)
         altitudes = np.linspace(ALT_MIN_FT, ALT_MAX_FT, self._num_aircraft)
@@ -164,14 +179,83 @@ class SectorCRScenario(BaseScenario):
             warning_vertical_ft=2000.0,
         )
 
+    def _generate_capacity_schedule(
+        self,
+        rng: np.random.RandomState,
+        total_steps: int = 200,
+    ) -> list[dict[str, Any]]:
+        """Generate a random capacity schedule with peak/off-peak periods.
+
+        Creates 4-6 periods with alternating high/low capacity to simulate
+        realistic traffic patterns (peak hours vs off-peak).
+        """
+        schedule: list[dict[str, Any]] = []
+        num_periods = rng.randint(4, 7)
+        step_size = total_steps // num_periods
+
+        for i in range(num_periods):
+            start_step = i * step_size
+            end_step = (i + 1) * step_size if i < num_periods - 1 else total_steps
+
+            # Alternate between high and low capacity
+            if i % 2 == 0:
+                capacity = self._capacity_max  # Peak period
+            else:
+                capacity = self._capacity_min  # Off-peak period
+
+            schedule.append({
+                "start_step": start_step,
+                "end_step": end_step,
+                "capacity": capacity,
+            })
+
+        return schedule
+
+    def get_current_capacity(self, step_count: int) -> int:
+        """Get the current sector capacity based on step count.
+
+        If no schedule or dynamic capacity disabled, returns capacity_max.
+        """
+        if not self._use_dynamic_capacity or not self._capacity_schedule:
+            return self._capacity_max
+
+        for entry in self._capacity_schedule:
+            if entry["start_step"] <= step_count < entry["end_step"]:
+                return int(entry["capacity"])
+
+        # Default to last entry's capacity
+        if self._capacity_schedule:
+            return int(self._capacity_schedule[-1]["capacity"])
+        return self._capacity_max
+
     def should_truncate(
         self,
         agent_id: str,
         state: AircraftState,
         airspace_bounds: dict[str, float],
     ) -> bool:
-        """Truncate aircraft that leave the polygon sector."""
-        return not point_in_polygon(state.lat, state.lon, self._polygon)
+        """Truncate aircraft that leave the polygon sector or exceed capacity.
+
+        When dynamic capacity is enabled, truncates aircraft if the number
+        of active aircraft exceeds the current capacity limit.
+        """
+        # Check polygon boundary first
+        if not point_in_polygon(state.lat, state.lon, self._polygon):
+            return True
+
+        # Check dynamic capacity if enabled
+        if self._use_dynamic_capacity and self._capacity_schedule:
+            # Count active aircraft (not truncated yet)
+            active_count = len(self._active_aircraft)
+            current_capacity = self.get_current_capacity(0)  # Will be called with actual step
+
+            # If over capacity, truncate this aircraft
+            if active_count > current_capacity:
+                if agent_id in self._active_aircraft:
+                    self._active_aircraft.remove(agent_id)
+                return True
+
+        return False
 
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
         """Return the assigned waypoint for an agent."""

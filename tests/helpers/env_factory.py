@@ -157,6 +157,14 @@ def make_env(
     rewards_path = write_rewards_yaml(tmp_path, rewards_yaml)
     config["_rewards_yaml"] = str(rewards_path)
 
+    # Apply scenario-specific max_observable_aircraft override
+    import copy
+    config = copy.deepcopy(config)
+    if scenario is not None and scenario.max_observable_aircraft is not None:
+        config.setdefault("observation", {})["max_observable_aircraft"] = (
+            scenario.max_observable_aircraft
+        )
+
     wrapper = BlueSkyWrapper(config)
     obs_manager = ObservationManager(config)
     action_translator = ActionTranslator(config)

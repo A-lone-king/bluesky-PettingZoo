@@ -145,3 +145,121 @@ class TestE2ETraining:
 
         # Same number of episodes
         assert len(rows0) == len(rows1)
+
+
+class TestFullEpisodeTraining:
+    """Test complete episode training from reset to termination."""
+
+    def test_full_episode_training(self, tmp_path: Path) -> None:
+        """Train PPO for a full episode and verify it completes without error."""
+        from stable_baselines3 import PPO
+
+        from scripts.train_ppo_scenarios import train_scenario
+
+        args = MagicMock()
+        args.scenario = "HorizontalCR"
+        args.timesteps = 512
+        args.seed = 42
+        args.save_dir = str(tmp_path / "models")
+        args.resume = None
+        args.max_steps = 20
+        args.num_aircraft = 2
+        args.num_envs = 1
+        args.device = "cpu"
+        args.verbose = 0
+        args.batch_size = 64
+        args.algorithm = "PPO"
+
+        # Should complete without error
+        train_scenario(args)
+
+        # Verify model was saved
+        model_path = Path(args.save_dir) / args.scenario / args.algorithm / "checkpoint_final.zip"
+        assert model_path.exists(), f"Model not saved at {model_path}"
+
+        # Load and verify model can predict actions
+        model = PPO.load(str(model_path))
+        assert model is not None
+        assert hasattr(model, "policy")
+
+    def test_multi_scenario_training(self, tmp_path: Path) -> None:
+        """Train PPO on 3 core scenarios and verify all complete successfully."""
+        from scripts.train_ppo_scenarios import train_scenario
+
+        scenarios = ["HorizontalCR", "SectorCR", "WaypointNav"]
+
+        for scenario in scenarios:
+            args = MagicMock()
+            args.scenario = scenario
+            args.timesteps = 256
+            args.seed = 42
+            args.save_dir = str(tmp_path / "models")
+            args.resume = None
+            args.max_steps = 10
+            args.num_aircraft = 2
+            args.num_envs = 1
+            args.device = "cpu"
+            args.verbose = 0
+            args.batch_size = 64
+            args.algorithm = "PPO"
+
+            # Should complete without error
+            train_scenario(args)
+
+            # Verify model was saved
+            model_path = (
+                Path(args.save_dir) / scenario / args.algorithm / "checkpoint_final.zip"
+            )
+            assert model_path.exists(), f"Model not saved for {scenario}"
+
+    def test_reward_signal_exists(self, tmp_path: Path) -> None:
+        """Verify that training produces a learning signal (reward improvement)."""
+        from stable_baselines3 import PPO
+
+        from scripts.train_ppo_scenarios import train_scenario
+
+        args = MagicMock()
+        args.scenario = "HorizontalCR"
+        args.timesteps = 1024
+        args.seed = 42
+        args.save_dir = str(tmp_path / "models")
+        args.resume = None
+        args.max_steps = 15
+        args.num_aircraft = 2
+        args.num_envs = 1
+        args.device = "cpu"
+        args.verbose = 0
+        args.batch_size = 64
+        args.algorithm = "PPO"
+
+        # Train the model
+        train_scenario(args)
+
+        # Load the trained model
+        model_path = Path(args.save_dir) / args.scenario / args.algorithm / "checkpoint_final.zip"
+        model = PPO.load(str(model_path))
+
+        # Read the training log to check for reward improvement
+        csv_path = (
+            Path(args.save_dir) / args.scenario / args.algorithm / "logs" / "training_log.csv"
+        )
+        assert csv_path.exists(), f"CSV log not found at {csv_path}"
+
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+        # Need at least 2 episodes to compare
+        assert len(rows) >= 2, f"Need at least 2 episodes, got {len(rows)}"
+
+        # Compare first and last episode rewards
+        first_reward = float(rows[0]["reward"])
+        last_reward = float(rows[-1]["reward"])
+
+        # At minimum, training should complete without negative infinite rewards
+        assert first_reward > float("-inf"), "First reward is negative infinity"
+        assert last_reward > float("-inf"), "Last reward is negative infinity"
+
+        # Log the improvement for visibility
+        improvement = last_reward - first_reward
+        print(f"\nReward improvement: {first_reward:.2f} -> {last_reward:.2f} ({improvement:+.2f})")

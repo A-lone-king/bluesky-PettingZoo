@@ -19,6 +19,11 @@ WAYPOINT_DISTANCE_MIN_NM = 100
 WAYPOINT_DISTANCE_MAX_NM = 150
 CRUISE_ALT_FT = 35000.0
 
+# Multi-altitude layer constants
+ALTITUDE_LAYER_MIN_FT = 29000.0
+ALTITUDE_LAYER_MAX_FT = 41000.0
+ALTITUDE_LAYER_SEPARATION_FT = 4000.0  # Minimum separation between layers
+
 
 class HorizontalCRScenario(BaseScenario):
     """Horizontal conflict resolution scenario.
@@ -37,10 +42,12 @@ class HorizontalCRScenario(BaseScenario):
         num_aircraft: int = 5,
         num_aircraft_range: tuple[int, int] | None = None,
         seed: int | None = None,
+        num_altitude_layers: int = 1,
     ) -> None:
         self._num_aircraft = num_aircraft
         self._num_aircraft_range = num_aircraft_range
         self._seed = seed
+        self._num_altitude_layers = num_altitude_layers
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
         self._bounds: dict[str, float] = {}
@@ -76,11 +83,29 @@ class HorizontalCRScenario(BaseScenario):
 
         Aircraft are placed at random positions; waypoints are placed
         100-150 NM away in alternating east/west directions to create
-        head-on conflict opportunities.
+        head-on conflict opportunities. When num_altitude_layers > 1,
+        aircraft are distributed across multiple altitude layers.
         """
         self._bounds = airspace_bounds
         self._agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
         self._waypoints = {}
+
+        # Generate altitude layers
+        if self._num_altitude_layers == 1:
+            altitude_layers = [CRUISE_ALT_FT]
+        else:
+            # Evenly distribute layers across altitude range
+            altitude_layers = np.linspace(
+                ALTITUDE_LAYER_MIN_FT,
+                ALTITUDE_LAYER_MAX_FT,
+                self._num_altitude_layers,
+            ).tolist()
+
+        # Assign aircraft to layers (distribute evenly)
+        layer_assignments = []
+        for i in range(self._num_aircraft):
+            layer_idx = i % len(altitude_layers)
+            layer_assignments.append(altitude_layers[layer_idx])
 
         for i, acid in enumerate(self._agents):
             # Place aircraft at random position within airspace
@@ -105,7 +130,7 @@ class HorizontalCRScenario(BaseScenario):
             self._waypoints[acid] = {
                 "lat": wp_lat,
                 "lon": wp_lon,
-                "alt": CRUISE_ALT_FT,
+                "alt": layer_assignments[i],
                 "hdg": bearing_deg,
             }
 

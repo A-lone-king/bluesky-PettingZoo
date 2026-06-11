@@ -61,6 +61,9 @@ class ObservationManager:
                 dtype=np.int8,
             ),
             "goal": spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32),
+            "conflict_state": spaces.Box(
+                low=0.0, high=1.0, shape=(3,), dtype=np.float32
+            ),
         }
         if self._max_obstacles > 0:
             obs_feat_low = np.array([0.0, -1.0, -1.0, 0.0], dtype=np.float32)
@@ -81,6 +84,24 @@ class ObservationManager:
                 }
             )
         return spaces.Dict(space_dict)
+
+    def _encode_conflict_status(self, status: str) -> np.ndarray:
+        """Encode conflict status as one-hot vector.
+
+        Args:
+            status: Conflict status string ("nmac", "warning", or "safe").
+
+        Returns:
+            One-hot vector of shape (3,): [is_nmac, is_warning, is_safe].
+        """
+        vec = np.zeros(3, dtype=np.float32)
+        if status == "nmac":
+            vec[0] = 1.0
+        elif status == "warning":
+            vec[1] = 1.0
+        else:
+            vec[2] = 1.0
+        return vec
 
     def generate(
         self,
@@ -264,6 +285,7 @@ class ObservationManager:
             "other_aircraft": other_aircraft,
             "other_aircraft_mask": mask,
             "goal": goal_vec,
+            "conflict_state": self._encode_conflict_status(conflict_status),
         }
         if obstacles_obs is not None:
             observation["obstacles"] = obstacles_obs

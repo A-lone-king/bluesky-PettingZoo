@@ -683,13 +683,16 @@
       "area": "observations",
       "title": "观测零填充文档说明",
       "user_visible_behavior": "文档明确说明 other_aircraft_mask 机制，训练时正确使用 mask 忽略填充槽位。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "文档说明 mask 机制",
         "现有测试不退化"
       ],
-      "evidence": [],
-      "notes": "V3.0 Phase 3 MEDIUM。零填充 + mask 是 PettingZoo 标准做法，无需代码改动，仅需文档。"
+      "evidence": [
+        "observations/README.md 添加零填充与 Mask 机制章节",
+        "包含观测结构、mask 含义、训练使用方式、配置项说明"
+      ],
+      "notes": "V3.0 Phase 3 MEDIUM。已完成。文档说明零填充 + mask 是 PettingZoo 标准做法。"
     },
     {
       "id": "obs-003",
@@ -697,14 +700,19 @@
       "area": "observations",
       "title": "max_observable_aircraft 动态配置",
       "user_visible_behavior": "场景可覆盖 max_observable_aircraft，高密度场景自动增加可观测槽位。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "场景可覆盖 max_observable_aircraft",
         "未覆盖时保持默认值 10",
         "observation_space 随配置变化"
       ],
-      "evidence": [],
-      "notes": "V3.0 Phase 3 MEDIUM。当前固定为 10，不适应不同密度场景。"
+      "evidence": [
+        "base.py: 添加 max_observable_aircraft 属性（默认返回 None）",
+        "env_factory.py: make_env() 检查场景覆盖并应用到配置",
+        "test_max_observable_config.py: 8 个测试全部通过",
+        "ruff check: No issues found"
+      ],
+      "notes": "V3.0 Phase 3 MEDIUM。已完成。场景可通过 max_observable_aircraft 属性覆盖全局配置。"
     },
     {
       "id": "arch-003",
@@ -712,14 +720,19 @@
       "area": "rendering",
       "title": "渲染器接口解耦",
       "user_visible_behavior": "渲染器通过 RendererDataSource Protocol 访问数据，不再直接访问 env.agents / env.pz_env。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "渲染器不直接访问 env.agents 或 env.pz_env",
         "所有渲染测试通过",
         "渲染效果不变"
       ],
-      "evidence": [],
-      "notes": "V3.0 Phase 4 MEDIUM。当前渲染器通过 self.env.agents 直接访问内部状态，违反封装。"
+      "evidence": [
+        "protocols.py: 添加 RendererDataSource Protocol（get_aircraft_states, get_waypoints, get_step_count, get_active_agents）",
+        "parallel_env.py: 添加 EnvRendererAdapter 类实现 RendererDataSource 协议",
+        "test_renderer_protocol.py: 16 个测试全部通过",
+        "ruff check: No issues found"
+      ],
+      "notes": "V3.0 Phase 4 MEDIUM。已完成。渲染器已通过方法参数接收数据，无需直接访问环境内部。RendererDataSource Protocol 形式化了这一接口。"
     },
     {
       "id": "scenario-002",
@@ -727,14 +740,19 @@
       "area": "envs",
       "title": "场景初始位置随机化",
       "user_visible_behavior": "场景支持分布采样初始位置，每次 reset 生成不同构型，提升训练泛化性。",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "每次 reset 生成不同初始位置",
         "配置格式向后兼容",
         "所有现有场景测试不退化"
       ],
-      "evidence": [],
-      "notes": "V3.0 Phase 4 LOW。当前部分场景初始位置固定在 YAML 中。"
+      "evidence": [
+        "horizontal_cr.py: 使用 rng.uniform() 随机生成位置和航向",
+        "vertical_cr.py: 使用 rng.uniform() 随机生成位置，rng.shuffle() 打乱高度",
+        "test_scenario_randomization.py: 5 个测试全部通过",
+        "ruff check: No issues found"
+      ],
+      "notes": "V3.0 Phase 4 LOW。已完成。场景已在 setup() 中实现随机化，每次 reset 生成不同构型。"
     }
   ]
 }

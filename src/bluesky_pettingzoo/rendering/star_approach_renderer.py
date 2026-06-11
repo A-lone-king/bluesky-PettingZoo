@@ -16,7 +16,6 @@ from bluesky_pettingzoo.rendering.common import (
     latlon_to_pixel,
 )
 
-
 # STAR procedure colors (one per procedure)
 STAR_COLORS = {
     "ARTIP3C": (0, 200, 255),    # Cyan

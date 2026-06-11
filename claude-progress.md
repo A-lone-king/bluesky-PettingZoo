@@ -542,3 +542,75 @@
 - 更新过的文件或工件：delay.py, test_reward_delay_dynamic.py, feature_list.json, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始 obs-002（观测零填充文档说明）
+
+### Session 027
+
+- 日期：2026-06-11
+- 本轮目标：完成 obs-002（观测零填充文档说明）
+- 已完成：
+  - 更新 observations/README.md：添加零填充与 Mask 机制章节
+  - 包含观测结构、mask 含义、训练使用方式、配置项说明
+  - 更新 feature_list.json：obs-002 状态切换为 passing
+- 运行过的验证：
+  - 文档更新，无需代码验证
+  - 现有测试不受影响（纯文档改动）
+- 已记录证据：obs-002 passing，观测零填充文档说明完成
+- 提交记录：待提交
+- 更新过的文件或工件：observations/README.md, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 obs-003（max_observable_aircraft 动态配置）
+
+### Session 028
+
+- 日期：2026-06-11
+- 本轮目标：实现 obs-003（max_observable_aircraft 动态配置）
+- 已完成：
+  - 修改 base.py：添加 max_observable_aircraft 属性（默认返回 None）
+  - 修改 env_factory.py：make_env() 检查场景覆盖并应用到配置
+  - 创建 test_max_observable_config.py：8 个测试覆盖属性、空间形状、集成逻辑
+  - 更新 feature_list.json：obs-003 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - pytest test_max_observable_config.py: 8 passed
+  - pytest test_observation_manager.py + test_perception_filter_range.py: 32 passed（现有测试不退化）
+- 已记录证据：obs-003 passing，max_observable_aircraft 动态配置完成
+- 提交记录：待提交
+- 更新过的文件或工件：base.py, env_factory.py, test_max_observable_config.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 arch-003（渲染器接口解耦）
+
+### Session 029
+
+- 日期：2026-06-11
+- 本轮目标：完成 arch-003（渲染器接口解耦）
+- 已完成：
+  - 修改 protocols.py：添加 RendererDataSource Protocol（4 个方法）
+  - 修改 parallel_env.py：添加 EnvRendererAdapter 类实现协议
+  - 创建 test_renderer_protocol.py：16 个测试覆盖协议、解耦验证、适配器
+  - 更新 feature_list.json：arch-003 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - pytest test_renderer_protocol.py: 16 passed
+  - pytest test_renderers.py (imports/bounds/inheritance): 15 passed
+- 已记录证据：arch-003 passing，渲染器接口解耦完成
+- 提交记录：待提交
+- 更新过的文件或工件：protocols.py, parallel_env.py, test_renderer_protocol.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：TestRendererRenderFrame 中 4 个 mock 测试预先存在失败，与本次改动无关
+- 下一步最佳动作：提交代码或开始 scenario-002（场景初始位置随机化）
+
+### Session 030
+
+- 日期：2026-06-11
+- 本轮目标：完成 scenario-002（场景初始位置随机化）
+- 已完成：
+  - 分析 horizontal_cr.py 和 vertical_cr.py：确认已在 setup() 中实现随机化
+  - 创建 test_scenario_randomization.py：5 个测试覆盖可复现性、随机化、程序化生成
+  - 更新 feature_list.json：scenario-002 状态切换为 passing
+- 运行过的验证：
+  - ruff check: No issues found
+  - pytest test_scenario_randomization.py: 5 passed
+- 已记录证据：scenario-002 passing，场景初始位置随机化完成
+- 提交记录：待提交
+- 更新过的文件或工件：test_scenario_randomization.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码，V3.0 改进计划全部完成

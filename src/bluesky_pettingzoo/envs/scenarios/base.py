@@ -338,6 +338,19 @@ class BaseScenario(ABC):
         """
         return None
 
+    @property
+    def max_observable_aircraft(self) -> int | None:
+        """Override to set scenario-specific max observable aircraft.
+
+        When not None, this value overrides the global
+        ``observation.max_observable_aircraft`` config setting, allowing
+        high-density scenarios to automatically increase observation slots.
+
+        Returns:
+            Max observable aircraft count, or None to use config default.
+        """
+        return None
+
     def reset(self, rng: np.random.RandomState) -> None:
         """Reset scenario state and randomize parameters for next episode.
 

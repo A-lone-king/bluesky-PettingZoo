@@ -6,7 +6,7 @@ Used by ObservationBuilder and BlueSkyMARLEnv for component detection.
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from bluesky_pettingzoo.utils.types import AircraftState
 
@@ -135,8 +135,34 @@ class NavigationScenario(Protocol):
 
 
 # ---------------------------------------------------------------------------
-# Renderer protocol
+# Renderer protocols
 # ---------------------------------------------------------------------------
+
+
+@runtime_checkable
+class RendererDataSource(Protocol):
+    """Protocol for renderer data source interface.
+
+    Renderers should depend on this protocol instead of directly accessing
+    environment internals (env.agents, env.pz_env). This decouples
+    renderers from environment implementation details.
+    """
+
+    def get_aircraft_states(self) -> dict[str, Any]:
+        """Return current aircraft states keyed by agent ID."""
+        ...
+
+    def get_waypoints(self) -> dict[str, dict[str, float]] | None:
+        """Return goal waypoints keyed by agent ID."""
+        ...
+
+    def get_step_count(self) -> int:
+        """Return current simulation step count."""
+        ...
+
+    def get_active_agents(self) -> list[str]:
+        """Return list of active agent IDs."""
+        ...
 
 
 @runtime_checkable
