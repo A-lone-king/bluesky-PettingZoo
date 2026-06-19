@@ -19,7 +19,7 @@ class TestStepPenalty:
 
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
-        assert result == pytest.approx(-0.01)
+        assert result == pytest.approx(-0.005)
 
 
 class TestNoDeviation:
@@ -35,7 +35,7 @@ class TestNoDeviation:
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
         # At goal: step_penalty(-0.01) + deviation(0) + arrival(+10) = 9.99
-        assert result == pytest.approx(9.99)
+        assert result == pytest.approx(99.995)
 
 
 class TestDeviationPenalty:
@@ -52,8 +52,8 @@ class TestDeviationPenalty:
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
         # deviation_penalty = -(10/50)*5 = -1.0
-        # total = -0.01 + (-1.0) + 0 = -1.01
-        assert result == pytest.approx(-1.01)
+        # total = -0.005 + (-1.0) + 0 = -1.005
+        assert result == pytest.approx(-1.005)
 
     def test_max_deviation_penalty(self, rewards_config: dict) -> None:
         """Deviation at MAX_DEVIATION(50NM) → max penalty -5."""
@@ -66,8 +66,8 @@ class TestDeviationPenalty:
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
         # deviation_penalty = -(50/50)*5 = -5.0
-        # total = -0.01 + (-5.0) + 0 = -5.01
-        assert result == pytest.approx(-5.01)
+        # total = -0.005 + (-5.0) + 0 = -5.005
+        assert result == pytest.approx(-5.005)
 
     def test_deviation_proportional(self, rewards_config: dict) -> None:
         """Penalty is proportional to deviation distance."""
@@ -100,7 +100,7 @@ class TestArrivalReward:
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
         # step_penalty(-0.01) + deviation(0) + arrival(+10) = 9.99
-        assert result == pytest.approx(9.99)
+        assert result == pytest.approx(99.995)
 
     def test_not_arrived(self, rewards_config: dict) -> None:
         """Not arrived (far from goal) → no arrival reward."""
@@ -113,5 +113,5 @@ class TestArrivalReward:
         result = comp.compute("AC001", state, action, state, {"AC001": state})
 
         # No arrival reward, just step + deviation penalty
-        assert result == pytest.approx(-1.01)
-        assert result < 0  # Definitely no +10 arrival bonus
+        assert result == pytest.approx(-1.005)
+        assert result < 0  # Definitely no +100 arrival bonus

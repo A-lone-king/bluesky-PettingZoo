@@ -238,8 +238,8 @@ def _make_rewards_config() -> dict[str, Any]:
                 "weight": 0.3,
                 "max_deviation_nm": 50,
                 "deviation_penalty_scale": 5,
-                "arrival_reward": 10,
-                "step_penalty": -0.01,
+                "arrival_reward": 100,
+                "step_penalty": -0.005,
                 "arrival_threshold_nm": 2,
             },
         }

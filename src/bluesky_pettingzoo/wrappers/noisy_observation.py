@@ -37,6 +37,14 @@ class NoisyObservationWrapper(EnvWrapperMixin):
     # ------------------------------------------------------------------
 
     def reset(self, **kwargs: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Reset the wrapped environment and add Gaussian noise to observations.
+
+        Args:
+            **kwargs: Arguments forwarded to the underlying env reset.
+
+        Returns:
+            Noisy observations and info dicts.
+        """
         observations, infos = self.env.reset(**kwargs)
         noisy_obs = {aid: self._add_noise(obs) for aid, obs in observations.items()}
         return noisy_obs, infos
@@ -45,6 +53,14 @@ class NoisyObservationWrapper(EnvWrapperMixin):
         self,
         actions: dict[str, Any],
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Step the wrapped environment and add Gaussian noise to observations.
+
+        Args:
+            actions: Actions for all agents.
+
+        Returns:
+            Noisy observations, rewards, terminations, truncations, and infos.
+        """
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         noisy_obs = {aid: self._add_noise(obs) for aid, obs in observations.items()}
         return noisy_obs, rewards, terminations, truncations, infos

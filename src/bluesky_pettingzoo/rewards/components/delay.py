@@ -51,9 +51,7 @@ class DelayPenalty(RewardComponent):
         """
         self._goals[agent_id] = (distance_nm, speed_kt, dt)
 
-    def _compute_expected_steps(
-        self, distance_nm: float, speed_kt: float, dt: float
-    ) -> int:
+    def _compute_expected_steps(self, distance_nm: float, speed_kt: float, dt: float) -> int:
         """Compute expected steps to reach goal given distance and speed."""
         if speed_kt <= 0 or dt <= 0:
             return 0

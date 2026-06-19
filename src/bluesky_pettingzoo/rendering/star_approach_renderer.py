@@ -18,9 +18,9 @@ from bluesky_pettingzoo.rendering.common import (
 
 # STAR procedure colors (one per procedure)
 STAR_COLORS = {
-    "ARTIP3C": (0, 200, 255),    # Cyan
-    "RIVER4M": (255, 150, 0),    # Orange
-    "SOBTU3G": (0, 255, 100),    # Green
+    "ARTIP3C": (0, 200, 255),  # Cyan
+    "RIVER4M": (255, 150, 0),  # Orange
+    "SOBTU3G": (0, 255, 100),  # Green
 }
 
 
@@ -115,6 +115,7 @@ class StarApproachRenderer(BaseRenderer):
                 x2, y2 = latlon_to_pixel(wp2[1], wp2[2], bounds, self._width, self._height)
 
                 import pygame
+
                 pygame.draw.line(self._screen, color, (x1, y1), (x2, y2), 2)
 
             # Draw waypoint labels
@@ -134,11 +135,13 @@ class StarApproachRenderer(BaseRenderer):
         x, y = latlon_to_pixel(lat, lon, bounds, self._width, self._height)
 
         import pygame
+
         # Draw runway as a white rectangle
         runway_length = 30
         runway_width = 6
 
         import math
+
         angle = math.radians(heading)
         dx = runway_length * math.cos(angle)
         dy = runway_length * math.sin(angle)
@@ -155,6 +158,7 @@ class StarApproachRenderer(BaseRenderer):
             return
         try:
             import pygame
+
             font = pygame.font.SysFont("Arial", 10)
             surface = font.render(text, True, color)
             self._screen.blit(surface, (x, y))

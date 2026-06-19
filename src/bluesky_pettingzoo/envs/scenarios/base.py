@@ -102,6 +102,7 @@ class BaseScenario(ABC):
 
     @action_space_type.setter
     def action_space_type(self, value: str) -> None:
+        """Set the action space type for the scenario."""
         self._action_space_type = value
 
     @property

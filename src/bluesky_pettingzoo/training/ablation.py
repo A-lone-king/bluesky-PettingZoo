@@ -96,22 +96,16 @@ class AblationRunner:
     def list_discrete_experiments(self) -> list[str]:
         """List discrete action space experiments."""
         return [
-            eid
-            for eid, cfg in self._experiments.items()
-            if cfg.get("action_type") == "discrete"
+            eid for eid, cfg in self._experiments.items() if cfg.get("action_type") == "discrete"
         ]
 
     def list_continuous_experiments(self) -> list[str]:
         """List continuous action space experiments."""
         return [
-            eid
-            for eid, cfg in self._experiments.items()
-            if cfg.get("action_type") == "continuous"
+            eid for eid, cfg in self._experiments.items() if cfg.get("action_type") == "continuous"
         ]
 
-    def create_action_space_config(
-        self, experiment_id: str
-    ) -> dict[str, Any]:
+    def create_action_space_config(self, experiment_id: str) -> dict[str, Any]:
         """Create action space configuration for an experiment.
 
         Returns a config dict that can be merged with the base environment config.
@@ -135,17 +129,13 @@ class AblationRunner:
             config["action"]["dims"] = action_dims
             # Add scale parameters if specified
             if "heading_scale" in exp_cfg:
-                config["continuous_action"] = {
-                    "heading_scale": exp_cfg["heading_scale"]
-                }
+                config["continuous_action"] = {"heading_scale": exp_cfg["heading_scale"]}
             if "speed_scale" in exp_cfg:
-                config.setdefault("continuous_action", {})["speed_scale"] = exp_cfg[
-                    "speed_scale"
-                ]
+                config.setdefault("continuous_action", {})["speed_scale"] = exp_cfg["speed_scale"]
             if "altitude_scale" in exp_cfg:
-                config.setdefault("continuous_action", {})[
+                config.setdefault("continuous_action", {})["altitude_scale"] = exp_cfg[
                     "altitude_scale"
-                ] = exp_cfg["altitude_scale"]
+                ]
 
         return config
 
@@ -203,9 +193,7 @@ class AblationRunner:
                     actions[agent_id] = action
 
                 # Step environment
-                next_obs, rewards, terminations, truncations, next_infos = env.step(
-                    actions
-                )
+                next_obs, rewards, terminations, truncations, next_infos = env.step(actions)
 
                 # Accumulate metrics
                 for agent_id in rewards:
@@ -281,9 +269,7 @@ class AblationReporter:
         lines: list[str] = []
         lines.append("# Action Space Ablation Report")
         lines.append("")
-        lines.append(
-            f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}"
-        )
+        lines.append(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
         lines.append("")
 
         # Summary table
@@ -336,16 +322,14 @@ class AblationReporter:
             fastest = min(results, key=lambda x: x.training_time_seconds)
 
             lines.append(
-                f"- **Highest Reward**: {best_reward.name} "
-                f"({best_reward.mean_reward:.2f})"
+                f"- **Highest Reward**: {best_reward.name} ({best_reward.mean_reward:.2f})"
             )
             lines.append(
                 f"- **Best Efficiency**: {best_efficiency.name} "
                 f"({best_efficiency.mean_efficiency:.3f})"
             )
             lines.append(
-                f"- **Fastest Training**: {fastest.name} "
-                f"({fastest.training_time_seconds:.1f}s)"
+                f"- **Fastest Training**: {fastest.name} ({fastest.training_time_seconds:.1f}s)"
             )
 
             # Discrete vs Continuous comparison
@@ -354,9 +338,7 @@ class AblationReporter:
 
             if discrete_results and continuous_results:
                 avg_discrete_reward = float(np.mean([r.mean_reward for r in discrete_results]))
-                avg_continuous_reward = float(
-                    np.mean([r.mean_reward for r in continuous_results])
-                )
+                avg_continuous_reward = float(np.mean([r.mean_reward for r in continuous_results]))
                 lines.append(
                     f"- **Discrete vs Continuous**: "
                     f"Discrete avg reward = {avg_discrete_reward:.2f}, "

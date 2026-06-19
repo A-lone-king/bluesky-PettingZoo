@@ -90,9 +90,7 @@ class FlightPlanParser:
         with open(file_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                waypoints = FlightPlanParser._parse_waypoints_str(
-                    row.get("waypoints", "[]")
-                )
+                waypoints = FlightPlanParser._parse_waypoints_str(row.get("waypoints", "[]"))
                 plans.append(
                     FlightPlanData(
                         flight_id=row["flight_id"],

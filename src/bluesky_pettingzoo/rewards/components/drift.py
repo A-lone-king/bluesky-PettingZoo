@@ -50,6 +50,19 @@ class DriftPenalty(RewardComponent):
         all_states: dict[str, AircraftState],
         step_count: int = 0,
     ) -> float:
+        """Compute drift penalty from heading deviation toward goal bearing.
+
+        Args:
+            agent_id: The agent identifier.
+            prev_state: Previous aircraft state.
+            action: Action taken.
+            curr_state: Current aircraft state.
+            all_states: All aircraft states.
+            step_count: Current step number.
+
+        Returns:
+            Penalty proportional to absolute heading error in radians.
+        """
         goal = self._goal_cache.get(agent_id)
         if goal is None:
             return 0.0
@@ -66,4 +79,5 @@ class DriftPenalty(RewardComponent):
         return drift_rad * self._scale
 
     def reset(self) -> None:
+        """Clear cached goal positions between episodes."""
         self._goal_cache.clear()

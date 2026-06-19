@@ -7,9 +7,12 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
+@pytest.mark.e2e
 class TestE2ETraining:
     """Full train → save → load → evaluate pipeline."""
 
@@ -147,6 +150,7 @@ class TestE2ETraining:
         assert len(rows0) == len(rows1)
 
 
+@pytest.mark.e2e
 class TestFullEpisodeTraining:
     """Test complete episode training from reset to termination."""
 
@@ -207,9 +211,7 @@ class TestFullEpisodeTraining:
             train_scenario(args)
 
             # Verify model was saved
-            model_path = (
-                Path(args.save_dir) / scenario / args.algorithm / "checkpoint_final.zip"
-            )
+            model_path = Path(args.save_dir) / scenario / args.algorithm / "checkpoint_final.zip"
             assert model_path.exists(), f"Model not saved for {scenario}"
 
     def test_reward_signal_exists(self, tmp_path: Path) -> None:

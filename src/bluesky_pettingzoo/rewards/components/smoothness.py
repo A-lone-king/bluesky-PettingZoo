@@ -50,4 +50,5 @@ class SmoothnessPenalty(RewardComponent):
         return 0.0
 
     def reset(self) -> None:
+        """Reset previous action tracking between episodes."""
         pass

@@ -303,7 +303,8 @@ def draw_runway(
     # Draw center line
     line_y = y
     pygame.draw.line(
-        screen, (255, 255, 255),
+        screen,
+        (255, 255, 255),
         (x - length // 2 + 10, line_y),
         (x + length // 2 - 10, line_y),
         2,

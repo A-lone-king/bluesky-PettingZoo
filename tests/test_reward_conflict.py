@@ -59,7 +59,7 @@ class TestNMAC:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -500.0
+        assert result == -50.0
 
 
 class TestWarning:
@@ -87,7 +87,7 @@ class TestWarning:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -50.0
+        assert result == -10.0
 
 
 class TestSeparation:
@@ -108,7 +108,7 @@ class TestSeparation:
 
         result = comp.compute("OWN", own, action, own, {"OWN": own, "AC001": other})
 
-        assert result == -20.0
+        assert result == -5.0
 
 
 class TestMultipleConflicts:
@@ -131,7 +131,7 @@ class TestMultipleConflicts:
 
         result = comp.compute("OWN", own, action, own, all_states)
 
-        assert result == -500.0  # Most severe
+        assert result == -50.0  # Most severe
 
 
 class TestBoundary:

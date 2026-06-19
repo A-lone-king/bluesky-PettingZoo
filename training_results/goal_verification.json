@@ -1,0 +1,34 @@
+{
+  "M4.1": {
+    "pass": true,
+    "random": {
+      "mean_reward": -121.83810475890928,
+      "std_reward": 31.945479093835438,
+      "arrival_rate": 0.0,
+      "nmac_rate": 1.0,
+      "mean_steps": 44.1
+    },
+    "rule_based": {
+      "mean_reward": -81.72417851628778,
+      "std_reward": 49.94105397709152,
+      "arrival_rate": 0.0,
+      "nmac_rate": 1.0,
+      "mean_steps": 34.4
+    }
+  },
+  "M3.3": {
+    "pass": true,
+    "random_reward": -121.83810475890928,
+    "ppo_reward": -46.74212257694872,
+    "improvement_pct": 61.635875189095344
+  },
+  "M3.4": {
+    "pass": "True",
+    "loaded_reward": -55.30678680480213
+  },
+  "M4.2": {
+    "pass": true,
+    "ppo_vs_random": true,
+    "ppo_vs_rule": true
+  }
+}

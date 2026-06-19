@@ -484,12 +484,8 @@ class TestFrameStackWrapper:
         # Create observation space
         obs_space = spaces.Dict(
             {
-                "self_state": spaces.Box(
-                    low=-1.0, high=1.0, shape=(obs_dim,), dtype=np.float32
-                ),
-                "goal": spaces.Box(
-                    low=-1.0, high=1.0, shape=(4,), dtype=np.float32
-                ),
+                "self_state": spaces.Box(low=-1.0, high=1.0, shape=(obs_dim,), dtype=np.float32),
+                "goal": spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32),
             }
         )
         env.observation_space.return_value = obs_space

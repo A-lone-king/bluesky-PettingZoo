@@ -187,9 +187,7 @@ class FlightPlanScenario(BaseScenario):
         hdg = 0.0
         if idx + 1 < len(plan.waypoints):
             next_wp = plan.waypoints[idx + 1]
-            hdg = self._calculate_heading(
-                wp.lat, wp.lon, next_wp.lat, next_wp.lon
-            )
+            hdg = self._calculate_heading(wp.lat, wp.lon, next_wp.lat, next_wp.lon)
 
         return {
             "lat": wp.lat,
@@ -223,9 +221,7 @@ class FlightPlanScenario(BaseScenario):
 
         # Check if close enough to current waypoint (< 2 NM)
         current_wp = plan.waypoints[idx]
-        dist = haversine_distance(
-            state.lat, state.lon, current_wp.lat, current_wp.lon
-        )
+        dist = haversine_distance(state.lat, state.lon, current_wp.lat, current_wp.lon)
         if dist < 2.0:
             self._waypoint_indices[agent_id] = idx + 1
             next_wp = plan.waypoints[idx + 1]
@@ -375,10 +371,9 @@ class FlightPlanScenario(BaseScenario):
         dlon_rad = math.radians(lon2 - lon1)
 
         x = math.sin(dlon_rad) * math.cos(lat2_rad)
-        y = (
-            math.cos(lat1_rad) * math.sin(lat2_rad)
-            - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon_rad)
-        )
+        y = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(
+            lat2_rad
+        ) * math.cos(dlon_rad)
 
         bearing = math.degrees(math.atan2(x, y))
         return (bearing + 360) % 360

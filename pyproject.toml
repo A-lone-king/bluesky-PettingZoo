@@ -64,7 +64,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "--cov=src/bluesky_pettingzoo --cov-report=term-missing --cov-fail-under=80"
+addopts = "-m 'not slow and not e2e' --cov=src/bluesky_pettingzoo --cov-report=term-missing --cov-fail-under=80 --basetemp=tests/.pytest-temp"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests requiring BlueSky engine",

@@ -48,6 +48,7 @@ class RouteNavScenario(BaseScenario):
 
     @property
     def action_dimensions(self) -> list[int]:
+        """Return list of active action dimensions (indices into [heading, alt, speed])."""
         return [0, 2]  # heading + speed
 
     @property
@@ -115,6 +116,7 @@ class RouteNavScenario(BaseScenario):
         return list(self._agents)
 
     def get_spawn_config(self) -> SpawnConfig:
+        """Return aircraft spawn configuration (altitude, speed, heading ranges)."""
         return SpawnConfig(
             altitude_range=(CRUISE_ALT_FT, CRUISE_ALT_FT),
             speed_range=(400, 500),
@@ -122,6 +124,7 @@ class RouteNavScenario(BaseScenario):
         )
 
     def get_conflict_config(self) -> ConflictConfig:
+        """Return conflict detection thresholds (NMAC and warning distances)."""
         return ConflictConfig(
             nmac_horizontal_nm=5.0,
             nmac_vertical_ft=1000.0,
@@ -130,9 +133,25 @@ class RouteNavScenario(BaseScenario):
         )
 
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
+        """Return the goal waypoint for the given agent.
+
+        Args:
+            agent_id: The agent identifier.
+
+        Returns:
+            Dictionary with lat, lon, alt, hdg keys.
+        """
         return self._goals[agent_id]
 
     def get_goal(self, agent_id: str) -> dict[str, float]:
+        """Return the goal waypoint for the given agent (alias for get_waypoint).
+
+        Args:
+            agent_id: The agent identifier.
+
+        Returns:
+            Dictionary with lat, lon, alt, hdg keys.
+        """
         return self._goals[agent_id]
 
     def get_route(self, agent_id: str) -> Route:

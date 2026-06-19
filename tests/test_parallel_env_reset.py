@@ -24,7 +24,7 @@ class TestParallelEnvResetWithDelay:
                 "conflict": {
                     "enabled": True,
                     "weight": 1.0,
-                    "nmac_penalty": -100,
+                    "nmac_penalty": -50,
                     "warning_penalty": -10,
                     "separation_penalty": -5,
                     "thresholds": {
@@ -40,8 +40,8 @@ class TestParallelEnvResetWithDelay:
                     "weight": 0.3,
                     "max_deviation_nm": 200,
                     "deviation_penalty_scale": 5,
-                    "arrival_reward": 10,
-                    "step_penalty": -0.01,
+                    "arrival_reward": 100,
+                    "step_penalty": -0.005,
                     "arrival_threshold_nm": 2,
                 },
                 "delay": {
@@ -70,7 +70,7 @@ class TestParallelEnvResetWithDelay:
                 "conflict": {
                     "enabled": True,
                     "weight": 1.0,
-                    "nmac_penalty": -100,
+                    "nmac_penalty": -50,
                     "warning_penalty": -10,
                     "separation_penalty": -5,
                     "thresholds": {
@@ -86,8 +86,8 @@ class TestParallelEnvResetWithDelay:
                     "weight": 0.3,
                     "max_deviation_nm": 200,
                     "deviation_penalty_scale": 5,
-                    "arrival_reward": 10,
-                    "step_penalty": -0.01,
+                    "arrival_reward": 100,
+                    "step_penalty": -0.005,
                     "arrival_threshold_nm": 2,
                 },
                 "delay": {

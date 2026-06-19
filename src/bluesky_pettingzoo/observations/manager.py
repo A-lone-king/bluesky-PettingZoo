@@ -61,9 +61,7 @@ class ObservationManager:
                 dtype=np.int8,
             ),
             "goal": spaces.Box(low=-1.0, high=1.0, shape=(4,), dtype=np.float32),
-            "conflict_state": spaces.Box(
-                low=0.0, high=1.0, shape=(3,), dtype=np.float32
-            ),
+            "conflict_state": spaces.Box(low=0.0, high=1.0, shape=(3,), dtype=np.float32),
         }
         if self._max_obstacles > 0:
             obs_feat_low = np.array([0.0, -1.0, -1.0, 0.0], dtype=np.float32)

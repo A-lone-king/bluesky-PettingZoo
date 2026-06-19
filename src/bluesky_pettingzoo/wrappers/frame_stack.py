@@ -36,9 +36,7 @@ class FrameStackWrapper(EnvWrapperMixin):
         if stack_size < 1:
             raise ValueError(f"stack_size must be >= 1, got {stack_size}")
         if padding_type not in ("zero", "repeat"):
-            raise ValueError(
-                f"padding_type must be 'zero' or 'repeat', got {padding_type!r}"
-            )
+            raise ValueError(f"padding_type must be 'zero' or 'repeat', got {padding_type!r}")
 
         self._stack_size = stack_size
         self._padding_type = padding_type
@@ -50,9 +48,7 @@ class FrameStackWrapper(EnvWrapperMixin):
         # Pre-compute stacked observation spaces for each agent
         for agent in self.possible_agents:
             orig_space = self.env.observation_space(agent)
-            self._stacked_obs_spaces[agent] = self._build_stacked_space(
-                orig_space, stack_size
-            )
+            self._stacked_obs_spaces[agent] = self._build_stacked_space(orig_space, stack_size)
 
     # ------------------------------------------------------------------
     # Core interface
@@ -62,23 +58,17 @@ class FrameStackWrapper(EnvWrapperMixin):
         """Return the stacked observation space for an agent."""
         return self._stacked_obs_spaces[agent]
 
-    def reset(
-        self, **kwargs: Any
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+    def reset(self, **kwargs: Any) -> tuple[dict[str, Any], dict[str, Any]]:
         """Reset environment and initialize frame buffers."""
         observations, infos = self.env.reset(**kwargs)
 
         # Initialize buffers for each agent
         self._obs_buffers = {}
         for agent_id, obs in observations.items():
-            buffer: deque[dict[str, Any]] = deque(
-                maxlen=self._stack_size
-            )
+            buffer: deque[dict[str, Any]] = deque(maxlen=self._stack_size)
             # Create padding observation
             if self._padding_type == "zero":
-                padding = self._create_zero_observation(
-                    self.env.observation_space(agent_id)
-                )
+                padding = self._create_zero_observation(self.env.observation_space(agent_id))
             else:  # repeat
                 padding = deepcopy(obs)
 
@@ -90,10 +80,7 @@ class FrameStackWrapper(EnvWrapperMixin):
             self._obs_buffers[agent_id] = buffer
 
         # Stack observations
-        stacked_obs = {
-            aid: self._stack_obs(buf)
-            for aid, buf in self._obs_buffers.items()
-        }
+        stacked_obs = {aid: self._stack_obs(buf) for aid, buf in self._obs_buffers.items()}
         return stacked_obs, infos
 
     def step(
@@ -107,21 +94,15 @@ class FrameStackWrapper(EnvWrapperMixin):
         dict[str, Any],
     ]:
         """Step through environment and update frame stacks."""
-        observations, rewards, terminations, truncations, infos = self.env.step(
-            actions
-        )
+        observations, rewards, terminations, truncations, infos = self.env.step(actions)
 
         # Update buffers
         for agent_id, obs in observations.items():
             if agent_id not in self._obs_buffers:
                 # New agent (dynamic entry) — initialize buffer
-                buffer: deque[dict[str, Any]] = deque(
-                    maxlen=self._stack_size
-                )
+                buffer: deque[dict[str, Any]] = deque(maxlen=self._stack_size)
                 if self._padding_type == "zero":
-                    padding = self._create_zero_observation(
-                        self.env.observation_space(agent_id)
-                    )
+                    padding = self._create_zero_observation(self.env.observation_space(agent_id))
                 else:
                     padding = deepcopy(obs)
                 for _ in range(self._stack_size - 1):
@@ -176,9 +157,7 @@ class FrameStackWrapper(EnvWrapperMixin):
 
         return stacked
 
-    def _stack_nested_dict(
-        self, dicts: list[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _stack_nested_dict(self, dicts: list[dict[str, Any]]) -> dict[str, Any]:
         """Stack values from multiple dicts."""
         if not dicts:
             return {}
@@ -199,9 +178,7 @@ class FrameStackWrapper(EnvWrapperMixin):
 
         return result
 
-    def _build_stacked_space(
-        self, orig_space: spaces.Dict, stack_size: int
-    ) -> spaces.Dict:
+    def _build_stacked_space(self, orig_space: spaces.Dict, stack_size: int) -> spaces.Dict:
         """Build a new Dict space with stacked dimensions."""
         new_spaces: dict[str, spaces.Space[Any]] = {}
 
@@ -209,12 +186,8 @@ class FrameStackWrapper(EnvWrapperMixin):
             if isinstance(subspace, spaces.Box):
                 # Add stack_size dimension at the beginning
                 new_shape = (stack_size,) + subspace.shape
-                new_low = np.tile(
-                    subspace.low, (stack_size,) + (1,) * len(subspace.shape)
-                )
-                new_high = np.tile(
-                    subspace.high, (stack_size,) + (1,) * len(subspace.shape)
-                )
+                new_low = np.tile(subspace.low, (stack_size,) + (1,) * len(subspace.shape))
+                new_high = np.tile(subspace.high, (stack_size,) + (1,) * len(subspace.shape))
                 new_spaces[key] = spaces.Box(
                     low=new_low,
                     high=new_high,
@@ -223,35 +196,25 @@ class FrameStackWrapper(EnvWrapperMixin):
                 )
             elif isinstance(subspace, spaces.Dict):
                 # Recursively handle nested dicts
-                new_spaces[key] = self._build_stacked_dict_space(
-                    subspace, stack_size
-                )
+                new_spaces[key] = self._build_stacked_dict_space(subspace, stack_size)
             elif isinstance(subspace, spaces.Discrete):
                 # Stack discrete spaces as multi-discrete
-                new_spaces[key] = spaces.MultiDiscrete(
-                    [int(subspace.n)] * stack_size
-                )
+                new_spaces[key] = spaces.MultiDiscrete([int(subspace.n)] * stack_size)
             else:
                 # For other space types, keep as-is (not stacked)
                 new_spaces[key] = subspace
 
         return spaces.Dict(new_spaces)
 
-    def _build_stacked_dict_space(
-        self, orig_space: spaces.Dict, stack_size: int
-    ) -> spaces.Dict:
+    def _build_stacked_dict_space(self, orig_space: spaces.Dict, stack_size: int) -> spaces.Dict:
         """Build a stacked Dict space for nested observations."""
         new_spaces: dict[str, spaces.Space[Any]] = {}
 
         for key, subspace in orig_space.spaces.items():
             if isinstance(subspace, spaces.Box):
                 new_shape = (stack_size,) + subspace.shape
-                new_low = np.tile(
-                    subspace.low, (stack_size,) + (1,) * len(subspace.shape)
-                )
-                new_high = np.tile(
-                    subspace.high, (stack_size,) + (1,) * len(subspace.shape)
-                )
+                new_low = np.tile(subspace.low, (stack_size,) + (1,) * len(subspace.shape))
+                new_high = np.tile(subspace.high, (stack_size,) + (1,) * len(subspace.shape))
                 new_spaces[key] = spaces.Box(
                     low=new_low,
                     high=new_high,
@@ -259,9 +222,7 @@ class FrameStackWrapper(EnvWrapperMixin):
                     dtype=np.float32,
                 )
             elif isinstance(subspace, spaces.Dict):
-                new_spaces[key] = self._build_stacked_dict_space(
-                    subspace, stack_size
-                )
+                new_spaces[key] = self._build_stacked_dict_space(subspace, stack_size)
             else:
                 new_spaces[key] = subspace
 

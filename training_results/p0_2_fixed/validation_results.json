@@ -1,0 +1,11 @@
+{
+  "initial_reward": -51.69568679466563,
+  "final_reward": -52.93027873222656,
+  "improvement": -1.2345919375609284,
+  "has_upward_trend": false,
+  "trend_slope": -0.6125464759002552,
+  "initial_arrival_rate": 0.0,
+  "final_arrival_rate": 0.02,
+  "arrival_rate_target_met": false,
+  "timesteps": 100000
+}

@@ -138,8 +138,11 @@ class TestRendererRenderFrame:
     @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.pygame")
     @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.draw_aircraft")
     @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.draw_nmac_circle")
-    @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.draw_waypoint")
-    def test_plan_waypoint_renders_without_error(self, mock_wp, mock_nmac, mock_ac, mock_pygame):
+    @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.draw_waypoint_circle")
+    @patch("bluesky_pettingzoo.rendering.plan_waypoint_renderer.draw_sky_gradient")
+    def test_plan_waypoint_renders_without_error(
+        self, mock_sky, mock_wpc, mock_nmac, mock_ac, mock_pygame
+    ):
         from bluesky_pettingzoo.rendering.plan_waypoint_renderer import PlanWaypointRenderer
 
         r = PlanWaypointRenderer()
@@ -153,13 +156,15 @@ class TestRendererRenderFrame:
             {"lat": 40.1, "lon": 117.1, "reached": False},
         ]
         r.render_frame(states, waypoints=waypoints, step=1)
-        assert mock_wp.call_count == 2
+        assert mock_wpc.call_count == 2
         mock_pygame.draw.lines.assert_called_once()
 
     @patch("bluesky_pettingzoo.rendering.merge_renderer.draw_aircraft")
     @patch("bluesky_pettingzoo.rendering.merge_renderer.draw_nmac_circle")
     @patch("bluesky_pettingzoo.rendering.merge_renderer.draw_waypoint")
-    def test_merge_renders_without_error(self, mock_wp, mock_nmac, mock_ac):
+    @patch("bluesky_pettingzoo.rendering.merge_renderer.draw_sky_gradient")
+    @patch("bluesky_pettingzoo.rendering.merge_renderer.draw_merge_line")
+    def test_merge_renders_without_error(self, mock_ml, mock_sky, mock_wp, mock_nmac, mock_ac):
         from bluesky_pettingzoo.rendering.merge_renderer import MergeRenderer
 
         r = MergeRenderer()
@@ -187,7 +192,12 @@ class TestRendererRenderFrame:
     @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_aircraft")
     @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_nmac_circle")
     @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_waypoint")
-    def test_descent_renders_without_error(self, mock_wp, mock_nmac, mock_ac, mock_pygame):
+    @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_sky_gradient")
+    @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_ground")
+    @patch("bluesky_pettingzoo.rendering.descent_renderer.draw_runway")
+    def test_descent_renders_without_error(
+        self, mock_rw, mock_gnd, mock_sky, mock_wp, mock_nmac, mock_ac, mock_pygame
+    ):
         from bluesky_pettingzoo.rendering.descent_renderer import DescentRenderer
 
         r = DescentRenderer()
@@ -200,13 +210,16 @@ class TestRendererRenderFrame:
         r.render_frame(states, waypoints=waypoints, step=1)
         mock_ac.assert_called_once()
         mock_wp.assert_called_once()
-        mock_pygame.draw.line.assert_called()
+        mock_sky.assert_called_once()
 
     @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_aircraft")
     @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_nmac_circle")
-    @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_sector_polygon")
+    @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_obstacle_triangle")
+    @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_sky_gradient")
     @patch("bluesky_pettingzoo.rendering.static_obstacle_renderer.draw_waypoint")
-    def test_static_obstacle_renders_without_error(self, mock_wp, mock_poly, mock_nmac, mock_ac):
+    def test_static_obstacle_renders_without_error(
+        self, mock_wp, mock_sky, mock_poly, mock_nmac, mock_ac
+    ):
         from bluesky_pettingzoo.rendering.static_obstacle_renderer import StaticObstacleRenderer
 
         r = StaticObstacleRenderer()

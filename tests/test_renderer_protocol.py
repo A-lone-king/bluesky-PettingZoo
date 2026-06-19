@@ -29,6 +29,7 @@ class TestRendererDoesNotAccessEnv:
     def _check_renderer_no_env_access(self, renderer_cls: type) -> None:
         """Check that renderer class doesn't have env attribute."""
         import inspect
+
         source = inspect.getsource(renderer_cls)
         # Check for direct env access patterns
         assert "self.env" not in source, f"{renderer_cls.__name__} accesses self.env"
@@ -41,56 +42,67 @@ class TestRendererDoesNotAccessEnv:
     def test_horizontal_cr_renderer_no_env(self) -> None:
         """HorizontalCRRenderer should not access env."""
         from bluesky_pettingzoo.rendering.horizontal_cr_renderer import HorizontalCRRenderer
+
         self._check_renderer_no_env_access(HorizontalCRRenderer)
 
     def test_vertical_cr_renderer_no_env(self) -> None:
         """VerticalCRRenderer should not access env."""
         from bluesky_pettingzoo.rendering.vertical_cr_renderer import VerticalCRRenderer
+
         self._check_renderer_no_env_access(VerticalCRRenderer)
 
     def test_descent_renderer_no_env(self) -> None:
         """DescentRenderer should not access env."""
         from bluesky_pettingzoo.rendering.descent_renderer import DescentRenderer
+
         self._check_renderer_no_env_access(DescentRenderer)
 
     def test_merge_renderer_no_env(self) -> None:
         """MergeRenderer should not access env."""
         from bluesky_pettingzoo.rendering.merge_renderer import MergeRenderer
+
         self._check_renderer_no_env_access(MergeRenderer)
 
     def test_sector_cr_renderer_no_env(self) -> None:
         """SectorCRRenderer should not access env."""
         from bluesky_pettingzoo.rendering.sector_cr_renderer import SectorCRRenderer
+
         self._check_renderer_no_env_access(SectorCRRenderer)
 
     def test_star_approach_renderer_no_env(self) -> None:
         """StarApproachRenderer should not access env."""
         from bluesky_pettingzoo.rendering.star_approach_renderer import StarApproachRenderer
+
         self._check_renderer_no_env_access(StarApproachRenderer)
 
     def test_waypoint_nav_renderer_no_env(self) -> None:
         """WaypointNavRenderer should not access env."""
         from bluesky_pettingzoo.rendering.waypoint_nav_renderer import WaypointNavRenderer
+
         self._check_renderer_no_env_access(WaypointNavRenderer)
 
     def test_plan_waypoint_renderer_no_env(self) -> None:
         """PlanWaypointRenderer should not access env."""
         from bluesky_pettingzoo.rendering.plan_waypoint_renderer import PlanWaypointRenderer
+
         self._check_renderer_no_env_access(PlanWaypointRenderer)
 
     def test_static_obstacle_renderer_no_env(self) -> None:
         """StaticObstacleRenderer should not access env."""
         from bluesky_pettingzoo.rendering.static_obstacle_renderer import StaticObstacleRenderer
+
         self._check_renderer_no_env_access(StaticObstacleRenderer)
 
     def test_sector_capacity_renderer_no_env(self) -> None:
         """SectorCapacityRenderer should not access env."""
         from bluesky_pettingzoo.rendering.sector_capacity_renderer import SectorCapacityRenderer
+
         self._check_renderer_no_env_access(SectorCapacityRenderer)
 
     def test_route_nav_renderer_no_env(self) -> None:
         """RouteNavRenderer should not access env."""
         from bluesky_pettingzoo.rendering.route_nav_renderer import RouteNavRenderer
+
         self._check_renderer_no_env_access(RouteNavRenderer)
 
 
@@ -121,9 +133,7 @@ class TestEnvRendererAdapter:
         from bluesky_pettingzoo.envs.parallel_env import EnvRendererAdapter
 
         obs_builder = MagicMock()
-        obs_builder.get_waypoints_for_render.return_value = {
-            "AC000": {"lat": 40.0, "lon": 117.0}
-        }
+        obs_builder.get_waypoints_for_render.return_value = {"AC000": {"lat": 40.0, "lon": 117.0}}
         step_count = 42
         agents = ["AC000", "AC001"]
 

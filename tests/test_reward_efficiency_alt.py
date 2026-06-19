@@ -35,7 +35,8 @@ class TestAltDeviation:
         # alt_deviation_penalty = -(1000/5000)*2 = -0.4
         # step_penalty(-0.01) + deviation(0) + alt_penalty(-0.4) + arrival(+10)
         # arrival is triggered because horizontal distance = 0
-        assert result == pytest.approx(9.59)
+        # step_penalty(-0.005) + deviation(0) + alt_penalty(-0.4) + arrival(+100)
+        assert result == pytest.approx(99.595)
 
     def test_max_alt_deviation_penalty(self, rewards_config: dict) -> None:
         """Altitude deviation at MAX → max penalty."""
@@ -61,7 +62,8 @@ class TestAltDeviation:
         # alt_deviation_penalty = -(5000/5000)*2 = -2.0
         # step_penalty(-0.01) + deviation(0) + alt_penalty(-2.0) + arrival(+10)
         # arrival is triggered because horizontal distance = 0
-        assert result == pytest.approx(7.99)
+        # step_penalty(-0.005) + deviation(0) + alt_penalty(-2.0) + arrival(+100)
+        assert result == pytest.approx(97.995)
 
     def test_no_alt_deviation(self, rewards_config: dict) -> None:
         """Aircraft at correct altitude → no altitude penalty."""
@@ -85,7 +87,8 @@ class TestAltDeviation:
 
         # No alt penalty, at goal → arrival reward
         # total = -0.01 + 0 + 0 + 10 = 9.99
-        assert result == pytest.approx(9.99)
+        # total = -0.005 + 0 + 0 + 100 = 99.995
+        assert result == pytest.approx(99.995)
 
 
 class TestNoAltGoal:
@@ -114,7 +117,8 @@ class TestNoAltGoal:
 
         # No alt penalty, at goal → arrival reward
         # total = -0.01 + 0 + 0 + 10 = 9.99
-        assert result == pytest.approx(9.99)
+        # total = -0.005 + 0 + 0 + 100 = 99.995
+        assert result == pytest.approx(99.995)
 
 
 class TestCombinedDeviation:
@@ -145,4 +149,5 @@ class TestCombinedDeviation:
         # horizontal: -(10/50)*5 = -1.0
         # altitude: -(1000/5000)*2 = -0.4
         # total = -0.01 + (-1.0) + (-0.4) = -1.41
-        assert result == pytest.approx(-1.41)
+        # total = -0.005 + (-1.0) + (-0.4) = -1.405
+        assert result == pytest.approx(-1.405)

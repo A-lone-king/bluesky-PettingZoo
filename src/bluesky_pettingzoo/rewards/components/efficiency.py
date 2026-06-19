@@ -19,6 +19,7 @@ class EfficiencyReward(RewardComponent):
     - deviation_penalty: proportional to distance from goal, capped
     - alt_deviation_penalty: proportional to altitude deviation, capped (optional)
     - arrival_reward: bonus when within arrival_threshold of goal
+    - distance_reward: progressive reward for approaching goal (optional)
     """
 
     component_name = "efficiency"
@@ -30,8 +31,10 @@ class EfficiencyReward(RewardComponent):
         "arrival_threshold_nm": ("_arrival_threshold", 2.0),
         "max_alt_deviation_ft": ("_max_alt_deviation", 0.0),
         "alt_deviation_penalty_scale": ("_alt_deviation_scale", 0.0),
+        "distance_reward_scale": ("_distance_reward_scale", 0.0),
+        "distance_threshold_nm": ("_distance_threshold", 50.0),
     }
-    _stateful_attrs = ["_goals"]
+    _stateful_attrs = ["_goals", "_initial_distances"]
 
     def __init__(self, config: dict[str, Any]) -> None:
         self._max_deviation: float = 50.0
@@ -41,11 +44,20 @@ class EfficiencyReward(RewardComponent):
         self._arrival_threshold: float = 2.0
         self._max_alt_deviation: float = 0.0
         self._alt_deviation_scale: float = 0.0
+        self._distance_reward_scale: float = 0.0
+        self._distance_threshold: float = 50.0
         self._goals: dict[str, tuple[float, float, float | None]] = {}
+        self._initial_distances: dict[str, float] = {}
         super().__init__(config)
 
     def set_goal(
-        self, agent_id: str, lat: float, lon: float, alt: float | None = None
+        self,
+        agent_id: str,
+        lat: float,
+        lon: float,
+        alt: float | None = None,
+        initial_lat: float | None = None,
+        initial_lon: float | None = None,
     ) -> None:
         """Set the goal waypoint for an agent.
 
@@ -54,8 +66,14 @@ class EfficiencyReward(RewardComponent):
             lat: Goal latitude
             lon: Goal longitude
             alt: Goal altitude in feet (optional, None to skip altitude penalty)
+            initial_lat: Initial latitude for distance reward calculation (optional)
+            initial_lon: Initial longitude for distance reward calculation (optional)
         """
         self._goals[agent_id] = (lat, lon, alt)
+        if initial_lat is not None and initial_lon is not None:
+            self._initial_distances[agent_id] = haversine_distance(
+                initial_lat, initial_lon, lat, lon
+            )
 
     def compute(
         self,
@@ -66,6 +84,21 @@ class EfficiencyReward(RewardComponent):
         all_states: dict[str, AircraftState],
         step_count: int = 0,
     ) -> float:
+        """Compute efficiency reward from progress toward goal waypoint.
+
+        Includes distance-based reward and step penalty.
+
+        Args:
+            agent_id: The agent identifier.
+            prev_state: Previous aircraft state.
+            action: Action taken.
+            curr_state: Current aircraft state.
+            all_states: All aircraft states.
+            step_count: Current step number.
+
+        Returns:
+            Step penalty plus distance-based reward scaled by progress.
+        """
         reward = self._step_penalty
 
         goal = self._goals.get(agent_id)
@@ -88,6 +121,13 @@ class EfficiencyReward(RewardComponent):
             alt_diff = abs(curr_state.alt - goal_alt)
             alt_penalty = -(alt_diff / self._max_alt_deviation) * self._alt_deviation_scale
             reward += max(alt_penalty, -self._alt_deviation_scale)
+
+        # Distance reward: progressive reward for approaching goal
+        if self._distance_reward_scale > 0 and agent_id in self._initial_distances:
+            initial_dist = self._initial_distances[agent_id]
+            if initial_dist > 0 and distance <= self._distance_threshold:
+                progress = 1.0 - (distance / initial_dist)
+                reward += progress * self._distance_reward_scale
 
         if distance < self._arrival_threshold:
             reward += self._arrival_reward

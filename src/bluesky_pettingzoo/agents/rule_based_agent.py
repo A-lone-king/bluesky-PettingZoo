@@ -79,6 +79,15 @@ class RuleBasedAgent(BaseAgent):
         observations: dict[AgentID, Any],
         action_spaces: dict[AgentID, spaces.Space[Any]],
     ) -> dict[AgentID, Any]:
+        """Compute actions for all agents using TCAS-inspired conflict avoidance.
+
+        Args:
+            observations: Observations keyed by agent ID.
+            action_spaces: Action spaces keyed by agent ID.
+
+        Returns:
+            Dictionary mapping agent IDs to discrete action lists.
+        """
         actions: dict[AgentID, Any] = {}
 
         for agent_id, obs in observations.items():
@@ -168,4 +177,5 @@ class RuleBasedAgent(BaseAgent):
             return 0  # -20 (turn left more)
 
     def reset(self) -> None:
+        """Reset the agent state between episodes (no-op for rule-based agent)."""
         pass

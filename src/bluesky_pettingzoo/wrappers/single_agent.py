@@ -39,6 +39,15 @@ class SingleAgentGymWrapper(gymnasium.Env[Any, Any]):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Reset the multi-agent environment and return the ego agent's observation.
+
+        Args:
+            seed: Optional random seed.
+            options: Optional configuration overrides.
+
+        Returns:
+            Tuple of (observation, info) for the ego agent only.
+        """
         observations, infos = self._env.reset(seed=seed, options=options)
         obs = observations[self._ego]
         info = infos.get(self._ego, {})
@@ -48,6 +57,14 @@ class SingleAgentGymWrapper(gymnasium.Env[Any, Any]):
         self,
         action: np.ndarray,
     ) -> tuple[dict[str, Any], float, bool, bool, dict[str, Any]]:
+        """Step with ego agent action; other agents receive noop actions.
+
+        Args:
+            action: Action for the ego agent.
+
+        Returns:
+            Tuple of (observation, reward, terminated, truncated, info).
+        """
         # Build full multi-agent action dict
         actions: dict[str, Any] = {}
         for agent_id in self._env.agents:
@@ -71,7 +88,9 @@ class SingleAgentGymWrapper(gymnasium.Env[Any, Any]):
         return obs, reward, terminated, truncated, info
 
     def close(self) -> None:
+        """Close the wrapped environment and release resources."""
         self._env.close()
 
     def render(self) -> None:
+        """Render is not supported in single-agent mode (returns None)."""
         return None

@@ -107,9 +107,7 @@ class VerticalCRScenario(BaseScenario):
                 bearing_deg = rng.uniform(0, 360)
 
                 # Calculate starting position (far from runway)
-                start_lat, start_lon = point_at_distance(
-                    mid_lat, mid_lon, distance_nm, bearing_deg
-                )
+                start_lat, start_lon = point_at_distance(mid_lat, mid_lon, distance_nm, bearing_deg)
 
                 # Speed decreases as aircraft approaches runway
                 initial_speed = APPROACH_SPEED_INITIAL_KT

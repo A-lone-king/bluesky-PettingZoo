@@ -203,11 +203,13 @@ class SectorCRScenario(BaseScenario):
             else:
                 capacity = self._capacity_min  # Off-peak period
 
-            schedule.append({
-                "start_step": start_step,
-                "end_step": end_step,
-                "capacity": capacity,
-            })
+            schedule.append(
+                {
+                    "start_step": start_step,
+                    "end_step": end_step,
+                    "capacity": capacity,
+                }
+            )
 
         return schedule
 

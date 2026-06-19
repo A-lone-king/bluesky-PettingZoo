@@ -268,6 +268,7 @@ def _make_model(algo_cls, env, args):
         verbose=_safe_get(args, "verbose", 0),
         device=device,
         seed=args.seed,
+        tensorboard_log=_safe_get(args, "tensorboard_log_dir", None),
     )
 
     if args.algorithm == "PPO":
@@ -376,11 +377,21 @@ def train_scenario(args: argparse.Namespace) -> dict[str, float]:
         else:
             model = _make_model(algo_cls, env, args)
 
+        # Build callback list - conditionally include TensorBoard
+        from bluesky_pettingzoo.training.tensorboard_callback import TensorBoardCallback
+        callbacks: list[BaseCallback] = [
+            csv_callback,
+            _CheckpointCallback(ckpt_mgr),
+            ProgressCallback(),
+        ]
+        if getattr(args, "tensorboard", False):
+            callbacks.append(TensorBoardCallback())
+
         # Train
         print(f"\nTraining {args.algorithm} on {args.scenario} ({args.timesteps:,} timesteps)...")
         model.learn(
             total_timesteps=args.timesteps,
-            callback=[csv_callback, _CheckpointCallback(ckpt_mgr), ProgressCallback()],
+            callback=callbacks,
         )
 
         # Save final

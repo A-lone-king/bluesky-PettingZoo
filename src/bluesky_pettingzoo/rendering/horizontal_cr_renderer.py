@@ -91,7 +91,7 @@ class HorizontalCRRenderer(BaseRenderer):
                     width=2,
                 )
                 # Flash effect for conflicts
-                flash_state = (step % 2 == 0)  # Toggle every step
+                flash_state = step % 2 == 0  # Toggle every step
                 draw_conflict_flash(
                     self._screen,
                     x,

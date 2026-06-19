@@ -195,6 +195,7 @@ class ConflictPenalty(RewardComponent):
         return chains
 
     def reset(self) -> None:
+        """Reset internal conflict state between episodes."""
         pass
 
     def get_conflict_status(

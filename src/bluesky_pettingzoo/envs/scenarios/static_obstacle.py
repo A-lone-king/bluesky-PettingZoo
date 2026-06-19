@@ -122,6 +122,14 @@ def _sort_vertices_clockwise(
     """Sort vertices by angle from center, clockwise."""
 
     def angle(v: tuple[float, float]) -> float:
+        """Compute the angle of a vertex relative to the center point.
+
+        Args:
+            v: Vertex as (lat, lon) tuple.
+
+        Returns:
+            Angle in radians from center to vertex.
+        """
         return math.atan2(v[1] - center_lon, v[0] - center_lat)
 
     return sorted(vertices, key=angle)

@@ -24,6 +24,7 @@ class MockScenario(BaseScenario):
 
     def get_spawn_config(self):
         from bluesky_pettingzoo.utils.types import SpawnConfig
+
         return SpawnConfig(
             altitudes=[35000.0, 35000.0],
             speeds=[450.0, 450.0],

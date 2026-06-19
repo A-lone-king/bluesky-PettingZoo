@@ -15,8 +15,8 @@ from bluesky_pettingzoo.utils.geometry import point_at_distance
 from bluesky_pettingzoo.utils.types import AircraftState, ConflictConfig, SpawnConfig
 
 # Constants matching bluesky-gym reference
-WAYPOINT_DISTANCE_MIN_NM = 100
-WAYPOINT_DISTANCE_MAX_NM = 150
+WAYPOINT_DISTANCE_MIN_NM: float = 100
+WAYPOINT_DISTANCE_MAX_NM: float = 150
 CRUISE_ALT_FT = 35000.0
 
 # Multi-altitude layer constants

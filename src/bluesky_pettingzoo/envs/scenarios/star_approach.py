@@ -163,7 +163,7 @@ class StarApproachScenario(BaseScenario):
             # Build full waypoint list including approach fix and runway
             star = STAR_PROCEDURES[star_name]
             waypoints = []
-            for name, lat, lon, alt in star["waypoints"]:
+            for name, lat, lon, alt in star["waypoints"]:  # type: ignore[attr-defined]
                 waypoints.append(
                     {
                         "lat": lat,
@@ -218,7 +218,7 @@ class StarApproachScenario(BaseScenario):
         for acid in self._agents:
             star_name = self._star_assignments[acid]
             star = STAR_PROCEDURES[star_name]
-            first_wp = star["waypoints"][0]
+            first_wp = star["waypoints"][0]  # type: ignore[index]
             # Start slightly before the first waypoint
             positions[acid] = (first_wp[1], first_wp[2])
         return positions
@@ -242,9 +242,7 @@ class StarApproachScenario(BaseScenario):
         hdg = 0.0
         if idx + 1 < len(waypoints):
             next_wp = waypoints[idx + 1]
-            hdg = self._calculate_heading(
-                wp["lat"], wp["lon"], next_wp["lat"], next_wp["lon"]
-            )
+            hdg = self._calculate_heading(wp["lat"], wp["lon"], next_wp["lat"], next_wp["lon"])
 
         return {
             "lat": wp["lat"],
@@ -276,9 +274,7 @@ class StarApproachScenario(BaseScenario):
 
         # Check if close enough to current waypoint (< 2 NM)
         current_wp = waypoints[idx]
-        dist = haversine_distance(
-            state.lat, state.lon, current_wp["lat"], current_wp["lon"]
-        )
+        dist = haversine_distance(state.lat, state.lon, current_wp["lat"], current_wp["lon"])
         if dist < 2.0:
             self._waypoint_indices[agent_id] = idx + 1
             next_wp = waypoints[idx + 1]
@@ -375,7 +371,7 @@ class StarApproachScenario(BaseScenario):
             return True
 
         # Also truncate if leaving airspace
-        return (
+        return (  # type: ignore[no-any-return]
             state.lat < airspace_bounds["lat_min"]
             or state.lat > airspace_bounds["lat_max"]
             or state.lon < airspace_bounds["lon_min"]
@@ -405,10 +401,9 @@ class StarApproachScenario(BaseScenario):
         dlon_rad = math.radians(lon2 - lon1)
 
         x = math.sin(dlon_rad) * math.cos(lat2_rad)
-        y = (
-            math.cos(lat1_rad) * math.sin(lat2_rad)
-            - math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon_rad)
-        )
+        y = math.cos(lat1_rad) * math.sin(lat2_rad) - math.sin(lat1_rad) * math.cos(
+            lat2_rad
+        ) * math.cos(dlon_rad)
 
         bearing = math.degrees(math.atan2(x, y))
         return (bearing + 360) % 360

@@ -36,6 +36,14 @@ class SectorCapacityRenderer(BaseRenderer):
         step: int = 0,
         info: dict[str, Any] | None = None,
     ) -> None:
+        """Render one frame showing aircraft positions and sector boundaries.
+
+        Args:
+            states: Aircraft states keyed by agent ID.
+            waypoints: Optional goal waypoints keyed by agent ID.
+            step: Current simulation step number.
+            info: Optional additional info dict.
+        """
         if not self._initialized or self._screen is None:
             return
 

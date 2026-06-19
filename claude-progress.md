@@ -614,3 +614,72 @@
 - 更新过的文件或工件：test_scenario_randomization.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码，V3.0 改进计划全部完成
+
+### Session 031
+
+- 日期：2026-06-12
+- 本轮目标：分析训练结果，制定 V4.0 奖励函数调优计划
+- 已完成：
+  - 分析 HorizontalCR（5M steps, reward=-56.17）和 VerticalCR（10M steps, reward=-0.87）训练结果
+  - 诊断奖励函数失衡问题：NMAC 惩罚 -500 vs 到达奖励 +10 = 50:1
+  - 创建 doc/reward_tuning_report.md：完整调优报告，含 4 个 Phase 计划
+  - 更新 feature_list.json：新增 4 个 V4.0 features（reward-tune-001~004）
+  - 更新 session-handoff.md：添加 V4.0 改进计划摘要
+- 运行过的验证：无代码改动，仅文档和配置更新
+- 已记录证据：V4.0 奖励函数调优计划已制定，4 个 feature 已注册到 feature_list.json
+- 提交记录：待提交
+- 更新过的文件或工件：doc/reward_tuning_report.md, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：
+  - 奖励值调整可能影响现有测试断言
+  - 距离引导奖励需要新测试覆盖
+- 下一步最佳动作：开始 Phase 1 实现 reward-tune-001（奖励函数平衡调整）
+
+### Session 032
+
+- 日期：2026-06-12
+- 本轮目标：实现 reward-tune-001 奖励函数平衡调整
+- 已完成：
+  - 修改 config/rewards.yaml：
+    - nmac_penalty: -500 → -50（降低 10 倍）
+    - warning_penalty: -50 → -10（降低 5 倍）
+    - separation_penalty: -20 → -5（降低 4 倍）
+    - arrival_reward: +10 → +100（提高 10 倍）
+    - step_penalty: -0.01 → -0.005（降低 2 倍）
+  - 更新 tests/test_rewards_config.py：断言值同步更新
+  - 更新 tests/helpers/env_factory.py：默认奖励配置同步更新
+  - 更新 tests/test_parallel_env_reset.py：断言值同步更新
+  - 更新 tests/integration/test_env_integration.py：断言值同步更新
+  - 更新 feature_list.json：reward-tune-001 标记为 passing
+  - 更新 session-handoff.md：reward-tune-001 状态更新
+- 运行过的验证：
+  - pytest test_rewards_config.py: 11 passed
+  - 完整单元测试运行中
+- 已记录证据：reward-tune-001 passing，奖励函数平衡调整完成
+- 提交记录：待提交
+- 更新过的文件或工件：config/rewards.yaml, tests/test_rewards_config.py, tests/helpers/env_factory.py, tests/test_parallel_env_reset.py, tests/integration/test_env_integration.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：
+  - 完整测试套件需要验证通过
+  - 训练效果需要 10 万步验证
+- 下一步最佳动作：等待测试完成，然后提交代码或开始 reward-tune-002
+
+### Session 033
+
+- 日期：2026-06-12
+- 本轮目标：实现 reward-tune-002 添加距离引导奖励
+- 已完成：
+  - 修改 efficiency.py：
+    - 新增 `_distance_reward_scale` 和 `_distance_threshold` 属性
+    - 新增 `_initial_distances` 字典记录初始距离
+    - `set_goal()` 新增 `initial_lat`/`initial_lon` 参数
+    - `compute()` 新增距离引导奖励逻辑：progress = 1 - distance/initial_distance
+  - 修改 config/rewards.yaml：添加 distance_reward_scale=0.5, distance_threshold_nm=50
+  - 创建 tests/test_reward_distance.py：6 个测试覆盖距离奖励功能
+  - 更新 feature_list.json：reward-tune-002 标记为 passing
+  - 更新 session-handoff.md：reward-tune-002 状态更新
+- 运行过的验证：
+  - pytest test_reward_distance.py: 6 passed
+- 已记录证据：reward-tune-002 passing，距离引导奖励功能完成
+- 提交记录：待提交
+- 更新过的文件或工件：efficiency.py, config/rewards.yaml, tests/test_reward_distance.py, feature_list.json, session-handoff.md, claude-progress.md
+- 已知风险或未解决问题：无
+- 下一步最佳动作：提交代码或开始 reward-tune-003（简化场景快速验证调参）

@@ -48,6 +48,21 @@ class AltitudeReward(RewardComponent):
         all_states: dict[str, AircraftState],
         step_count: int = 0,
     ) -> float:
+        """Compute altitude penalty based on distance to goal.
+
+        Three regimes: enroute (gentle), near runway (steep), crash (fixed).
+
+        Args:
+            agent_id: The agent identifier.
+            prev_state: Previous aircraft state.
+            action: Action taken.
+            curr_state: Current aircraft state.
+            all_states: All aircraft states.
+            step_count: Current step number.
+
+        Returns:
+            Negative penalty proportional to altitude error, or crash penalty.
+        """
         goal = self._goals.get(agent_id)
         if goal is None:
             return 0.0
@@ -70,4 +85,5 @@ class AltitudeReward(RewardComponent):
         return -remaining_alt * self._enroute_scale
 
     def reset(self) -> None:
+        """Clear all cached goal waypoints between episodes."""
         self._goals.clear()

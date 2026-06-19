@@ -86,6 +86,14 @@ class WindFieldWrapper(EnvWrapperMixin):
     # ------------------------------------------------------------------
 
     def reset(self, **kwargs: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Reset the environment and inject the wind field into BlueSky.
+
+        Args:
+            **kwargs: Arguments forwarded to the underlying env reset.
+
+        Returns:
+            Observations and infos, optionally augmented with wind components.
+        """
         observations, infos = self.env.reset(**kwargs)
         if bs is None:
             raise ImportError(
@@ -101,6 +109,14 @@ class WindFieldWrapper(EnvWrapperMixin):
         self,
         actions: dict[str, Any],
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Step the environment and optionally augment observations with wind data.
+
+        Args:
+            actions: Actions for all agents.
+
+        Returns:
+            Observations, rewards, terminations, truncations, and infos.
+        """
         observations, rewards, terminations, truncations, infos = self.env.step(actions)
         if self.augment_obs:
             observations = self._augment(observations)

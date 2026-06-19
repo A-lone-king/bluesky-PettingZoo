@@ -109,9 +109,7 @@ class PriorityScenario(Protocol):
 class DynamicEntryScenario(Protocol):
     """Protocol for scenarios supporting dynamic aircraft entry."""
 
-    def get_initial_positions(
-        self, num_aircraft: int, rng: object
-    ) -> list[dict[str, float]]:
+    def get_initial_positions(self, num_aircraft: int, rng: object) -> list[dict[str, float]]:
         """Return initial positions for dynamically added aircraft."""
         ...
 

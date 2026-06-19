@@ -243,9 +243,25 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
     # ------------------------------------------------------------------
 
     def observation_space(self, agent_id: str) -> spaces.Dict:
+        """Return the observation space for the given agent.
+
+        Args:
+            agent_id: The agent identifier.
+
+        Returns:
+            A Dict space containing self_state, other_aircraft, and goal.
+        """
         return self._obs_space
 
     def action_space(self, agent_id: str) -> spaces.MultiDiscrete | spaces.Box:
+        """Return the action space for the given agent.
+
+        Args:
+            agent_id: The agent identifier.
+
+        Returns:
+            MultiDiscrete (discrete) or Box (continuous) action space.
+        """
         return self._act_space
 
     @property
@@ -262,6 +278,15 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Reset the environment and return initial observations for all agents.
+
+        Args:
+            seed: Optional random seed for reproducibility.
+            options: Optional configuration overrides.
+
+        Returns:
+            Tuple of (observations, infos) dictionaries keyed by agent ID.
+        """
         if seed is not None:
             self._rng = np.random.RandomState(seed)
 
@@ -373,6 +398,15 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         self,
         actions: dict[str, Any],
     ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+        """Execute one time step: translate actions to BlueSky commands,
+        advance the simulation, compute observations and rewards.
+
+        Args:
+            actions: Dictionary mapping agent IDs to actions.
+
+        Returns:
+            Tuple of (observations, rewards, terminations, truncations, infos).
+        """
         self._step_count += 1
 
         # Translate actions to BlueSky commands
@@ -644,6 +678,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         return observations, rewards, terminations, truncations, infos
 
     def close(self) -> None:
+        """Close the environment and release all resources."""
         if self._renderer is not None:
             self._renderer.close()
             self._renderer = None

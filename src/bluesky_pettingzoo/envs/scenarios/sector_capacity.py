@@ -81,6 +81,7 @@ class SectorCapacityScenario(BaseScenario):
         return self._sectors
 
     def get_initial_positions(self) -> dict[str, tuple[float, float]] | None:
+        """Return initial lat/lon positions for all agents, or None if unset."""
         return self._initial_positions
 
     def setup(
@@ -136,6 +137,7 @@ class SectorCapacityScenario(BaseScenario):
         return list(self._agents)
 
     def get_spawn_config(self) -> SpawnConfig:
+        """Return aircraft spawn configuration (altitude, speed, heading ranges)."""
         return SpawnConfig(
             altitude_range=(CRUISE_ALT_FT, CRUISE_ALT_FT),
             speed_range=(SPEED_MIN_KT, SPEED_MAX_KT),
@@ -143,6 +145,7 @@ class SectorCapacityScenario(BaseScenario):
         )
 
     def get_conflict_config(self) -> ConflictConfig:
+        """Return conflict detection thresholds (NMAC and warning distances)."""
         return ConflictConfig(
             nmac_horizontal_nm=5.0,
             nmac_vertical_ft=1000.0,
@@ -161,4 +164,12 @@ class SectorCapacityScenario(BaseScenario):
         return sector is None
 
     def get_waypoint(self, agent_id: str) -> dict[str, float]:
+        """Return the goal waypoint for the given agent.
+
+        Args:
+            agent_id: The agent identifier.
+
+        Returns:
+            Dictionary with lat, lon, alt, hdg keys.
+        """
         return self._waypoints[agent_id]

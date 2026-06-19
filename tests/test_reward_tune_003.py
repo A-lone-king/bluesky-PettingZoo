@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import yaml
+import pytest
 
 from bluesky_pettingzoo.actions.translator import ActionTranslator
 from bluesky_pettingzoo.bluesky.wrapper import BlueSkyWrapper
@@ -43,7 +43,11 @@ def _make_horizontal_cr_env(
     With action_frequency=3 and dt=5s, one RL step = 15s sim time (~1.875 NM/step).
     50 RL steps covers ~93.75 NM at 450 kts; waypoints at 40-70 NM are reachable.
     """
-    scenario = HorizontalCRScenario(num_aircraft=num_aircraft, seed=seed, waypoint_distance_range=(40, 70))
+    scenario = HorizontalCRScenario(
+        num_aircraft=num_aircraft,
+        seed=seed,
+        waypoint_distance_range=(40, 70),
+    )
     config = make_config(
         initial_count=num_aircraft,
         max_steps=max_steps,
@@ -54,24 +58,34 @@ def _make_horizontal_cr_env(
     rewards_cfg = {
         "components": {
             "conflict": {
-                "enabled": True, "weight": 1.0,
-                "nmac_penalty": -50, "warning_penalty": -10, "separation_penalty": -5,
+                "enabled": True,
+                "weight": 1.0,
+                "nmac_penalty": -50,
+                "warning_penalty": -10,
+                "separation_penalty": -5,
                 "thresholds": {
-                    "nmac_horizontal_nm": 5, "nmac_vertical_ft": 1000,
-                    "warning_horizontal_nm": 10, "warning_vertical_ft": 2000,
+                    "nmac_horizontal_nm": 5,
+                    "nmac_vertical_ft": 1000,
+                    "warning_horizontal_nm": 10,
+                    "warning_vertical_ft": 2000,
                 },
             },
             "smoothness": {"enabled": True, "weight": 0.5, "action_penalty": -0.1},
             "efficiency": {
-                "enabled": True, "weight": 0.3,
-                "max_deviation_nm": 200, "deviation_penalty_scale": 5,
-                "arrival_reward": 100, "step_penalty": -0.005,
+                "enabled": True,
+                "weight": 0.3,
+                "max_deviation_nm": 200,
+                "deviation_penalty_scale": 5,
+                "arrival_reward": 100,
+                "step_penalty": -0.005,
                 "arrival_threshold_nm": 2,
-                "distance_reward_scale": 2.0, "distance_threshold_nm": 500,
+                "distance_reward_scale": 2.0,
+                "distance_threshold_nm": 500,
             },
         }
     }
     import copy
+
     rewards_copy = copy.deepcopy(rewards_cfg)
     rewards_path = write_rewards_yaml(tmp_path, rewards_copy)
     config["_rewards_yaml"] = str(rewards_path)
@@ -126,6 +140,7 @@ def _evaluate(model: Any, env: SingleAgentGymWrapper, n_episodes: int = 10) -> t
     return float(np.mean(rewards)), arrivals / n_episodes
 
 
+@pytest.mark.slow
 class TestRewardTune003QuickValidation:
     """Quick validation that PPO training pipeline works on HorizontalCR."""
 

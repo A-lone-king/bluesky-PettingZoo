@@ -57,7 +57,7 @@ _DEFAULT_REWARDS: dict[str, Any] = {
         "conflict": {
             "enabled": True,
             "weight": 1.0,
-            "nmac_penalty": -100,
+            "nmac_penalty": -50,
             "warning_penalty": -10,
             "separation_penalty": -5,
             "thresholds": {
@@ -73,8 +73,8 @@ _DEFAULT_REWARDS: dict[str, Any] = {
             "weight": 0.3,
             "max_deviation_nm": 200,
             "deviation_penalty_scale": 5,
-            "arrival_reward": 10,
-            "step_penalty": -0.01,
+            "arrival_reward": 100,
+            "step_penalty": -0.005,
             "arrival_threshold_nm": 2,
         },
     }
@@ -159,6 +159,7 @@ def make_env(
 
     # Apply scenario-specific max_observable_aircraft override
     import copy
+
     config = copy.deepcopy(config)
     if scenario is not None and scenario.max_observable_aircraft is not None:
         config.setdefault("observation", {})["max_observable_aircraft"] = (

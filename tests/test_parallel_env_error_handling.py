@@ -43,9 +43,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = ValueError("Test error")
-        _, rewards, _, _, _ = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        _, rewards, _, _, _ = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert rewards[agent_id] == -100.0  # default crash_penalty
@@ -57,9 +55,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = RuntimeError("Test")
-        _, rewards, _, _, _ = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        _, rewards, _, _, _ = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert rewards[agent_id] == -200.0
@@ -70,9 +66,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = RuntimeError("Test")
-        _, _, terms, _, _ = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        _, _, terms, _, _ = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert terms[agent_id] is True
@@ -83,9 +77,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = RuntimeError("Test")
-        _, _, _, truncs, _ = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        _, _, _, truncs, _ = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert truncs[agent_id] is False
@@ -96,9 +88,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = RuntimeError("Engine failure")
-        _, _, _, _, infos = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        _, _, _, _, infos = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert "error" in infos[agent_id]
@@ -113,9 +103,7 @@ class TestSafeTerminationFallback:
         env.reset(seed=42)
 
         error = RuntimeError("Test")
-        obs, _, _, _, _ = env._safe_termination_fallback(
-            actions={}, error=error
-        )
+        obs, _, _, _, _ = env._safe_termination_fallback(actions={}, error=error)
 
         for agent_id in env.agents:
             assert "self_state" in obs[agent_id]
@@ -167,9 +155,7 @@ class TestStepExceptionHandling:
 
         actions = {agent_id: [2, 2, 2] for agent_id in env.agents}
 
-        with patch.object(
-            env._wrapper, "step_n", side_effect=ValueError("Step failed")
-        ):
+        with patch.object(env._wrapper, "step_n", side_effect=ValueError("Step failed")):
             obs, rewards, terms, truncs, infos = env.step(actions)
 
         assert isinstance(obs, dict)
@@ -183,17 +169,13 @@ class TestStepExceptionHandling:
         actions = {agent_id: [2, 2, 2] for agent_id in env.agents}
 
         # First call fails
-        with patch.object(
-            env._wrapper, "send_commands_batch", side_effect=RuntimeError("Crash")
-        ):
+        with patch.object(env._wrapper, "send_commands_batch", side_effect=RuntimeError("Crash")):
             env.step(actions)
 
         # Second call should work normally (wrapper恢复)
         with patch.object(env._wrapper, "send_commands_batch"):
             with patch.object(env._wrapper, "step_n"):
-                with patch.object(
-                    env._wrapper, "get_all_aircraft_states", return_value={}
-                ):
+                with patch.object(env._wrapper, "get_all_aircraft_states", return_value={}):
                     obs, rewards, terms, truncs, infos = env.step(actions)
                     # Should return valid structure without crashing
                     assert isinstance(obs, dict)
