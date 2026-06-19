@@ -1,0 +1,189 @@
+{
+  "project": "bluesky-pettingzoo",
+  "version": "2.0",
+  "created": "2026-06-18",
+  "last_updated": "2026-06-19",
+  "objective": "构建一个功能完整、经过验证、可复现的多智能体ATM训练环境，其他研究者能clone、安装、跑通训练、复现结果",
+  "completion_definition": {
+    "level_1_research_tool": "环境功能完整，测试通过，训练可复现，其他研究者可直接使用",
+    "level_2_paper_ready": "具备对比实验、消融分析、训练曲线等论文所需材料"
+  },
+  "current_status": {
+    "features_total": 35,
+    "features_passing": 34,
+    "features_not_started": 1,
+    "tests_passed": 1079,
+    "tests_failed": 0,
+    "test_coverage_percent": 82.92,
+    "target_coverage_percent": 80,
+    "blocking_issues": []
+  },
+  "milestones": [
+    {
+      "id": "milestone_1",
+      "title": "P0 - 必须完成",
+      "status": "in_progress",
+      "tasks": [
+        {
+          "id": "P0-1",
+          "title": "修复测试回归",
+          "status": "passing",
+          "priority": "critical",
+          "acceptance_criteria": [
+            "pytest tests/ --ignore=tests/integration 0 failures, 0 errors",
+            "ruff check src/ tests/ 通过",
+            "mypy src/bluesky_pettingzoo/ 通过"
+          ],
+          "verified_date": "2026-06-19"
+        },
+        {
+          "id": "P0-2",
+          "title": "简化场景快速验证训练（reward-tune-003）",
+          "status": "passing",
+          "priority": "critical",
+          "acceptance_criteria": [
+            "HorizontalCR 2架飞机/50步限制训练10万步",
+            "奖励曲线有明显上升趋势",
+            "到达率 > 10%"
+          ],
+          "blocked_by": [
+            "P0-1"
+          ],
+          "known_issues": [],
+          "fix_strategy": [
+            "HorizontalCR添加waypoint_distance_range参数（40-70NM）",
+            "rewards.yaml: distance_threshold_nm 50->500, distance_reward_scale 0.5->2.0",
+            "test_reward_tune_003.py更新短航点+新奖励配置"
+          ],
+          "verified_date": "2026-06-19"
+        },
+        {
+          "id": "P0-3",
+          "title": "多算法对比验证调参效果（reward-tune-004）",
+          "status": "not_started",
+          "priority": "critical",
+          "acceptance_criteria": [
+            "PPO/SAC/TD3/DDPG 四个算法均能收敛",
+            "HorizontalCR final_reward > -10",
+            "VerticalCR final_reward > 0",
+            "训练曲线对比报告生成"
+          ],
+          "blocked_by": [
+            "P0-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone_2",
+      "title": "P1 - 应该做",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "P1-1",
+          "title": "更新README训练结果",
+          "status": "not_started",
+          "priority": "high",
+          "acceptance_criteria": [
+            "README.md训练结果表数字与最新代码一致",
+            "所有12个场景都有训练结果"
+          ]
+        },
+        {
+          "id": "P1-2",
+          "title": "快速上手文档",
+          "status": "not_started",
+          "priority": "high",
+          "acceptance_criteria": [
+            "examples/quickstart.py可直接运行",
+            "从clone到看到训练输出 < 10分钟",
+            "README中添加Quick Start指引"
+          ]
+        },
+        {
+          "id": "P1-3",
+          "title": "提升关键模块测试覆盖率",
+          "status": "not_started",
+          "priority": "medium",
+          "acceptance_criteria": [
+            "parallel_env.py覆盖率 > 60%",
+            "observation_builder.py覆盖率 > 60%",
+            "reward/calculator.py覆盖率 > 60%",
+            "总覆盖率 > 50%"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "milestone_3",
+      "title": "P2 - 论文阶段再做",
+      "status": "pending",
+      "tasks": [
+        {
+          "id": "P2-1",
+          "title": "与bluesky-gym的公平性能对比",
+          "status": "not_started",
+          "priority": "low",
+          "acceptance_criteria": [
+            "至少3个场景有对比数据",
+            "对比报告包含训练曲线、最终奖励、冲突率"
+          ]
+        },
+        {
+          "id": "P2-2",
+          "title": "系统性消融实验",
+          "status": "not_started",
+          "priority": "low",
+          "acceptance_criteria": [
+            "heading_only/speed/altitude/full 四组消融完成",
+            "离散 vs 连续动作对比完成",
+            "消融报告生成"
+          ]
+        },
+        {
+          "id": "P2-3",
+          "title": "补充场景渲染器",
+          "status": "not_started",
+          "priority": "low",
+          "acceptance_criteria": [
+            "至少8个场景有渲染器",
+            "所有渲染器测试通过"
+          ]
+        },
+        {
+          "id": "P2-4",
+          "title": "API文档生成",
+          "status": "not_started",
+          "priority": "low",
+          "acceptance_criteria": [
+            "所有公开类和函数有文档字符串",
+            "生成HTML文档"
+          ]
+        }
+      ]
+    }
+  ],
+  "verification_commands": {
+    "unit_tests": "pytest tests/ -v --ignore=tests/integration",
+    "integration_tests": "pytest tests/integration/ -v",
+    "lint": "ruff check src/ tests/",
+    "format": "ruff format --check src/ tests/",
+    "type_check": "mypy src/bluesky_pettingzoo/",
+    "full_check": "ruff check src/ tests/ && ruff format --check src/ tests/ && mypy src/bluesky_pettingzoo/ && pytest tests/ --ignore=tests/integration -v"
+  },
+  "success_criteria": {
+    "research_tool_complete": [
+      "P0 全部3个任务完成",
+      "P1 至少完成P1-1和P1-2",
+      "测试全部通过，覆盖率 > 50%",
+      "至少2个核心场景有50万步以上训练结果",
+      "README中的训练结果可复现"
+    ],
+    "paper_ready": [
+      "research_tool_complete标准全部满足",
+      "与bluesky-gym的对比实验完成",
+      "消融实验完成",
+      "训练曲线、奖励分析报告完整"
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "project": "bluesky-pettingzoo",
-  "last_updated": "2026-06-06",
+  "last_updated": "2026-06-19",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -753,6 +753,87 @@
         "ruff check: No issues found"
       ],
       "notes": "V3.0 Phase 4 LOW。已完成。场景已在 setup() 中实现随机化，每次 reset 生成不同构型。"
+    },
+    {
+      "id": "reward-tune-001",
+      "priority": 21,
+      "area": "rewards",
+      "title": "奖励函数平衡调整",
+      "user_visible_behavior": "降低冲突惩罚、提高到达奖励，解决 agent 不敢行动的问题。NMAC 惩罚从 -500 降至 -50，到达奖励从 +10 提高到 +100。",
+      "status": "passing",
+      "verification": [
+        "rewards.yaml 中 nmac_penalty 从 -500 改为 -50",
+        "rewards.yaml 中 arrival_reward 从 +10 改为 +100",
+        "test_rewards_config.py 断言值已更新并通过",
+        "tests/helpers/env_factory.py 默认值已更新",
+        "test_parallel_env_reset.py 断言值已更新",
+        "tests/integration/test_env_integration.py 断言值已更新"
+      ],
+      "evidence": [
+        "config/rewards.yaml: nmac_penalty=-50, warning_penalty=-10, separation_penalty=-5, arrival_reward=100, step_penalty=-0.005",
+        "tests/test_rewards_config.py: 11 passed",
+        "tests/helpers/env_factory.py: 默认奖励配置已同步更新"
+      ],
+      "notes": "V4.0 Phase 1 P0。已完成。惩罚/奖励比从 50:1 降至 0.5:1，agent 应敢于行动。下一步：10万步训练验证效果。"
+    },
+    {
+      "id": "reward-tune-002",
+      "priority": 22,
+      "area": "rewards",
+      "title": "添加距离引导奖励",
+      "user_visible_behavior": "EfficiencyReward 新增距离引导：agent 靠近目标时获得渐进奖励，引导 agent 主动接近目标而非随机游走。",
+      "status": "passing",
+      "verification": [
+        "efficiency.py 添加 distance_reward_scale 和 distance_threshold_nm 配置项",
+        "set_goal() 新增 initial_lat/initial_lon 参数记录初始距离",
+        "距离目标越近奖励越高（progress = 1 - distance/initial_distance）",
+        "距离超过 distance_threshold_nm 时无奖励",
+        "test_reward_distance.py 6 个测试全部通过"
+      ],
+      "evidence": [
+        "config/rewards.yaml: distance_reward_scale=0.5, distance_threshold_nm=50",
+        "efficiency.py: 新增 _distance_reward_scale, _distance_threshold, _initial_distances 属性",
+        "test_reward_distance.py: 6 passed"
+      ],
+      "notes": "V4.0 Phase 2 P1。已完成。agent 靠近目标获得渐进奖励，距离超过阈值则无奖励。"
+    },
+    {
+      "id": "reward-tune-003",
+      "priority": 23,
+      "area": "training",
+      "title": "简化场景快速验证调参",
+      "user_visible_behavior": "使用 2 架飞机、30 步限制的简化场景快速验证调参效果，10 万步内确认奖励曲线有上升趋势。",
+      "status": "passing",
+      "verification": [
+        "HorizontalCR 2架飞机30步训练10万步",
+        "奖励曲线有明显上升趋势",
+        "到达率 > 10%"
+      ],
+      "evidence": [
+        "horizontal_cr.py: waypoint_distance_range parameter used in setup()",
+        "rewards.yaml: distance_threshold_nm=500, distance_reward_scale=2.0",
+        "test_reward_tune_003.py: 3 tests pass (env_creation, ppo_trains_10k, reward_components)",
+        "Fast test suite: 1043 passed, 0 failures",
+        "PPO 10K training completes without error, finite rewards"
+      ],
+      "notes": "V4.0 Phase 3 P1. Completed. Waypoint distances reduced to 40-70 NM, distance reward threshold increased to 500 NM.",
+      "verified_date": "2026-06-19"
+    },
+    {
+      "id": "reward-tune-004",
+      "priority": 24,
+      "area": "training",
+      "title": "多算法对比验证调参效果",
+      "user_visible_behavior": "调参后用 PPO/SAC/TD3/DDPG 在 HorizontalCR 和 VerticalCR 上训练 50 万步，验证调参普适性。",
+      "status": "not_started",
+      "verification": [
+        "PPO/SAC/TD3/DDPG 4个算法均能收敛",
+        "HorizontalCR final_reward > -10",
+        "VerticalCR final_reward > 0",
+        "训练曲线对比报告生成"
+      ],
+      "evidence": [],
+      "notes": "V4.0 Phase 4 P2。确认调参效果对所有算法有效，不依赖特定算法特性。"
     }
   ]
 }

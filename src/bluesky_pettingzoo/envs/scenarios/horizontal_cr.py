@@ -43,11 +43,13 @@ class HorizontalCRScenario(BaseScenario):
         num_aircraft_range: tuple[int, int] | None = None,
         seed: int | None = None,
         num_altitude_layers: int = 1,
+        waypoint_distance_range: tuple[float, float] | None = None,
     ) -> None:
         self._num_aircraft = num_aircraft
         self._num_aircraft_range = num_aircraft_range
         self._seed = seed
         self._num_altitude_layers = num_altitude_layers
+        self._waypoint_distance_range = waypoint_distance_range
         self._agents: list[str] = []
         self._waypoints: dict[str, dict[str, float]] = {}
         self._bounds: dict[str, float] = {}
@@ -87,6 +89,14 @@ class HorizontalCRScenario(BaseScenario):
         aircraft are distributed across multiple altitude layers.
         """
         self._bounds = airspace_bounds
+
+        # Use configurable waypoint distance range if provided
+        wp_min = WAYPOINT_DISTANCE_MIN_NM
+        wp_max = WAYPOINT_DISTANCE_MAX_NM
+        if self._waypoint_distance_range is not None:
+            wp_min = self._waypoint_distance_range[0]
+            wp_max = self._waypoint_distance_range[1]
+
         self._agents = [f"AC{i:03d}" for i in range(self._num_aircraft)]
         self._waypoints = {}
 
@@ -124,7 +134,7 @@ class HorizontalCRScenario(BaseScenario):
             else:
                 bearing_deg = rng.uniform(240, 300)  # roughly westward
 
-            dist_nm = rng.uniform(WAYPOINT_DISTANCE_MIN_NM, WAYPOINT_DISTANCE_MAX_NM)
+            dist_nm = rng.uniform(wp_min, wp_max)
             wp_lat, wp_lon = point_at_distance(ac_lat, ac_lon, dist_nm, bearing_deg)
 
             self._waypoints[acid] = {

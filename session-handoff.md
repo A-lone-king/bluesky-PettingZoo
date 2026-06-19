@@ -85,6 +85,12 @@
 4. ✅ 增强 `calculator.py` 添加 compute_detailed() 方法
 5. ✅ 编写 25 个测试（test_data_recording.py）
 
+## 本轮改动 (Session 014)
+
+- 修复 P0-1 测试回归：ruff E501（test_reward_distance.py 长行）、ruff format（21 文件）、mypy 3 个类型错误（star_approach.py）
+- 测试结果：1079 passed / 0 failed / 8 deselected(e2e)，覆盖率 82.92%
+- P0-1 标记为 passing
+
 ## V2.0 改进计划（2026-06-06 制定）
 
 **参考 ROADMAP.md 第七章获取详细计划**
@@ -135,6 +141,32 @@
 
 **总工作量**：7-11 天
 **推荐执行顺序**：Phase 1 → Phase 2 → Phase 3 → Phase 4
+
+## V4.0 改进计划（2026-06-12 制定）
+
+**参考 doc/reward_tuning_report.md 获取详细分析**
+
+基于训练结果分析发现的奖励函数失衡问题，制定 4 个改进 feature：
+
+| Feature ID | 标题 | 优先级 | Phase | 状态 |
+|------------|------|--------|-------|------|
+| reward-tune-001 | 奖励函数平衡调整 | P0 | Phase 1 | passing |
+| reward-tune-002 | 添加距离引导奖励 | P1 | Phase 2 | passing |
+| reward-tune-003 | 简化场景快速验证调参 | P1 | Phase 3 | passing ✔ |
+| reward-tune-004 | 多算法对比验证调参效果 | P2 | Phase 4 | not_started |
+
+**训练问题诊断**：
+
+| 场景 | Timesteps | Final Reward | 问题 |
+|------|-----------|--------------|------|
+| HorizontalCR | 5M | -56.17 | 惩罚/奖励比 50:1，agent 不敢行动 |
+| VerticalCR | 10M | -0.87 | 基本收敛，垂直冲突相对容易 |
+
+**核心问题**：NMAC 惩罚 -500 vs 到达奖励 +10 = 50:1，agent 学会"拖延"而非"避碰+到达"
+
+**推荐执行顺序**：Phase 1 → Phase 3 → Phase 2 → Phase 4
+
+**总工作量**：3-5 天
 
 ## 失败分类
 
