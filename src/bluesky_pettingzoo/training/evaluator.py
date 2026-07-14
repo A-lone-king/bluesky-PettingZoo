@@ -9,6 +9,8 @@ from typing import Any
 
 import numpy as np
 
+from bluesky_pettingzoo.training.metrics import ExtendedMetrics
+
 
 @dataclass
 class EvalResult:
@@ -25,6 +27,7 @@ class EvalResult:
     nmac_rate: float
     num_episodes: int
     seed: int
+    extended_metrics: "ExtendedMetrics | None" = None
 
 
 class ModelEvaluator:

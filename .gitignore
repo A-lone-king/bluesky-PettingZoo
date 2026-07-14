@@ -100,3 +100,12 @@ evaluator-rubric.md
 quality-document.md
 claude-progress.md
 BLUE_SKY_INTEGRATION_PLAN.md
+
+# ========== 实验结果 ==========
+results/
+
+# ========== BlueSky 缓存 ==========
+.bluesky_cache/
+
+# ========== 训练日志 ==========
+training_log.csv
