@@ -1,6 +1,6 @@
 {
   "project": "bluesky-pettingzoo",
-  "last_updated": "2026-06-19",
+  "last_updated": "2026-07-15",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -931,7 +931,8 @@
         "src/bluesky_pettingzoo/training/metrics.py: ExtendedMetrics 数据类 + MetricsCalculator 计算器",
         "6 个新指标: conflict_resolution_rate, separation_violation_duration, min_separation_distance_nm, trajectory_efficiency, fuel_consumption_estimate, mean_time_to_resolve",
         "EvalResult.extended_metrics 字段已添加",
-        "tests/test_metrics.py: 16 个单元测试（15 passed，1 failed 因浮点精度问题）",
+        "trajectory_efficiency bug 已修复: clamp 到 [0, 1] 范围",
+        "tests/test_metrics.py: 16 个单元测试全部通过",
         "MetricsCalculator.calculate() 支持从 trajectory/conflict/goal 数据计算所有指标"
       ],
       "notes": "V5.0 Phase 4。安全性指标（conflict_resolution_rate/separation_violation_duration/min_separation_distance）+ 效率指标（trajectory_efficiency/fuel_consumption_estimate）+ 时间指标（mean_time_to_resolve）。参考计划 .trae/documents/paper-level-upgrade-plan.md"
@@ -954,7 +955,11 @@
         "支持 PPO/Random/RuleBased 三种算法评估",
         "ScalabilityResult/ScalabilitySummary 数据类",
         "get_aggregated_results() 按飞机数量聚合结果",
-        "结果保存到 results/scalability/{scenario}_{algorithm}_scalability.json"
+        "结果保存到 results/scalability/{scenario}_{algorithm}_scalability.json",
+        "Bug 修复: 构造函数接受 env_factory 和 model_path 参数",
+        "Bug 修复: 移除不存在的 make() 导入",
+        "Bug 修复: 使用 termination_reason 判断到达/NMAC，而非 total_reward > 0",
+        "Bug 修复: PPO 评估使用预训练模型，不再从零训练"
       ],
       "notes": "V5.0 Phase 5。验证多智能体环境在高密度场景下的可扩展性。利用已有 num_aircraft_range 属性。参考计划 .trae/documents/paper-level-upgrade-plan.md"
     },
@@ -977,7 +982,11 @@
         "奖励组件消融: full/no_conflict/no_efficiency/no_smoothness/conflict_only 五种配置",
         "AblationResult/AblationSummary 数据类",
         "get_aggregated_results() 按配置聚合结果",
-        "结果保存到 results/ablation/{scenario}_{ablation_type}_ablation.json"
+        "结果保存到 results/ablation/{scenario}_{ablation_type}_ablation.json",
+        "Bug 修复: 构造函数接受 env_factory 和 model_path 参数",
+        "Bug 修复: 移除不存在的 make() 导入",
+        "Bug 修复: 使用 termination_reason 判断到达/NMAC，而非 total_reward > 0",
+        "Bug 修复: PPO 评估使用预训练模型，不再从零训练"
       ],
       "notes": "V5.0 Phase 6。框架已完整（ablation.py + ablation_experiments.yaml），需实际运行生成结果。参考计划 .trae/documents/paper-level-upgrade-plan.md"
     },
@@ -1000,7 +1009,11 @@
         "generate_comparison_table() 生成 Markdown 对比表",
         "使用 seaborn-v0_8-whitegrid 风格，色盲友好配色",
         "输出分辨率 300dpi，支持自动创建目录",
-        "支持训练曲线、算法对比、可扩展性分析、消融实验、扩展指标对比"
+        "支持训练曲线、算法对比、可扩展性分析、消融实验、扩展指标对比",
+        "src/bluesky_pettingzoo/training/statistics.py: 统计检验模块已实现",
+        "3 种统计检验: Wilcoxon rank-sum test, Cohen's d effect size, 95% confidence interval",
+        "StatisticalTest.compare() 一站式对比两个算法结果",
+        "tests/test_statistics.py: 14 个单元测试全部通过"
       ],
       "notes": "V5.0 Phase 7。依赖 Phase 1-6 的结果。图表规格：PDF矢量图，单栏3.5\"×2.8\"，双栏7\"×4\"。参考计划 .trae/documents/paper-level-upgrade-plan.md"
     }

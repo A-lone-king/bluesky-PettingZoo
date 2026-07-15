@@ -117,6 +117,7 @@ class ModelEvaluator:
                 episode_steps = 0
                 arrived = False
                 nmac = False
+                step_info: Any = {}
 
                 for step in range(self._max_steps):
                     if model is not None:
@@ -129,9 +130,9 @@ class ModelEvaluator:
                             done = step_result[2]
                             terminated = done
                             truncated = False
-                            info = step_result[3] if len(step_result) > 3 else {}
+                            step_info = step_result[3] if len(step_result) > 3 else {}
                         else:
-                            obs, reward, terminated, truncated, info = env.step(action)
+                            obs, reward, terminated, truncated, step_info = env.step(action)
                         total_reward += float(reward)
                     elif agent is not None:
                         # Multi-agent path: obs is {agent_id: obs_dict}
@@ -140,7 +141,7 @@ class ModelEvaluator:
                                 obs = obs[0] if isinstance(obs, tuple) else obs
                             action_spaces = {aid: env.action_space(aid) for aid in env.agents}
                             actions = agent.act(obs, action_spaces)
-                            obs, step_rewards, terminations, truncations, infos = env.step(actions)
+                            obs, step_rewards, terminations, truncations, step_info = env.step(actions)
                             total_reward += (
                                 sum(step_rewards.values())
                                 if isinstance(step_rewards, dict)
@@ -162,7 +163,7 @@ class ModelEvaluator:
                             action_spaces = {ego: env.action_space}
                             actions = agent.act({ego: obs}, action_spaces)
                             ego_action = actions.get(ego, env.action_space.sample())
-                            obs, reward, terminated, truncated, info = env.step(ego_action)
+                            obs, reward, terminated, truncated, step_info = env.step(ego_action)
                             total_reward += float(reward)
                         else:
                             break
@@ -172,7 +173,7 @@ class ModelEvaluator:
                             if not isinstance(obs, dict):
                                 obs = obs[0] if isinstance(obs, tuple) else obs
                             actions = {aid: env.action_space(aid).sample() for aid in env.agents}
-                            obs, step_rewards, terminations, truncations, infos = env.step(actions)
+                            obs, step_rewards, terminations, truncations, step_info = env.step(actions)
                             total_reward += (
                                 sum(step_rewards.values())
                                 if isinstance(step_rewards, dict)
@@ -192,13 +193,13 @@ class ModelEvaluator:
                             # SingleAgentGymWrapper: random action for ego agent
                             ego = env._ego
                             action = env.action_space.sample()
-                            obs, reward, terminated, truncated, info = env.step(action)
+                            obs, reward, terminated, truncated, step_info = env.step(action)
                             total_reward += float(reward)
                         else:
                             agents = getattr(env, "agents", None)
                             action = env.action_space(agents[0]).sample() if agents else None
                             if action is not None and agents is not None:
-                                obs, reward, terminated, truncated, info = env.step(
+                                obs, reward, terminated, truncated, step_info = env.step(
                                     {agents[0]: action}
                                 )
                                 total_reward += (
@@ -220,8 +221,7 @@ class ModelEvaluator:
                     episode_steps = step + 1
 
                     if terminated:
-                        arrived = total_reward > 0
-                        nmac = not arrived
+                        arrived, nmac = self._extract_termination_reason(step_info)
                         break
                     if truncated:
                         break
@@ -249,6 +249,37 @@ class ModelEvaluator:
             num_episodes=self._num_episodes,
             seed=self._seed,
         )
+
+    @staticmethod
+    def _extract_termination_reason(info: Any) -> tuple[bool, bool]:
+        """Extract arrival and NMAC flags from step info.
+
+        Handles both single-agent (flat dict) and multi-agent (dict of dicts) info.
+
+        Args:
+            info: Info dict from env.step()
+
+        Returns:
+            Tuple of (arrived, nmac) booleans.
+        """
+        arrived = False
+        nmac = False
+        if isinstance(info, dict):
+            # Single-agent: info is {termination_reason: "arrival", ...}
+            reason = info.get("termination_reason")
+            if reason == "arrival":
+                arrived = True
+            elif reason == "nmac":
+                nmac = True
+            # Multi-agent: info is {agent_id: {termination_reason: ...}, ...}
+            for v in info.values():
+                if isinstance(v, dict):
+                    reason = v.get("termination_reason")
+                    if reason == "arrival":
+                        arrived = True
+                    elif reason == "nmac":
+                        nmac = True
+        return arrived, nmac
 
     @staticmethod
     def format_table(results: list[EvalResult]) -> str:

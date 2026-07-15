@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
@@ -69,19 +69,26 @@ class AblationExperiment:
     def __init__(
         self,
         scenario_name: str,
+        env_factory: Callable[[], Any],
         ablation_type: str = "action_space",
         configs: Optional[List[str]] = None,
         seeds: Optional[List[int]] = None,
+        model_path: Optional[Path] = None,
     ) -> None:
         """Initialize ablation experiment.
 
         Args:
             scenario_name: Name of the scenario to test
+            env_factory: Callable that returns a fresh env instance
             ablation_type: "action_space" or "reward"
             configs: List of configuration names to test
             seeds: List of random seeds
+            model_path: Optional path to a pre-trained PPO model. If None,
+                random actions are used (algorithm labelled "Random").
         """
         self.scenario_name = scenario_name
+        self._env_factory = env_factory
+        self.model_path = model_path
         self.ablation_type = ablation_type
         self.seeds = seeds or self.DEFAULT_SEEDS
 
@@ -147,25 +154,7 @@ class AblationExperiment:
         Returns:
             AblationResult for this configuration
         """
-        from bluesky_pettingzoo import make
-
-        if self.ablation_type == "action_space":
-            action_config = self.ACTION_CONFIGS.get(config_name, {})
-            env = make(
-                self.scenario_name,
-                enable_heading=action_config.get("heading", True),
-                enable_speed=action_config.get("speed", True),
-                enable_altitude=action_config.get("altitude", True),
-            )
-        else:
-            reward_config = self.REWARD_CONFIGS.get(config_name, {})
-            env = make(
-                self.scenario_name,
-                use_conflict_penalty=reward_config.get("conflict", True),
-                use_efficiency_reward=reward_config.get("efficiency", True),
-                use_smoothness_penalty=reward_config.get("smoothness", True),
-            )
-
+        env = self._env_factory()
         return self._evaluate_ppo(env, config_name, seed, num_episodes)
 
     def _evaluate_ppo(
@@ -178,14 +167,11 @@ class AblationExperiment:
         """Evaluate PPO on the configuration."""
         from stable_baselines3 import PPO
 
-        model = PPO(
-            "MlpPolicy",
-            env,
-            verbose=0,
-            seed=seed,
-        )
-
-        model.learn(total_timesteps=100_000)
+        if self.model_path is not None:
+            model = PPO.load(str(self.model_path))
+        else:
+            # No pre-trained model: fall back to random actions ("Random").
+            model = None
 
         rewards: List[float] = []
         steps_list: List[int] = []
@@ -198,12 +184,16 @@ class AblationExperiment:
             episode_steps = 0
             terminated = {agent: False for agent in env.possible_agents}
             truncated = {agent: False for agent in env.possible_agents}
+            info: Dict[str, Any] = {}
 
             while not all(terminated.values()) and not all(truncated.values()):
                 actions = {}
                 for agent_id in env.possible_agents:
                     if not terminated.get(agent_id, False) and not truncated.get(agent_id, False):
-                        action, _ = model.predict(obs[agent_id], deterministic=True)
+                        if model is not None:
+                            action, _ = model.predict(obs[agent_id], deterministic=True)
+                        else:
+                            action = env.action_space(agent_id).sample()
                         actions[agent_id] = action
                 obs, reward, terminated, truncated, info = env.step(actions)
                 total_reward += sum(float(r) for r in reward.values())
@@ -212,9 +202,19 @@ class AblationExperiment:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            # Inspect the info dict from the last step to determine outcomes.
+            episode_arrived = False
+            episode_nmac = False
+            for v in info.values():
+                reason = v.get("termination_reason")
+                if reason == "arrival":
+                    episode_arrived = True
+                elif reason == "nmac":
+                    episode_nmac = True
+
+            if episode_arrived:
                 arrivals += 1
-            else:
+            if episode_nmac:
                 nmacs += 1
 
         env.close()

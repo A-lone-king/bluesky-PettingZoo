@@ -195,9 +195,19 @@ class IPPOTrainer:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            # Check info dict for arrival/NMAC reasons
+            ep_arrived = False
+            ep_nmac = False
+            for ai in info.values():
+                if isinstance(ai, dict):
+                    reason = ai.get("termination_reason")
+                    if reason == "arrival":
+                        ep_arrived = True
+                    elif reason == "nmac":
+                        ep_nmac = True
+            if ep_arrived:
                 arrivals += 1
-            else:
+            if ep_nmac:
                 nmacs += 1
 
         n = len(rewards) if rewards else 1
@@ -355,9 +365,19 @@ class RayMAPPOAdapter:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            # Check info dict for arrival/NMAC reasons
+            ep_arrived = False
+            ep_nmac = False
+            for ai in info.values():
+                if isinstance(ai, dict):
+                    reason = ai.get("termination_reason")
+                    if reason == "arrival":
+                        ep_arrived = True
+                    elif reason == "nmac":
+                        ep_nmac = True
+            if ep_arrived:
                 arrivals += 1
-            else:
+            if ep_nmac:
                 nmacs += 1
 
         n = len(rewards) if rewards else 1

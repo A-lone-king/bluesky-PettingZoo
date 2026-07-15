@@ -167,7 +167,10 @@ class MetricsCalculator:
                 )
 
             if actual_distance > 0:
-                efficiencies.append(progress / actual_distance)
+                # Clamp to [0, 1]: efficiency cannot exceed 1.0 (straight-line path)
+                # nor be negative (no progress toward goal).
+                efficiency = min(1.0, max(0.0, progress / actual_distance))
+                efficiencies.append(efficiency)
 
         return float(sum(efficiencies) / len(efficiencies)) if efficiencies else 0.0
 

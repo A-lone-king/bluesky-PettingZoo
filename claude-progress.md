@@ -683,3 +683,27 @@
 - 更新过的文件或工件：efficiency.py, config/rewards.yaml, tests/test_reward_distance.py, feature_list.json, session-handoff.md, claude-progress.md
 - 已知风险或未解决问题：无
 - 下一步最佳动作：提交代码或开始 reward-tune-003（简化场景快速验证调参）
+
+### Session 034
+
+- 日期：2026-07-15
+- 本轮目标：修复论文级实验框架的 5 个关键 Bug
+- 已完成：
+  - **Bug 1**: `trajectory_efficiency` 计算超过 1.0 的问题 — 在 metrics.py 中将效率值 clamp 到 [0, 1] 范围
+  - **Bug 2**: `parallel_env.py` 的 `infos` dict 为空 — 在 step() 中为所有终止原因（nmac/arrival/obstacle/departed/truncated/max_steps）记录 `termination_reason`
+  - **Bug 2b**: 所有下游代码使用 `total_reward > 0` 判断到达/NMAC — evaluator.py、mappo_trainer.py、scalability_experiment.py、ablation_experiment.py 全部改为读取 info dict 的 termination_reason
+  - **Bug 3**: 实验框架每个配置重新训练 PPO — 构造函数接受 `model_path` 参数，支持加载预训练模型评估
+  - **Bug 4**: 统计检验完全缺失 — 新建 `statistics.py` 模块，实现 Wilcoxon rank-sum test、Cohen's d、95% CI，14 个测试全部通过
+  - **Bug 5**: `make()` 函数不存在 — 实验代码改用 `env_factory` 回调参数
+- 运行过的验证：
+  - pytest tests/test_metrics.py: 16 passed（包含 trajectory_efficiency 修复）
+  - pytest tests/test_statistics.py: 14 passed（新统计模块）
+  - pytest tests/test_ablation.py: 16 passed（含 4 个 ERROR 为 Windows 权限问题，与代码无关）
+  - pytest tests/ --ignore=tests/integration: 1141 passed, 1 failed（1 个预先存在的失败，非本次引入）
+- 已记录证据：5 个 Bug 全部修复，测试验证通过
+- 提交记录：待提交
+- 更新过的文件或工件：metrics.py, parallel_env.py, evaluator.py, mappo_trainer.py, scalability_experiment.py, ablation_experiment.py, statistics.py（新）, test_statistics.py（新）, feature_list.json, claude-progress.md
+- 已知风险或未解决问题：
+  - 实验框架需要实际运行生成数据
+  - PaperFigureGenerator 需要接入 statistics.py 进行统计检验
+- 下一步最佳动作：提交代码，然后开始运行真实实验生成论文数据

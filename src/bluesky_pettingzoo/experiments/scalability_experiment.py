@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
@@ -58,6 +58,8 @@ class ScalabilityExperiment:
         algorithm: str = "PPO",
         aircraft_counts: Optional[List[int]] = None,
         seeds: Optional[List[int]] = None,
+        env_factory: Optional[Callable[[int], Any]] = None,
+        model_path: Optional[Path] = None,
     ) -> None:
         """Initialize scalability experiment.
 
@@ -66,11 +68,17 @@ class ScalabilityExperiment:
             algorithm: Algorithm to use (PPO, Random, RuleBased)
             aircraft_counts: List of aircraft counts to test
             seeds: List of random seeds
+            env_factory: Callable that takes num_aircraft and returns an env
+                instance. Required to run the experiment.
+            model_path: Optional path to a pre-trained PPO model. If None and
+                algorithm is "PPO", evaluation falls back to random actions.
         """
         self.scenario_name = scenario_name
         self.algorithm = algorithm
         self.aircraft_counts = aircraft_counts or self.DEFAULT_AIRCRAFT_COUNTS
         self.seeds = seeds or self.DEFAULT_SEEDS
+        self.env_factory = env_factory
+        self.model_path = model_path
 
     def run(
         self,
@@ -126,10 +134,16 @@ class ScalabilityExperiment:
 
         Returns:
             ScalabilityResult for this configuration
-        """
-        from bluesky_pettingzoo import make
 
-        env = make(self.scenario_name, num_aircraft=num_aircraft)
+        Raises:
+            ValueError: If env_factory was not provided.
+        """
+        if self.env_factory is None:
+            raise ValueError(
+                "env_factory must be provided to ScalabilityExperiment"
+            )
+
+        env = self.env_factory(num_aircraft)
 
         if self.algorithm == "Random":
             return self._evaluate_random(env, num_aircraft, seed, num_episodes)
@@ -137,6 +151,31 @@ class ScalabilityExperiment:
             return self._evaluate_rulebased(env, num_aircraft, seed, num_episodes)
         else:
             return self._evaluate_ppo(env, num_aircraft, seed, num_episodes)
+
+    @staticmethod
+    def _extract_arrival_nmac(info: Any) -> tuple[bool, bool]:
+        """Extract episode-level arrival and NMAC flags from the last step info.
+
+        Iterates through the multi-agent info dict and checks each agent's
+        ``termination_reason``.
+
+        Args:
+            info: Info dict from env.step(). Multi-agent: ``{agent_id: {...}}``.
+
+        Returns:
+            Tuple of (arrived, nmac) booleans. Either may be True independently.
+        """
+        arrived = False
+        nmac = False
+        if isinstance(info, dict):
+            for v in info.values():
+                if isinstance(v, dict):
+                    reason = v.get("termination_reason")
+                    if reason == "arrival":
+                        arrived = True
+                    elif reason == "nmac":
+                        nmac = True
+        return arrived, nmac
 
     def _evaluate_random(
         self,
@@ -157,6 +196,7 @@ class ScalabilityExperiment:
             episode_steps = 0
             terminated = {agent: False for agent in env.possible_agents}
             truncated = {agent: False for agent in env.possible_agents}
+            info: Any = {}
 
             while not all(terminated.values()) and not all(truncated.values()):
                 actions = {agent: env.action_space(agent).sample() for agent in env.possible_agents}
@@ -167,9 +207,10 @@ class ScalabilityExperiment:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            episode_arrived, episode_nmac = self._extract_arrival_nmac(info)
+            if episode_arrived:
                 arrivals += 1
-            else:
+            if episode_nmac:
                 nmacs += 1
 
         env.close()
@@ -210,6 +251,7 @@ class ScalabilityExperiment:
             episode_steps = 0
             terminated = {agent: False for agent in env.possible_agents}
             truncated = {agent: False for agent in env.possible_agents}
+            info: Any = {}
 
             while not all(terminated.values()) and not all(truncated.values()):
                 actions = {}
@@ -223,9 +265,10 @@ class ScalabilityExperiment:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            episode_arrived, episode_nmac = self._extract_arrival_nmac(info)
+            if episode_arrived:
                 arrivals += 1
-            else:
+            if episode_nmac:
                 nmacs += 1
 
         env.close()
@@ -250,17 +293,31 @@ class ScalabilityExperiment:
         seed: int,
         num_episodes: int,
     ) -> ScalabilityResult:
-        """Evaluate PPO policy."""
-        from stable_baselines3 import PPO
+        """Evaluate PPO policy.
 
-        model = PPO(
-            "MlpPolicy",
-            env,
-            verbose=0,
-            seed=seed,
-        )
+        If ``model_path`` was provided to the constructor, the pre-trained
+        model is loaded with ``PPO.load`` and used for action selection.
+        Otherwise the method falls back to random actions and labels the
+        algorithm as ``"PPO_untrained"`` so the experiment remains controlled
+        (no in-evaluation training).
 
-        model.learn(total_timesteps=100_000)
+        Args:
+            env: Environment instance.
+            num_aircraft: Number of aircraft for this configuration.
+            seed: Random seed (used for env.reset).
+            num_episodes: Number of evaluation episodes.
+
+        Returns:
+            ScalabilityResult for this configuration.
+        """
+        algorithm_label = self.algorithm
+        model: Any = None
+        if self.model_path is not None:
+            from stable_baselines3 import PPO
+
+            model = PPO.load(str(self.model_path))
+        else:
+            algorithm_label = "PPO_untrained"
 
         rewards: List[float] = []
         steps_list: List[int] = []
@@ -273,13 +330,17 @@ class ScalabilityExperiment:
             episode_steps = 0
             terminated = {agent: False for agent in env.possible_agents}
             truncated = {agent: False for agent in env.possible_agents}
+            info: Any = {}
 
             while not all(terminated.values()) and not all(truncated.values()):
                 actions = {}
                 for agent_id in env.possible_agents:
                     if not terminated.get(agent_id, False) and not truncated.get(agent_id, False):
-                        action, _ = model.predict(obs[agent_id], deterministic=True)
-                        actions[agent_id] = action
+                        if model is not None:
+                            action, _ = model.predict(obs[agent_id], deterministic=True)
+                            actions[agent_id] = action
+                        else:
+                            actions[agent_id] = env.action_space(agent_id).sample()
                 obs, reward, terminated, truncated, info = env.step(actions)
                 total_reward += sum(float(r) for r in reward.values())
                 episode_steps += 1
@@ -287,16 +348,17 @@ class ScalabilityExperiment:
             rewards.append(total_reward)
             steps_list.append(episode_steps)
 
-            if total_reward > 0:
+            episode_arrived, episode_nmac = self._extract_arrival_nmac(info)
+            if episode_arrived:
                 arrivals += 1
-            else:
+            if episode_nmac:
                 nmacs += 1
 
         env.close()
 
         return ScalabilityResult(
             scenario=self.scenario_name,
-            algorithm=self.algorithm,
+            algorithm=algorithm_label,
             num_aircraft=num_aircraft,
             mean_reward=float(np.mean(rewards)) if rewards else 0.0,
             std_reward=float(np.std(rewards)) if rewards else 0.0,

@@ -450,6 +450,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         try:
             self._wrapper.send_commands_batch(commands)
             self._substep_terminated: set[str] = set()
+            self._termination_reasons: dict[str, str] = {}
 
             def _on_substep(_step: int) -> bool:
                 """Check safety-critical conditions after each substep."""
@@ -463,6 +464,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     conflict = self._obs_builder.compute_conflict_status(own, others)
                     if conflict == "nmac":
                         self._substep_terminated.add(agent_id)
+                        self._termination_reasons[agent_id] = "nmac"
                         self.agents.remove(agent_id)
                         self._wrapper.remove_aircraft(agent_id)
                         continue
@@ -470,6 +472,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                     obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
                     if obs_intrusion is not None and obs_intrusion.is_intruded(own):
                         self._substep_terminated.add(agent_id)
+                        self._termination_reasons[agent_id] = "obstacle"
                         self.agents.remove(agent_id)
                         self._wrapper.remove_aircraft(agent_id)
                         continue
@@ -610,6 +613,7 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                 others = [s for aid, s in new_states.items() if aid != agent_id]
                 conflict = self._obs_builder.compute_conflict_status(own, others)
                 if conflict == "nmac":
+                    self._termination_reasons[agent_id] = "nmac"
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
                     continue
@@ -627,21 +631,25 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                                 eff.set_goal(agent_id, new_wp["lat"], new_wp["lon"])
                                 continue
                             # No streaming — terminate
+                            self._termination_reasons[agent_id] = "arrival"
                             self.agents.remove(agent_id)
                             self._wrapper.remove_aircraft(agent_id)
                             continue
                 # Obstacle intrusion termination
                 obs_intrusion = self._obs_builder.find_obstacle_intrusion_component()
                 if obs_intrusion is not None and obs_intrusion.is_intruded(own):
+                    self._termination_reasons[agent_id] = "obstacle"
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
                     continue
             if self._scenario is not None and own is not None:
                 if self._scenario.should_truncate(agent_id, own, self._airspace):
+                    self._termination_reasons[agent_id] = "truncated"
                     scenario_truncated.add(agent_id)
                     self.agents.remove(agent_id)
                     self._wrapper.remove_aircraft(agent_id)
             elif not self._wrapper.is_aircraft_in_airspace(agent_id):
+                self._termination_reasons[agent_id] = "departed"
                 self.agents.remove(agent_id)
                 self._wrapper.remove_aircraft(agent_id)
 
@@ -657,6 +665,11 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
         truncations: dict[str, bool] = {
             aid: truncated or aid in scenario_truncated for aid in agents_snapshot
         }
+        # Record truncation reason for max_steps
+        if truncated:
+            for agent_id in agents_snapshot:
+                if agent_id not in self._termination_reasons:
+                    self._termination_reasons[agent_id] = "max_steps"
 
         # Fill in rewards/terms/truncs for removed agents that have no observation
         for agent_id in agents_snapshot:
@@ -664,6 +677,9 @@ class BlueSkyMARLEnv(ParallelEnv):  # type: ignore[misc]
                 observations[agent_id] = self._obs_builder.default_observation()
             if agent_id not in infos:
                 infos[agent_id] = {}
+            # Record termination reason for downstream evaluation
+            if agent_id in self._termination_reasons:
+                infos[agent_id]["termination_reason"] = self._termination_reasons[agent_id]
 
         self._prev_states = new_states
 
